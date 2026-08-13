@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Fixado pra Vercel (deploy atual). O pacote já auto-detecta a plataforma
+  // pelas env vars do CI, mas fixar aqui evita depender só da detecção
+  // automática. Se um dia voltar pro Cloudflare, é só remover este bloco
+  // (ou trocar o preset).
+  nitro: {
+    preset: "vercel",
+  },
 });

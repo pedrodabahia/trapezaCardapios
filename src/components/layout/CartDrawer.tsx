@@ -199,6 +199,7 @@ export function CartDrawer({ slug, config }: Props) {
               <Link
                 to="/s/$slug/checkout"
                 params={{ slug }}
+                onClick={closeDrawer}
                 className="mt-4 block"
               >
                 <Button className="w-full rounded-full bg-brand-red py-6 font-bold text-base hover:bg-brand-red/90">

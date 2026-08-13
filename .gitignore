@@ -39,3 +39,4 @@ dist-ssr
 # Ferramentas locais de IA/scaffold — não precisam ir pro repositório
 .claude/
 .lovable/
+.vercel

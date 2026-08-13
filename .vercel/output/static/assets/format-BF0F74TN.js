@@ -1,1 +1,0 @@
-var e=e=>e.toLocaleString(`pt-BR`,{style:`currency`,currency:`BRL`});export{e as t};

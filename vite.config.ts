@@ -18,5 +18,12 @@ export default defineConfig({
   // (ou trocar o preset).
   nitro: {
     preset: "vercel",
+    // Força o tslib (dependência transitiva do @supabase/functions-js) a ser
+    // embutido diretamente nos arquivos .mjs gerados, em vez de ficar como
+    // import externo resolvido em runtime — isso evita o
+    // ERR_MODULE_NOT_FOUND: Cannot find package 'tslib' na Vercel.
+    externals: {
+      inline: ["tslib"],
+    },
   },
 });

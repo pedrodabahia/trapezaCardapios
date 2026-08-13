@@ -1,9 +1,10 @@
 import { createFileRoute, redirect, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { LogOut, ArrowLeft, Menu, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuthSession } from "@/lib/auth-session";
 import {
   useEmpresaAdmin,
@@ -53,6 +54,21 @@ import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { brl } from "@/lib/format";
 
+// Itens de navegação do painel — usados tanto nas abas (desktop) quanto no
+// menu lateral que aparece no mobile.
+const TAB_ITEMS = [
+  { value: "produtos", label: "Produtos" },
+  { value: "categorias", label: "Categorias" },
+  { value: "pedidos", label: "Pedidos" },
+  { value: "promocoes", label: "Promoções" },
+  { value: "cupons", label: "Cupons" },
+  { value: "entrega", label: "Entrega" },
+  { value: "personalizacao", label: "Personalização" },
+  { value: "config", label: "Configurações" },
+  { value: "conta", label: "Conta / Plano" },
+  { value: "seguranca", label: "Segurança" },
+] as const;
+
 export const Route = createFileRoute("/painel/$empresaSlug")({
   beforeLoad: ({ params }) => {
     const session = useAuthSession.getState().session;
@@ -70,6 +86,8 @@ function PainelTenant() {
   const session = useAuthSession((s) => s.session);
   const clear = useAuthSession((s) => s.clear);
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("produtos");
+  const [navOpen, setNavOpen] = useState(false);
 
   // Carrega a empresa via slug (público) só pra ter nome/logo no header.
   // O state auth já dá empresaId; a config detalhada vem de useEmpresaAdmin.
@@ -114,27 +132,68 @@ function PainelTenant() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Sheet open={navOpen} onOpenChange={setNavOpen}>
+        <SheetContent side="left" className="flex w-3/4 flex-col gap-0 p-0 sm:max-w-xs">
+          <SheetHeader className="border-b bg-brand-cream p-5 text-left">
+            <SheetTitle className="font-display text-lg">Menu do painel</SheetTitle>
+          </SheetHeader>
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+            {TAB_ITEMS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.value);
+                  setNavOpen(false);
+                }}
+                className={`rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
+                  activeTab === tab.value
+                    ? "bg-brand-red text-white"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </SheetContent>
+      </Sheet>
+
       <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="font-display text-xl font-bold">{empresa.nome}</h1>
-            <p className="text-xs text-muted-foreground">
-              <code>/s/{empresa.slug}</code> · {session.email}
-            </p>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 md:hidden"
+              onClick={() => setNavOpen(true)}
+            >
+              <Menu className="h-4 w-4" />
+              <span className="sr-only">Abrir menu</span>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-xl font-bold">{empresa.nome}</h1>
+              <p className="truncate text-xs text-muted-foreground">
+                <code>/s/{empresa.slug}</code> · {session.email}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <a href={`/s/${empresa.slug}`} target="_blank" rel="noreferrer">
-              <Button variant="outline" size="sm">
-                Ver cardápio
+              <Button variant="outline" size="sm" className="px-2 sm:px-3">
+                <ExternalLink className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Ver cardápio</span>
               </Button>
             </a>
             <Link to="/painel/login">
               <Button
                 variant="outline"
                 size="sm"
+                className="px-2 sm:px-3"
                 onClick={() => clear()}
               >
-                <LogOut className="mr-1 h-3 w-3" /> Sair
+                <LogOut className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
             </Link>
           </div>
@@ -159,8 +218,10 @@ function PainelTenant() {
             </div>
           </div>
         )}
-        <Tabs defaultValue="produtos" className="space-y-6">
-          <TabsList className="flex flex-wrap">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Desktop: abas normais. Mobile: escondidas — usamos o botão de
+              seção atual + menu lateral logo abaixo em vez disso. */}
+          <TabsList className="hidden flex-wrap md:flex">
             <TabsTrigger value="produtos">Produtos</TabsTrigger>
             <TabsTrigger value="categorias">Categorias</TabsTrigger>
             <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
@@ -172,6 +233,15 @@ function PainelTenant() {
             <TabsTrigger value="conta">Conta / Plano</TabsTrigger>
             <TabsTrigger value="seguranca">Segurança</TabsTrigger>
           </TabsList>
+
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            className="flex w-full items-center justify-between rounded-xl border bg-card px-4 py-3 text-sm font-semibold shadow-sm md:hidden"
+          >
+            <span>{TAB_ITEMS.find((t) => t.value === activeTab)?.label ?? "Menu"}</span>
+            <Menu className="h-4 w-4 text-muted-foreground" />
+          </button>
 
           <TabsContent value="produtos">
             <ProdutosTab completa={completa} token={session.accessToken} onSaved={invalidate} />

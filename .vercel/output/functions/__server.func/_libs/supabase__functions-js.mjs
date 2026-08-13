@@ -273,9 +273,10 @@ var FunctionsClient = class {
 	*/
 	invoke(functionName_1) {
 		return __awaiter(this, arguments, void 0, function* (functionName, options = {}) {
-			var _a;
+			var _a, _b;
 			let timeoutId;
 			let timeoutController;
+			let onAbort;
 			try {
 				const { headers, method, body: functionArgs, signal, timeout } = options;
 				let _headers = {};
@@ -288,18 +289,19 @@ var FunctionsClient = class {
 				}
 				let body;
 				const hasContentTypeHeader = !!headers && Object.keys(headers).some((key) => key.toLowerCase() === "content-type");
-				if (functionArgs && !hasContentTypeHeader) if (typeof Blob !== "undefined" && functionArgs instanceof Blob || functionArgs instanceof ArrayBuffer) {
-					_headers["Content-Type"] = "application/octet-stream";
-					body = functionArgs;
-				} else if (typeof functionArgs === "string") {
-					_headers["Content-Type"] = "text/plain";
-					body = functionArgs;
-				} else if (typeof FormData !== "undefined" && functionArgs instanceof FormData) body = functionArgs;
-				else {
-					_headers["Content-Type"] = "application/json";
-					body = JSON.stringify(functionArgs);
-				}
-				else if (functionArgs && typeof functionArgs !== "string" && !(typeof Blob !== "undefined" && functionArgs instanceof Blob) && !(functionArgs instanceof ArrayBuffer) && !(typeof FormData !== "undefined" && functionArgs instanceof FormData)) body = JSON.stringify(functionArgs);
+				if (functionArgs && !hasContentTypeHeader) {
+					if (typeof Blob !== "undefined" && functionArgs instanceof Blob || functionArgs instanceof ArrayBuffer) {
+						_headers["Content-Type"] = "application/octet-stream";
+						body = functionArgs;
+					} else if (typeof functionArgs === "string") {
+						_headers["Content-Type"] = "text/plain";
+						body = functionArgs;
+					} else if (typeof FormData !== "undefined" && functionArgs instanceof FormData) body = functionArgs;
+					else {
+						_headers["Content-Type"] = "application/json";
+						body = JSON.stringify(functionArgs);
+					}
+				} else if (functionArgs && typeof functionArgs !== "string" && !(typeof Blob !== "undefined" && functionArgs instanceof Blob) && !(functionArgs instanceof ArrayBuffer) && !(typeof FormData !== "undefined" && functionArgs instanceof FormData)) body = JSON.stringify(functionArgs);
 				else body = functionArgs;
 				let effectiveSignal = signal;
 				if (timeout) {
@@ -307,7 +309,8 @@ var FunctionsClient = class {
 					timeoutId = setTimeout(() => timeoutController.abort(), timeout);
 					if (signal) {
 						effectiveSignal = timeoutController.signal;
-						signal.addEventListener("abort", () => timeoutController.abort());
+						onAbort = () => timeoutController.abort();
+						signal.addEventListener("abort", onAbort);
 					} else effectiveSignal = timeoutController.signal;
 				}
 				const response = yield this.fetch(url.toString(), {
@@ -321,7 +324,7 @@ var FunctionsClient = class {
 				const isRelayError = response.headers.get("x-relay-error");
 				if (isRelayError && isRelayError === "true") throw new FunctionsRelayError(response);
 				if (!response.ok) throw new FunctionsHttpError(response);
-				let responseType = ((_a = response.headers.get("Content-Type")) !== null && _a !== void 0 ? _a : "text/plain").split(";")[0].trim();
+				let responseType = ((_a = response.headers.get("Content-Type")) !== null && _a !== void 0 ? _a : "text/plain").split(";")[0].trim().toLowerCase();
 				let data;
 				if (responseType === "application/json") data = yield response.json();
 				else if (responseType === "application/octet-stream" || responseType === "application/pdf") data = yield response.blob();
@@ -341,6 +344,7 @@ var FunctionsClient = class {
 				};
 			} finally {
 				if (timeoutId) clearTimeout(timeoutId);
+				if (onAbort) (_b = options.signal) === null || _b === void 0 || _b.removeEventListener("abort", onAbort);
 			}
 		});
 	}

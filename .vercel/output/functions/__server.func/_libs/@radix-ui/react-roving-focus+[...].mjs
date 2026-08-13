@@ -1,12 +1,16 @@
-import { a as __toESM } from "../../__23tanstack-start-server-fn-resolver-RQ4HTkDC.mjs";
+import { i as __toESM } from "../../_runtime.mjs";
 import { u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-import { n as Primitive, o as useComposedRefs, s as require_jsx_runtime } from "./react-arrow+[...].mjs";
+import { a as useComposedRefs, n as createContextScope, o as require_jsx_runtime, t as createCollection } from "./react-collection+[...].mjs";
+import { _ as useId, g as useCallbackRef, h as useControllableState, v as useLayoutEffect2, y as Primitive } from "./react-dialog+[...].mjs";
 import { t as composeEventHandlers } from "../radix-ui__primitive.mjs";
-import { n as createContextScope, t as createCollection } from "./react-collection+[...].mjs";
-import { _ as useId, g as useCallbackRef, h as useControllableState, v as useLayoutEffect2 } from "./react-dialog+[...].mjs";
 import { t as useDirection } from "../radix-ui__react-direction.mjs";
 //#region node_modules/@radix-ui/react-use-is-hydrated/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
+var __defProp$1 = Object.defineProperty;
+var __name$1 = (target, value) => __defProp$1(target, "name", {
+	value,
+	configurable: true
+});
 var _isHydrated = false;
 function useIsHydrated() {
 	const [isHydrated, setIsHydrated] = import_react.useState(_isHydrated);
@@ -18,17 +22,25 @@ function useIsHydrated() {
 	}, []);
 	return isHydrated;
 }
+__name$1(useIsHydrated, "useIsHydrated");
 var useReactSyncExternalStore = import_react[" useSyncExternalStore ".trim().toString()];
 function subscribe() {
 	return () => {};
 }
+__name$1(subscribe, "subscribe");
 function useIsHydratedModern() {
 	return useReactSyncExternalStore(subscribe, () => true, () => false);
 }
+__name$1(useIsHydratedModern, "useIsHydratedModern");
 var useIsHydrated2 = typeof useReactSyncExternalStore === "function" ? useIsHydratedModern : useIsHydrated;
 //#endregion
 //#region node_modules/@radix-ui/react-roving-focus/dist/index.mjs
 var import_jsx_runtime = require_jsx_runtime();
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", {
+	value,
+	configurable: true
+});
 var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
 var EVENT_OPTIONS = {
 	bubbles: false,
@@ -38,7 +50,7 @@ var GROUP_NAME = "RovingFocusGroup";
 var [Collection, useCollection, createCollectionScope] = createCollection(GROUP_NAME);
 var [createRovingFocusGroupContext, createRovingFocusGroupScope] = createContextScope(GROUP_NAME, [createCollectionScope]);
 var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME);
-var RovingFocusGroup = import_react.forwardRef((props, forwardedRef) => {
+var RovingFocusGroup = /* @__PURE__ */ import_react.forwardRef(/* @__PURE__ */ __name(function RovingFocusGroup2(props, forwardedRef) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Collection.Provider, {
 		scope: props.__scopeRovingFocusGroup,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Collection.Slot, {
@@ -49,9 +61,8 @@ var RovingFocusGroup = import_react.forwardRef((props, forwardedRef) => {
 			})
 		})
 	});
-});
-RovingFocusGroup.displayName = GROUP_NAME;
-var RovingFocusGroupImpl = import_react.forwardRef((props, forwardedRef) => {
+}, "RovingFocusGroup"));
+var RovingFocusGroupImpl = /* @__PURE__ */ import_react.forwardRef(/* @__PURE__ */ __name(function RovingFocusGroupImpl2(props, forwardedRef) {
 	const { __scopeRovingFocusGroup, orientation, loop = false, dir, currentTabStopId: currentTabStopIdProp, defaultCurrentTabStopId, onCurrentTabStopIdChange, onEntryFocus, preventScrollOnEntryFocus = false, ...groupProps } = props;
 	const ref = import_react.useRef(null);
 	const composedRefs = useComposedRefs(forwardedRef, ref);
@@ -115,9 +126,9 @@ var RovingFocusGroupImpl = import_react.forwardRef((props, forwardedRef) => {
 			onBlur: composeEventHandlers(props.onBlur, () => setIsTabbingBackOut(false))
 		})
 	});
-});
+}, "RovingFocusGroupImpl"));
 var ITEM_NAME = "RovingFocusGroupItem";
-var RovingFocusGroupItem = import_react.forwardRef((props, forwardedRef) => {
+var RovingFocusGroupItem = /* @__PURE__ */ import_react.forwardRef(/* @__PURE__ */ __name(function RovingFocusGroupItem2(props, forwardedRef) {
 	const { __scopeRovingFocusGroup, focusable = true, active = false, tabStopId, children, ...itemProps } = props;
 	const autoId = useId();
 	const id = tabStopId || autoId;
@@ -187,8 +198,7 @@ var RovingFocusGroupItem = import_react.forwardRef((props, forwardedRef) => {
 			}) : children
 		})
 	});
-});
-RovingFocusGroupItem.displayName = ITEM_NAME;
+}, "RovingFocusGroupItem"));
 var MAP_KEY_TO_FOCUS_INTENT = {
 	ArrowLeft: "prev",
 	ArrowUp: "prev",
@@ -203,12 +213,14 @@ function getDirectionAwareKey(key, dir) {
 	if (dir !== "rtl") return key;
 	return key === "ArrowLeft" ? "ArrowRight" : key === "ArrowRight" ? "ArrowLeft" : key;
 }
+__name(getDirectionAwareKey, "getDirectionAwareKey");
 function getFocusIntent(event, orientation, dir) {
 	const key = getDirectionAwareKey(event.key, dir);
 	if (orientation === "vertical" && ["ArrowLeft", "ArrowRight"].includes(key)) return void 0;
 	if (orientation === "horizontal" && ["ArrowUp", "ArrowDown"].includes(key)) return void 0;
 	return MAP_KEY_TO_FOCUS_INTENT[key];
 }
+__name(getFocusIntent, "getFocusIntent");
 function focusFirst(candidates, preventScroll = false) {
 	const PREVIOUSLY_FOCUSED_ELEMENT = document.activeElement;
 	for (const candidate of candidates) {
@@ -217,9 +229,11 @@ function focusFirst(candidates, preventScroll = false) {
 		if (document.activeElement !== PREVIOUSLY_FOCUSED_ELEMENT) return;
 	}
 }
+__name(focusFirst, "focusFirst");
 function wrapArray(array, startIndex) {
 	return array.map((_, index) => array[(startIndex + index) % array.length]);
 }
+__name(wrapArray, "wrapArray");
 var Root = RovingFocusGroup;
 var Item = RovingFocusGroupItem;
 //#endregion

@@ -1,5 +1,5 @@
-import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { s as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { v as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { o as require_jsx_runtime } from "../_libs/@radix-ui/react-collection+[...].mjs";
 import { t as cn } from "./utils-C_uf36nf.mjs";
 import { t as brl } from "./format-GUzbl2Vi.mjs";
 import { r as getCartStore } from "./store-CCH2-yNj.mjs";

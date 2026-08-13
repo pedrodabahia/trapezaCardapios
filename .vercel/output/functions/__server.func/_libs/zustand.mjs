@@ -1,4 +1,4 @@
-import { a as __toESM } from "../__23tanstack-start-server-fn-resolver-RQ4HTkDC.mjs";
+import { i as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "./@floating-ui/react-dom+[...].mjs";
 //#region node_modules/zustand/esm/vanilla.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
@@ -140,14 +140,16 @@ var persistImpl = (config, baseOptions) => (set, get, api) => {
 		});
 		const postRehydrationCallback = ((_b = options.onRehydrateStorage) == null ? void 0 : _b.call(options, (_a = get()) != null ? _a : configResult)) || void 0;
 		return toThenable(storage.getItem.bind(storage))(options.name).then((deserializedStorageValue) => {
-			if (deserializedStorageValue) if (typeof deserializedStorageValue.version === "number" && deserializedStorageValue.version !== options.version) {
-				if (options.migrate) {
-					const migration = options.migrate(deserializedStorageValue.state, deserializedStorageValue.version);
-					if (migration instanceof Promise) return migration.then((result) => [true, result]);
-					return [true, migration];
-				}
-				console.error(`State loaded from storage couldn't be migrated since no migrate function was provided`);
-			} else return [false, deserializedStorageValue.state];
+			if (deserializedStorageValue) {
+				if (typeof deserializedStorageValue.version === "number" && deserializedStorageValue.version !== options.version) {
+					if (options.migrate) {
+						const migration = options.migrate(deserializedStorageValue.state, deserializedStorageValue.version);
+						if (migration instanceof Promise) return migration.then((result) => [true, result]);
+						return [true, migration];
+					}
+					console.error(`State loaded from storage couldn't be migrated since no migrate function was provided`);
+				} else return [false, deserializedStorageValue.state];
+			}
 			return [false, void 0];
 		}).then((migrationResult) => {
 			var _a2;
@@ -176,6 +178,7 @@ var persistImpl = (config, baseOptions) => (set, get, api) => {
 			if (newOptions.storage) storage = newOptions.storage;
 		},
 		clearStorage: () => {
+			++hydrationVersion;
 			storage?.removeItem(options.name);
 		},
 		getOptions: () => options,

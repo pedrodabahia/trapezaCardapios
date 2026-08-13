@@ -10,46 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PlataformaIndexRouteImport } from './routes/plataforma/index'
-import { Route as SSlugRouteImport } from './routes/s/$slug'
-import { Route as PlataformaLoginRouteImport } from './routes/plataforma/login'
-import { Route as PainelLoginRouteImport } from './routes/painel/login'
 import { Route as PainelEmpresaSlugRouteImport } from './routes/painel/$empresaSlug'
-import { Route as SSlugIndexRouteImport } from './routes/s/$slug/index'
-import { Route as SSlugSearchRouteImport } from './routes/s/$slug/search'
-import { Route as SSlugPromotionsRouteImport } from './routes/s/$slug/promotions'
-import { Route as SSlugOrdersRouteImport } from './routes/s/$slug/orders'
-import { Route as SSlugLocationRouteImport } from './routes/s/$slug/location'
-import { Route as SSlugFavoritesRouteImport } from './routes/s/$slug/favorites'
-import { Route as SSlugCheckoutRouteImport } from './routes/s/$slug/checkout'
-import { Route as PlataformaEmpresasNovaRouteImport } from './routes/plataforma/empresas/nova'
+import { Route as PainelLoginRouteImport } from './routes/painel/login'
+import { Route as PlataformaIndexRouteImport } from './routes/plataforma/index'
+import { Route as PlataformaLoginRouteImport } from './routes/plataforma/login'
+import { Route as SSlugRouteImport } from './routes/s/$slug'
 import { Route as PlataformaEmpresasIdRouteImport } from './routes/plataforma/empresas/$id'
-import { Route as SSlugProductIdRouteImport } from './routes/s/$slug/product/$id'
+import { Route as PlataformaEmpresasNovaRouteImport } from './routes/plataforma/empresas/nova'
+import { Route as SSlugIndexRouteImport } from './routes/s/$slug/index'
+import { Route as SSlugCheckoutRouteImport } from './routes/s/$slug/checkout'
+import { Route as SSlugFavoritesRouteImport } from './routes/s/$slug/favorites'
+import { Route as SSlugLocationRouteImport } from './routes/s/$slug/location'
+import { Route as SSlugOrdersRouteImport } from './routes/s/$slug/orders'
+import { Route as SSlugPromotionsRouteImport } from './routes/s/$slug/promotions'
+import { Route as SSlugSearchRouteImport } from './routes/s/$slug/search'
 import { Route as SSlugCategoryCatSlugRouteImport } from './routes/s/$slug/category/$catSlug'
+import { Route as SSlugProductIdRouteImport } from './routes/s/$slug/product/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlataformaIndexRoute = PlataformaIndexRouteImport.update({
-  id: '/plataforma/',
-  path: '/plataforma/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SSlugRoute = SSlugRouteImport.update({
-  id: '/s/$slug',
-  path: '/s/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlataformaLoginRoute = PlataformaLoginRouteImport.update({
-  id: '/plataforma/login',
-  path: '/plataforma/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PainelLoginRoute = PainelLoginRouteImport.update({
-  id: '/painel/login',
-  path: '/painel/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PainelEmpresaSlugRoute = PainelEmpresaSlugRouteImport.update({
@@ -57,44 +37,24 @@ const PainelEmpresaSlugRoute = PainelEmpresaSlugRouteImport.update({
   path: '/painel/$empresaSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SSlugIndexRoute = SSlugIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SSlugRoute,
+const PainelLoginRoute = PainelLoginRouteImport.update({
+  id: '/painel/login',
+  path: '/painel/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SSlugSearchRoute = SSlugSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => SSlugRoute,
+const PlataformaIndexRoute = PlataformaIndexRouteImport.update({
+  id: '/plataforma/',
+  path: '/plataforma/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SSlugPromotionsRoute = SSlugPromotionsRouteImport.update({
-  id: '/promotions',
-  path: '/promotions',
-  getParentRoute: () => SSlugRoute,
+const PlataformaLoginRoute = PlataformaLoginRouteImport.update({
+  id: '/plataforma/login',
+  path: '/plataforma/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SSlugOrdersRoute = SSlugOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => SSlugRoute,
-} as any)
-const SSlugLocationRoute = SSlugLocationRouteImport.update({
-  id: '/location',
-  path: '/location',
-  getParentRoute: () => SSlugRoute,
-} as any)
-const SSlugFavoritesRoute = SSlugFavoritesRouteImport.update({
-  id: '/favorites',
-  path: '/favorites',
-  getParentRoute: () => SSlugRoute,
-} as any)
-const SSlugCheckoutRoute = SSlugCheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => SSlugRoute,
-} as any)
-const PlataformaEmpresasNovaRoute = PlataformaEmpresasNovaRouteImport.update({
-  id: '/plataforma/empresas/nova',
-  path: '/plataforma/empresas/nova',
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlataformaEmpresasIdRoute = PlataformaEmpresasIdRouteImport.update({
@@ -102,14 +62,54 @@ const PlataformaEmpresasIdRoute = PlataformaEmpresasIdRouteImport.update({
   path: '/plataforma/empresas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SSlugProductIdRoute = SSlugProductIdRouteImport.update({
-  id: '/product/$id',
-  path: '/product/$id',
+const PlataformaEmpresasNovaRoute = PlataformaEmpresasNovaRouteImport.update({
+  id: '/plataforma/empresas/nova',
+  path: '/plataforma/empresas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SSlugIndexRoute = SSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugCheckoutRoute = SSlugCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugFavoritesRoute = SSlugFavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugLocationRoute = SSlugLocationRouteImport.update({
+  id: '/location',
+  path: '/location',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugOrdersRoute = SSlugOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugPromotionsRoute = SSlugPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugSearchRoute = SSlugSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => SSlugRoute,
 } as any)
 const SSlugCategoryCatSlugRoute = SSlugCategoryCatSlugRouteImport.update({
   id: '/category/$catSlug',
   path: '/category/$catSlug',
+  getParentRoute: () => SSlugRoute,
+} as any)
+const SSlugProductIdRoute = SSlugProductIdRouteImport.update({
+  id: '/product/$id',
+  path: '/product/$id',
   getParentRoute: () => SSlugRoute,
 } as any)
 
@@ -249,25 +249,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plataforma/': {
-      id: '/plataforma/'
-      path: '/plataforma'
-      fullPath: '/plataforma/'
-      preLoaderRoute: typeof PlataformaIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/s/$slug': {
-      id: '/s/$slug'
-      path: '/s/$slug'
-      fullPath: '/s/$slug'
-      preLoaderRoute: typeof SSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plataforma/login': {
-      id: '/plataforma/login'
-      path: '/plataforma/login'
-      fullPath: '/plataforma/login'
-      preLoaderRoute: typeof PlataformaLoginRouteImport
+    '/painel/$empresaSlug': {
+      id: '/painel/$empresaSlug'
+      path: '/painel/$empresaSlug'
+      fullPath: '/painel/$empresaSlug'
+      preLoaderRoute: typeof PainelEmpresaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/painel/login': {
@@ -277,67 +263,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PainelLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/painel/$empresaSlug': {
-      id: '/painel/$empresaSlug'
-      path: '/painel/$empresaSlug'
-      fullPath: '/painel/$empresaSlug'
-      preLoaderRoute: typeof PainelEmpresaSlugRouteImport
+    '/plataforma/': {
+      id: '/plataforma/'
+      path: '/plataforma'
+      fullPath: '/plataforma/'
+      preLoaderRoute: typeof PlataformaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/s/$slug/': {
-      id: '/s/$slug/'
-      path: '/'
-      fullPath: '/s/$slug/'
-      preLoaderRoute: typeof SSlugIndexRouteImport
-      parentRoute: typeof SSlugRoute
+    '/plataforma/login': {
+      id: '/plataforma/login'
+      path: '/plataforma/login'
+      fullPath: '/plataforma/login'
+      preLoaderRoute: typeof PlataformaLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/s/$slug/search': {
-      id: '/s/$slug/search'
-      path: '/search'
-      fullPath: '/s/$slug/search'
-      preLoaderRoute: typeof SSlugSearchRouteImport
-      parentRoute: typeof SSlugRoute
-    }
-    '/s/$slug/promotions': {
-      id: '/s/$slug/promotions'
-      path: '/promotions'
-      fullPath: '/s/$slug/promotions'
-      preLoaderRoute: typeof SSlugPromotionsRouteImport
-      parentRoute: typeof SSlugRoute
-    }
-    '/s/$slug/orders': {
-      id: '/s/$slug/orders'
-      path: '/orders'
-      fullPath: '/s/$slug/orders'
-      preLoaderRoute: typeof SSlugOrdersRouteImport
-      parentRoute: typeof SSlugRoute
-    }
-    '/s/$slug/location': {
-      id: '/s/$slug/location'
-      path: '/location'
-      fullPath: '/s/$slug/location'
-      preLoaderRoute: typeof SSlugLocationRouteImport
-      parentRoute: typeof SSlugRoute
-    }
-    '/s/$slug/favorites': {
-      id: '/s/$slug/favorites'
-      path: '/favorites'
-      fullPath: '/s/$slug/favorites'
-      preLoaderRoute: typeof SSlugFavoritesRouteImport
-      parentRoute: typeof SSlugRoute
-    }
-    '/s/$slug/checkout': {
-      id: '/s/$slug/checkout'
-      path: '/checkout'
-      fullPath: '/s/$slug/checkout'
-      preLoaderRoute: typeof SSlugCheckoutRouteImport
-      parentRoute: typeof SSlugRoute
-    }
-    '/plataforma/empresas/nova': {
-      id: '/plataforma/empresas/nova'
-      path: '/plataforma/empresas/nova'
-      fullPath: '/plataforma/empresas/nova'
-      preLoaderRoute: typeof PlataformaEmpresasNovaRouteImport
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plataforma/empresas/$id': {
@@ -347,11 +291,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlataformaEmpresasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/s/$slug/product/$id': {
-      id: '/s/$slug/product/$id'
-      path: '/product/$id'
-      fullPath: '/s/$slug/product/$id'
-      preLoaderRoute: typeof SSlugProductIdRouteImport
+    '/plataforma/empresas/nova': {
+      id: '/plataforma/empresas/nova'
+      path: '/plataforma/empresas/nova'
+      fullPath: '/plataforma/empresas/nova'
+      preLoaderRoute: typeof PlataformaEmpresasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$slug/': {
+      id: '/s/$slug/'
+      path: '/'
+      fullPath: '/s/$slug/'
+      preLoaderRoute: typeof SSlugIndexRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/checkout': {
+      id: '/s/$slug/checkout'
+      path: '/checkout'
+      fullPath: '/s/$slug/checkout'
+      preLoaderRoute: typeof SSlugCheckoutRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/favorites': {
+      id: '/s/$slug/favorites'
+      path: '/favorites'
+      fullPath: '/s/$slug/favorites'
+      preLoaderRoute: typeof SSlugFavoritesRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/location': {
+      id: '/s/$slug/location'
+      path: '/location'
+      fullPath: '/s/$slug/location'
+      preLoaderRoute: typeof SSlugLocationRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/orders': {
+      id: '/s/$slug/orders'
+      path: '/orders'
+      fullPath: '/s/$slug/orders'
+      preLoaderRoute: typeof SSlugOrdersRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/promotions': {
+      id: '/s/$slug/promotions'
+      path: '/promotions'
+      fullPath: '/s/$slug/promotions'
+      preLoaderRoute: typeof SSlugPromotionsRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/search': {
+      id: '/s/$slug/search'
+      path: '/search'
+      fullPath: '/s/$slug/search'
+      preLoaderRoute: typeof SSlugSearchRouteImport
       parentRoute: typeof SSlugRoute
     }
     '/s/$slug/category/$catSlug': {
@@ -359,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/category/$catSlug'
       fullPath: '/s/$slug/category/$catSlug'
       preLoaderRoute: typeof SSlugCategoryCatSlugRouteImport
+      parentRoute: typeof SSlugRoute
+    }
+    '/s/$slug/product/$id': {
+      id: '/s/$slug/product/$id'
+      path: '/product/$id'
+      fullPath: '/s/$slug/product/$id'
+      preLoaderRoute: typeof SSlugProductIdRouteImport
       parentRoute: typeof SSlugRoute
     }
   }

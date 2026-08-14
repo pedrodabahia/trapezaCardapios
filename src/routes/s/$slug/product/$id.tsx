@@ -228,7 +228,7 @@ function ProdutoDetalhe() {
           <h2 className="font-display text-base font-semibold">
             Remover algum ingrediente?
           </h2>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap bg-brand-yellow gap-2">
             {ingredientesProduto
               .filter((i) => i.removivel)
               .map((i) => {

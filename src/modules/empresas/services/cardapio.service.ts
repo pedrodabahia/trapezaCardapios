@@ -25,7 +25,9 @@ export class CardapioService {
       this.categoriaRepository.listarCategoriasAtivas(empresa.id),
       this.categoriaRepository.listarCategoriasOpcao(empresa.id),
       this.produtoRepository.listarAtivosPorEmpresa(empresa.id),
-      this.categoriaRepository.listarOpcoes(empresa.id),
+      // só opções ativas no cardápio público — o dono pode ter desligado
+      // alguma (ex: acabou a carne hoje) sem apagar o registro.
+      this.categoriaRepository.listarOpcoesAtivas(empresa.id),
     ]);
     const produtoIngredientes = await this.produtoService.listarIngredientesPorProdutos(
       produtos.map((p) => p.id),

@@ -63,3 +63,15 @@ export const deleteOpcao = createServerFn({ method: "POST" })
     await categoriaService.removerOpcao(args.empresaId, args.opcaoId);
     return { ok: true as const };
   });
+
+// Liga/desliga uma opção (ex: "acabou a carne hoje") sem reescrever o
+// registro inteiro — usado tanto na aba Personalização quanto no widget
+// "carne do dia" da home do painel.
+export const toggleOpcaoAtiva = createServerFn({ method: "POST" })
+  .validator((d: { token: string; empresaId: string; opcaoId: string; ativo: boolean }) => d)
+  .handler(async ({ data: args }) => {
+    await authTenantAtivo(args.token, args.empresaId);
+    const categoriaService = container.resolve("categoriaService");
+    await categoriaService.toggleOpcaoAtiva(args.empresaId, args.opcaoId, args.ativo);
+    return { ok: true as const };
+  });

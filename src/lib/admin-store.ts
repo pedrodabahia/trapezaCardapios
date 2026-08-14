@@ -10,6 +10,7 @@ import {
   type Produto,
   type OpcaoPersonalizacao,
   type ProdutoIngrediente,
+  type Pedido,
 } from "./admin-server";
 
 // ============================================================================
@@ -186,6 +187,116 @@ export function useIngredientesDoProduto(
     if (!empresaCompleta || !produtoId) return [];
     return empresaCompleta.produtoIngredientes[produtoId] ?? [];
   }, [empresaCompleta, produtoId]);
+}
+
+// ============================================================================
+// Resumo do dashboard (aba "Início" do painel)
+// ============================================================================
+//
+// Regra de negócio calculada aqui (não no componente): métricas da home do
+// painel do tenant. Todos os dados-fonte já estão carregados no cliente
+// (EmpresaCompleta via useEmpresaAdmin + a lista de pedidos que a aba
+// Pedidos já busca com listPedidosEmpresa) — não criamos nenhuma chamada
+// de rede nova só pra essa tela, só derivamos o que já veio.
+//
+// (Existe um `dashboard.service.ts` em modules/empresas/services, mas ele
+// é do dashboard da PLATAFORMA — estatística de todas as empresas pro
+// super-admin — uma feature completamente diferente desta aqui, que é só
+// do painel de uma empresa. Por isso o cálculo mora aqui, junto dos outros
+// selectors derivados do painel do tenant, em vez de "emprestar" aquele
+// arquivo pra uma coisa que ele não foi feito pra fazer.)
+
+export type PedidosPorDia = { data: string; label: string; total: number };
+
+export type DashboardResumo = {
+  produtosCount: number;
+  proximoVencimento: string | null;
+  pedidosHoje: number;
+  pedidosHojeCancelados: number;
+  pedidosPorDiaSemana: PedidosPorDia[];
+  // soma de valor_total dos pedidos dos últimos 7 dias, EXCLUINDO
+  // pedidos com status "cancelado" — um pedido cancelado não é dinheiro
+  // que entrou, mesmo com valor_total preenchido.
+  valorSemana: number;
+};
+
+const DIA_LABELS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+
+function toDateKey(iso: string): string {
+  // criado_em vem como timestamp ISO; usamos só a parte de data (local,
+  // não UTC) pra agrupar por dia civil.
+  return new Date(iso).toLocaleDateString("en-CA"); // YYYY-MM-DD
+}
+
+export function useDashboardResumo(
+  completa: EmpresaCompleta | null | undefined,
+  pedidos: Pedido[] | undefined,
+): DashboardResumo {
+  return useMemo(() => {
+    const produtosCount = completa?.produtos.length ?? 0;
+    const proximoVencimento = completa?.empresa.proximo_vencimento ?? null;
+    const lista = pedidos ?? [];
+
+    const hoje = new Date();
+    const hojeKey = toDateKey(hoje.toISOString());
+
+    // últimos 7 dias, do mais antigo pro mais recente (hoje por último)
+    const dias: PedidosPorDia[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(hoje);
+      d.setDate(hoje.getDate() - i);
+      dias.push({ data: toDateKey(d.toISOString()), label: DIA_LABELS[d.getDay()], total: 0 });
+    }
+    const indexPorDia = new Map(dias.map((d, idx) => [d.data, idx]));
+    const inicioSemana = dias[0].data;
+
+    let pedidosHoje = 0;
+    let pedidosHojeCancelados = 0;
+    let valorSemana = 0;
+
+    for (const p of lista) {
+      const key = toDateKey(p.criado_em);
+
+      if (key === hojeKey) {
+        pedidosHoje++;
+        if (p.status === "cancelado") pedidosHojeCancelados++;
+      }
+
+      if (key >= inicioSemana) {
+        const idx = indexPorDia.get(key);
+        if (idx !== undefined) dias[idx].total++;
+        if (p.status !== "cancelado") valorSemana += p.valor_total;
+      }
+    }
+
+    return {
+      produtosCount,
+      proximoVencimento,
+      pedidosHoje,
+      pedidosHojeCancelados,
+      pedidosPorDiaSemana: dias,
+      valorSemana,
+    };
+  }, [completa, pedidos]);
+}
+
+// Opções dentro de categorias marcadas com destaque_dashboard=true — é a
+// lista que alimenta o widget "carne do dia".
+export function useOpcoesDestaqueDashboard(
+  completa: EmpresaCompleta | null | undefined,
+): { categoria: CategoriaOpcao; opcoes: OpcaoPersonalizacao[] }[] {
+  return useMemo(() => {
+    if (!completa) return [];
+    return completa.categoriasOpcao
+      .filter((co) => co.destaque_dashboard)
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((categoria) => ({
+        categoria,
+        opcoes: completa.opcoes
+          .filter((o) => o.categoria_opcao_id === categoria.id)
+          .sort((a, b) => a.ordem - b.ordem),
+      }));
+  }, [completa]);
 }
 
 // ============================================================================

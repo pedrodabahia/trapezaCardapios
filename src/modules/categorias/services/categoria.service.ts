@@ -48,11 +48,19 @@ export class CategoriaService {
     return this.repository.listarOpcoes(empresaId);
   }
 
+  listarOpcoesAtivas(empresaId: string) {
+    return this.repository.listarOpcoesAtivas(empresaId);
+  }
+
   salvarOpcao(empresaId: string, opcao: NovaOpcaoInput) {
     return this.repository.salvarOpcao(empresaId, opcao);
   }
 
   async removerOpcao(empresaId: string, opcaoId: string) {
     await this.repository.removerOpcao(empresaId, opcaoId);
+  }
+
+  async toggleOpcaoAtiva(empresaId: string, opcaoId: string, ativo: boolean) {
+    await this.repository.toggleOpcaoAtiva(empresaId, opcaoId, ativo);
   }
 }

@@ -29,8 +29,14 @@ export interface CategoriaRepository {
   atualizarCategoriasOpcaoIds(categoriaId: string, ids: string[]): Promise<void>;
 
   listarOpcoes(empresaId: string): Promise<OpcaoPersonalizacao[]>;
+  // Só as opções com ativo=true — usada no cardápio público, pra não
+  // mostrar pro cliente algo que o dono desligou.
+  listarOpcoesAtivas(empresaId: string): Promise<OpcaoPersonalizacao[]>;
   salvarOpcao(empresaId: string, opcao: NovaOpcaoInput): Promise<{ id: string }>;
   removerOpcao(empresaId: string, opcaoId: string): Promise<void>;
+  // Liga/desliga uma opção sem reescrever o registro inteiro (o "carne do
+  // dia": desativa hoje, reativa amanhã, sem perder preço/nome/ordem).
+  toggleOpcaoAtiva(empresaId: string, opcaoId: string, ativo: boolean): Promise<void>;
 }
 
 export class SupabaseCategoriaRepository implements CategoriaRepository {
@@ -176,10 +182,30 @@ export class SupabaseCategoriaRepository implements CategoriaRepository {
     return { id: data.id as string };
   }
 
+  async listarOpcoesAtivas(empresaId: string): Promise<OpcaoPersonalizacao[]> {
+    const { data, error } = await this.sb()
+      .from("opcoes_personalizacao")
+      .select("*")
+      .eq("empresa_id", empresaId)
+      .eq("ativo", true)
+      .order("ordem");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as OpcaoPersonalizacao[];
+  }
+
   async removerOpcao(empresaId: string, opcaoId: string): Promise<void> {
     const { error } = await this.sb()
       .from("opcoes_personalizacao")
       .delete()
+      .eq("id", opcaoId)
+      .eq("empresa_id", empresaId);
+    if (error) throw new Error(error.message);
+  }
+
+  async toggleOpcaoAtiva(empresaId: string, opcaoId: string, ativo: boolean): Promise<void> {
+    const { error } = await this.sb()
+      .from("opcoes_personalizacao")
+      .update({ ativo })
       .eq("id", opcaoId)
       .eq("empresa_id", empresaId);
     if (error) throw new Error(error.message);

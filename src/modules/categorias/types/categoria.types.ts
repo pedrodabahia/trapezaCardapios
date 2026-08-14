@@ -21,6 +21,11 @@ export type CategoriaOpcao = {
   selecao: "unica" | "multipla";
   obrigatorio: boolean;
   ordem: number;
+  // Se true, essa categoria (e as opções dentro dela) aparece no widget
+  // "carne do dia" da home do painel — pra categorias que mudam de
+  // disponibilidade com frequência e o dono quer um atalho rápido, sem
+  // precisar entrar na aba Personalização.
+  destaque_dashboard: boolean;
 };
 
 export type OpcaoPersonalizacao = {
@@ -30,6 +35,10 @@ export type OpcaoPersonalizacao = {
   nome: string;
   preco_adicional: number;
   ordem: number;
+  // Liga/desliga a opção sem apagar o registro (ex: acabou a carne hoje).
+  // Opção com ativo=false não aparece pro cliente no cardápio público,
+  // mas continua visível pro admin pra religar depois.
+  ativo: boolean;
 };
 
 export type NovaCategoriaInput = Omit<Categoria, "id" | "empresa_id"> & { id?: string };

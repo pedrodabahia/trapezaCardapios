@@ -75,6 +75,7 @@ export {
   deleteCategoriaOpcao,
   saveOpcao,
   deleteOpcao,
+  toggleOpcaoAtiva,
 } from "@/modules/categorias/controllers/categoria.controller";
 
 // ============================================================================

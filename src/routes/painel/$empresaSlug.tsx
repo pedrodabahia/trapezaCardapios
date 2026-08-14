@@ -9,6 +9,8 @@ import { useAuthSession } from "@/lib/auth-session";
 import {
   useEmpresaAdmin,
   useInvalidateEmpresa,
+  useDashboardResumo,
+  useOpcoesDestaqueDashboard,
   getCores,
   getCupons,
   getFrete,
@@ -30,6 +32,7 @@ import {
   deleteCategoriaOpcao,
   saveOpcao,
   deleteOpcao,
+  toggleOpcaoAtiva,
   updateEmpresa,
   getEmpresaBySlug,
   listPedidosEmpresa,
@@ -50,13 +53,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ImageUploadField } from "@/components/ImageUploadField";
-import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Package,
+  Layers,
+  ClipboardList,
+  Settings2,
+  UserCircle,
+  ShieldCheck,
+  Beef,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { brl } from "@/lib/format";
 
 // Itens de navegação do painel — usados tanto nas abas (desktop) quanto no
 // menu lateral que aparece no mobile.
 const TAB_ITEMS = [
+  { value: "inicio", label: "Início" },
   { value: "produtos", label: "Produtos" },
   { value: "categorias", label: "Categorias" },
   { value: "pedidos", label: "Pedidos" },
@@ -86,7 +101,7 @@ function PainelTenant() {
   const session = useAuthSession((s) => s.session);
   const clear = useAuthSession((s) => s.clear);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("produtos");
+  const [activeTab, setActiveTab] = useState("inicio");
   const [navOpen, setNavOpen] = useState(false);
 
   // Carrega a empresa via slug (público) só pra ter nome/logo no header.
@@ -222,6 +237,7 @@ function PainelTenant() {
           {/* Desktop: abas normais. Mobile: escondidas — usamos o botão de
               seção atual + menu lateral logo abaixo em vez disso. */}
           <TabsList className="hidden flex-wrap md:flex">
+            <TabsTrigger value="inicio">Início</TabsTrigger>
             <TabsTrigger value="produtos">Produtos</TabsTrigger>
             <TabsTrigger value="categorias">Categorias</TabsTrigger>
             <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
@@ -243,6 +259,14 @@ function PainelTenant() {
             <Menu className="h-4 w-4 text-muted-foreground" />
           </button>
 
+          <TabsContent value="inicio">
+            <InicioTab
+              completa={completa}
+              token={session.accessToken}
+              onSaved={invalidate}
+              onNavigate={setActiveTab}
+            />
+          </TabsContent>
           <TabsContent value="produtos">
             <ProdutosTab completa={completa} token={session.accessToken} onSaved={invalidate} />
           </TabsContent>
@@ -282,6 +306,314 @@ function PainelTenant() {
 // ============================================================================
 // Subcomponentes de cada tab
 // ============================================================================
+
+// Cards de atalho pras outras seções do painel, mostrados na home.
+const ATALHOS = [
+  { tab: "produtos", label: "Produtos", icon: Package },
+  { tab: "categorias", label: "Categorias", icon: Layers },
+  { tab: "pedidos", label: "Pedidos", icon: ClipboardList },
+  { tab: "config", label: "Configurações", icon: Settings2 },
+  { tab: "conta", label: "Conta", icon: UserCircle },
+  { tab: "seguranca", label: "Segurança", icon: ShieldCheck },
+] as const;
+
+function InicioTab({
+  completa,
+  token,
+  onSaved,
+  onNavigate,
+}: {
+  completa: EmpresaCompleta;
+  token: string;
+  onSaved: () => void;
+  onNavigate: (tab: string) => void;
+}) {
+  const empresaId = completa.empresa.id;
+
+  // Mesma queryKey usada pela aba Pedidos (listPedidosEmpresa) — se as
+  // duas telas estiverem montadas, o react-query só busca uma vez.
+  const { data: pedidos } = useQuery({
+    queryKey: ["pedidos-empresa", empresaId],
+    queryFn: () => listPedidosEmpresa({ data: { token, empresaId } }),
+    enabled: !!token && !!empresaId,
+    refetchInterval: 30_000,
+  });
+
+  const resumo = useDashboardResumo(completa, pedidos);
+  const maxDia = Math.max(1, ...resumo.pedidosPorDiaSemana.map((d) => d.total));
+
+  const vencimentoLabel = resumo.proximoVencimento
+    ? new Date(resumo.proximoVencimento + "T00:00:00").toLocaleDateString("pt-BR")
+    : "—";
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-display text-lg font-semibold">
+          Olá, {completa.empresa.nome}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Um resumo rápido de como sua loja está hoje.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+        {ATALHOS.map((a) => (
+          <button
+            key={a.tab}
+            type="button"
+            onClick={() => onNavigate(a.tab)}
+            className="flex items-center gap-3 rounded-2xl border bg-card p-4 text-left shadow-sm transition hover:border-brand-red hover:shadow-md"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-red/10 text-brand-red">
+              <a.icon className="h-5 w-5" />
+            </span>
+            <span className="font-display font-semibold">{a.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Produtos cadastrados</p>
+            <p className="mt-1 font-display text-2xl font-bold">{resumo.produtosCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Vencimento do plano</p>
+            <p className="mt-1 font-display text-2xl font-bold">{vencimentoLabel}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Pedidos hoje</p>
+            <p className="mt-1 font-display text-2xl font-bold">
+              {resumo.pedidosHoje}
+              {resumo.pedidosHojeCancelados > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({resumo.pedidosHojeCancelados} cancelado
+                  {resumo.pedidosHojeCancelados > 1 ? "s" : ""})
+                </span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">
+              Faturou essa semana
+            </p>
+            <p className="mt-1 font-display text-2xl font-bold">{brl(resumo.valorSemana)}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              não conta pedido cancelado
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Pedidos nos últimos 7 dias</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end justify-between gap-2">
+            {resumo.pedidosPorDiaSemana.map((d) => (
+              <div key={d.data} className="flex flex-1 flex-col items-center gap-1">
+                <span className="text-xs font-semibold">{d.total}</span>
+                <div className="flex h-24 w-full items-end rounded-md bg-muted">
+                  <div
+                    className="w-full rounded-md bg-brand-red"
+                    style={{ height: `${(d.total / maxDia) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[11px] text-muted-foreground">{d.label}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <CarneDoDiaWidget completa={completa} token={token} onSaved={onSaved} />
+    </div>
+  );
+}
+
+// Widget "carne do dia": opções das categorias marcadas com
+// destaque_dashboard, com toggle liga/desliga rápido + form pra cadastrar
+// uma opção nova sem sair da home.
+function CarneDoDiaWidget({
+  completa,
+  token,
+  onSaved,
+}: {
+  completa: EmpresaCompleta;
+  token: string;
+  onSaved: () => void;
+}) {
+  const destaques = useOpcoesDestaqueDashboard(completa);
+
+  if (destaques.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Beef className="h-4 w-4" /> Carne do dia
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Nenhuma categoria de adicional está marcada pra aparecer aqui ainda.
+          Vá na aba <strong>Personalização</strong>, edite a categoria que muda
+          de disponibilidade com frequência (ex: "Escolha a carne") e ative
+          "Aparece no início do painel".
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {destaques.map(({ categoria, opcoes }) => (
+        <CarneDoDiaCategoria
+          key={categoria.id}
+          categoria={categoria}
+          opcoes={opcoes}
+          completa={completa}
+          token={token}
+          onSaved={onSaved}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CarneDoDiaCategoria({
+  categoria,
+  opcoes,
+  completa,
+  token,
+  onSaved,
+}: {
+  categoria: CategoriaOpcao;
+  opcoes: OpcaoPersonalizacao[];
+  completa: EmpresaCompleta;
+  token: string;
+  onSaved: () => void;
+}) {
+  const [novoNome, setNovoNome] = useState("");
+  const [novoPreco, setNovoPreco] = useState("0");
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(opcao: OpcaoPersonalizacao, ativo: boolean) {
+    try {
+      await toggleOpcaoAtiva({
+        data: { token, empresaId: completa.empresa.id, opcaoId: opcao.id, ativo },
+      });
+      toast.success(ativo ? `${opcao.nome} ativada` : `${opcao.nome} desativada`);
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
+    }
+  }
+
+  async function adicionar() {
+    const nome = novoNome.trim();
+    if (!nome) {
+      toast.error("Dê um nome pra opção");
+      return;
+    }
+    setBusy(true);
+    try {
+      // Reaproveita a mesma função de sempre pra criar opção — não existe
+      // um segundo jeito de cadastrar só porque isso está no dashboard.
+      await saveOpcao({
+        data: {
+          token,
+          empresaId: completa.empresa.id,
+          opcao: {
+            empresa_id: completa.empresa.id,
+            categoria_opcao_id: categoria.id,
+            nome,
+            preco_adicional: Number(novoPreco) || 0,
+            ordem: opcoes.length,
+            ativo: true,
+          },
+        },
+      });
+      toast.success("Opção adicionada");
+      setNovoNome("");
+      setNovoPreco("0");
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao adicionar");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Beef className="h-4 w-4" /> {categoria.nome}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {opcoes.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma opção cadastrada nessa categoria ainda.
+          </p>
+        )}
+        {opcoes.map((o) => (
+          <div
+            key={o.id}
+            className="flex items-center justify-between gap-2 rounded-lg border p-2"
+          >
+            <div className="min-w-0">
+              <p className={`truncate text-sm font-medium ${!o.ativo ? "text-muted-foreground line-through" : ""}`}>
+                {o.nome}
+              </p>
+              {o.preco_adicional > 0 && (
+                <p className="text-xs text-muted-foreground">+{brl(o.preco_adicional)}</p>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {o.ativo ? "disponível" : "desligada"}
+              </span>
+              <Switch checked={o.ativo} onCheckedChange={(v) => toggle(o, v)} />
+            </div>
+          </div>
+        ))}
+        <div className="flex gap-2 pt-1">
+          <Input
+            placeholder="Ex: Peixe"
+            value={novoNome}
+            onChange={(e) => setNovoNome(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                adicionar();
+              }
+            }}
+          />
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="+R$"
+            value={novoPreco}
+            onChange={(e) => setNovoPreco(e.target.value)}
+            className="w-24"
+          />
+          <Button type="button" size="sm" onClick={adicionar} disabled={busy}>
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function ProdutosTab({
   completa,
@@ -1136,6 +1468,7 @@ function PersonalizacaoTab({
             selecao: "unica",
             obrigatorio: false,
             ordem: categorias.length,
+            destaque_dashboard: false,
           }}
           onDone={() => {
             setCriando(false);
@@ -1254,6 +1587,20 @@ function CategoriaOpcaoEditor({
           />
           <Label>Obrigatório escolher</Label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={draft.destaque_dashboard}
+            onCheckedChange={(v) => setDraft({ ...draft, destaque_dashboard: v })}
+          />
+          <div>
+            <Label>Aparece no início do painel</Label>
+            <p className="text-xs text-muted-foreground">
+              Pra categorias que mudam de disponibilidade todo dia (ex:
+              "Escolha a carne") — fica com um atalho rápido de liga/desliga
+              na home do painel.
+            </p>
+          </div>
+        </div>
         <div className="md:col-span-2 flex gap-2">
           <Button onClick={save} disabled={busy}>
             {busy ? "Salvando..." : "Salvar"}
@@ -1282,6 +1629,23 @@ function OpcoesSection({
 }) {
   const [draft, setDraft] = useState(items);
   const [editandoCategoria, setEditandoCategoria] = useState(false);
+
+  // Liga/desliga direto, sem depender do botão "Salvar" lá embaixo (que
+  // reescreve a lista inteira) — só atualiza o campo ativo no banco e
+  // reflete no draft local.
+  async function toggleAtivo(opcao: OpcaoPersonalizacao, ativo: boolean) {
+    try {
+      await toggleOpcaoAtiva({
+        data: { token, empresaId: completa.empresa.id, opcaoId: opcao.id, ativo },
+      });
+      setDraft((list) => list.map((o) => (o.id === opcao.id ? { ...o, ativo } : o)));
+      toast.success(ativo ? `${opcao.nome} ativada` : `${opcao.nome} desativada`);
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
+    }
+  }
+
   async function save() {
     const newIds = new Set(draft.map((d) => d.id).filter(Boolean));
     for (const o of items) {
@@ -1355,7 +1719,7 @@ function OpcoesSection({
       </CardHeader>
       <CardContent className="space-y-2">
         {draft.map((o, i) => (
-          <div key={i} className="flex gap-2">
+          <div key={i} className="flex items-center gap-2">
             <Input
               placeholder="Nome"
               value={o.nome}
@@ -1376,6 +1740,21 @@ function OpcoesSection({
                 setDraft(cp);
               }}
             />
+            <div className="flex shrink-0 items-center gap-1" title={o.id ? "Liga/desliga sem apagar" : "Salve primeiro pra poder ligar/desligar"}>
+              <Switch
+                checked={o.ativo}
+                disabled={!o.id}
+                onCheckedChange={(v) => {
+                  if (o.id) {
+                    toggleAtivo(o, v);
+                  } else {
+                    const cp = [...draft];
+                    cp[i] = { ...o, ativo: v };
+                    setDraft(cp);
+                  }
+                }}
+              />
+            </div>
             <Button
               variant="destructive"
               size="sm"
@@ -1399,6 +1778,7 @@ function OpcoesSection({
                   nome: "",
                   preco_adicional: 0,
                   ordem: draft.length,
+                  ativo: true,
                 },
               ])
             }

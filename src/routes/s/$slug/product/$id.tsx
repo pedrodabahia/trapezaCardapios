@@ -131,7 +131,9 @@ function ProdutoDetalhe() {
       customization,
     };
     getCartStore(slug).getState().addItem(item);
-    toast.success("Adicionado ao carrinho!");
+    toast.success("Adicionado ao carrinho!",{
+      duration:1000,
+    });
     navigate({ to: "/s/$slug", params: { slug } });
   }
 
@@ -196,7 +198,7 @@ function ProdutoDetalhe() {
                 <span className="ml-1 text-xs font-normal text-brand-red">*</span>
               )}
             </h2>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap bg-brand-red p-3 py-4 rounded-md gap-2">
               {items.map((o) => {
                 const selected = selecionados.includes(o.nome);
                 return (
@@ -207,7 +209,7 @@ function ProdutoDetalhe() {
                     className={cn(
                       "rounded-full border px-4 py-2 text-sm font-semibold transition",
                       selected
-                        ? "border-brand-red bg-brand-red text-white"
+                        ? "border-white bg-brand-red text-white"
                         : "border-border bg-card hover:bg-muted",
                     )}
                   >

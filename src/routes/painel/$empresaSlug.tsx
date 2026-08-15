@@ -63,7 +63,7 @@ import {
   Settings2,
   UserCircle,
   ShieldCheck,
-  Beef,
+  Sparkles,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { brl } from "@/lib/format";
@@ -374,21 +374,21 @@ function InicioTab({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="bg-brand-red text-white">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Produtos cadastrados</p>
+            <p className="text-xs text-white">Produtos cadastrados</p>
             <p className="mt-1 font-display text-2xl font-bold">{resumo.produtosCount}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-brand-red text-white">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Vencimento do plano</p>
+            <p className="text-xs text-white">Vencimento do plano</p>
             <p className="mt-1 font-display text-2xl font-bold">{vencimentoLabel}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-brand-red text-white">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Pedidos hoje</p>
+            <p className="text-xs text-white">Pedidos hoje</p>
             <p className="mt-1 font-display text-2xl font-bold">
               {resumo.pedidosHoje}
               {resumo.pedidosHojeCancelados > 0 && (
@@ -400,13 +400,13 @@ function InicioTab({
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-brand-red text-white">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white">
               Faturou essa semana
             </p>
             <p className="mt-1 font-display text-2xl font-bold">{brl(resumo.valorSemana)}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-[11px] text-white">
               não conta pedido cancelado
             </p>
           </CardContent>
@@ -435,15 +435,16 @@ function InicioTab({
         </CardContent>
       </Card>
 
-      <CarneDoDiaWidget completa={completa} token={token} onSaved={onSaved} />
+      <OpcoesDoDiaWidget completa={completa} token={token} onSaved={onSaved} />
     </div>
   );
 }
 
-// Widget "carne do dia": opções das categorias marcadas com
+// Widget "opções do dia": opções das categorias marcadas com
 // destaque_dashboard, com toggle liga/desliga rápido + form pra cadastrar
-// uma opção nova sem sair da home.
-function CarneDoDiaWidget({
+// uma opção nova sem sair da home. Serve pra qualquer negócio (marmitaria,
+// lanchonete, pizzaria etc) — o nome não fica preso a um exemplo específico.
+function OpcoesDoDiaWidget({
   completa,
   token,
   onSaved,
@@ -459,13 +460,14 @@ function CarneDoDiaWidget({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Beef className="h-4 w-4" /> Carne do dia
+            <Sparkles className="h-4 w-4" /> Opções do dia
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           Nenhuma categoria de adicional está marcada pra aparecer aqui ainda.
           Vá na aba <strong>Personalização</strong>, edite a categoria que muda
-          de disponibilidade com frequência (ex: "Escolha a carne") e ative
+          de disponibilidade com frequência (ex: "Escolha a carne" numa
+          marmitaria, ou "Sabor do milk-shake" numa lanchonete) e ative
           "Aparece no início do painel".
         </CardContent>
       </Card>
@@ -475,7 +477,7 @@ function CarneDoDiaWidget({
   return (
     <div className="space-y-4">
       {destaques.map(({ categoria, opcoes }) => (
-        <CarneDoDiaCategoria
+        <OpcoesDoDiaCategoria
           key={categoria.id}
           categoria={categoria}
           opcoes={opcoes}
@@ -487,8 +489,7 @@ function CarneDoDiaWidget({
     </div>
   );
 }
-
-function CarneDoDiaCategoria({
+function OpcoesDoDiaCategoria({
   categoria,
   opcoes,
   completa,
@@ -504,16 +505,51 @@ function CarneDoDiaCategoria({
   const [novoNome, setNovoNome] = useState("");
   const [novoPreco, setNovoPreco] = useState("0");
   const [busy, setBusy] = useState(false);
+  // Alterações de liga/desliga feitas na tela mas ainda não enviadas pro
+  // banco. Um id só entra aqui quando o valor escolhido difere do que veio
+  // do servidor — assim o botão "Aplicar" só aparece quando tem algo pra
+  // salvar de fato, e cada clique no switch não faz nenhuma chamada de rede.
+  const [pendentes, setPendentes] = useState<Record<string, boolean>>({});
+  const [salvando, setSalvando] = useState(false);
 
-  async function toggle(opcao: OpcaoPersonalizacao, ativo: boolean) {
+  function marcarPendente(opcao: OpcaoPersonalizacao, ativo: boolean) {
+    setPendentes((prev) => {
+      const next = { ...prev };
+      if (ativo === opcao.ativo) {
+        delete next[opcao.id];
+      } else {
+        next[opcao.id] = ativo;
+      }
+      return next;
+    });
+  }
+
+  const pendentesEntries = Object.entries(pendentes);
+
+  async function aplicarPendentes() {
+    if (pendentesEntries.length === 0) return;
+    setSalvando(true);
     try {
-      await toggleOpcaoAtiva({
-        data: { token, empresaId: completa.empresa.id, opcaoId: opcao.id, ativo },
-      });
-      toast.success(ativo ? `${opcao.nome} ativada` : `${opcao.nome} desativada`);
+      // Só uma leva de chamadas, disparada quando a pessoa clica em
+      // "Aplicar alterações" — não mais uma por clique de switch.
+      await Promise.all(
+        pendentesEntries.map(([opcaoId, ativo]) =>
+          toggleOpcaoAtiva({
+            data: { token, empresaId: completa.empresa.id, opcaoId, ativo },
+          }),
+        ),
+      );
+      toast.success(
+        pendentesEntries.length === 1
+          ? "Opção atualizada"
+          : `${pendentesEntries.length} opções atualizadas`,
+      );
+      setPendentes({});
       onSaved();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar alterações");
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -532,7 +568,6 @@ function CarneDoDiaCategoria({
           token,
           empresaId: completa.empresa.id,
           opcao: {
-            empresa_id: completa.empresa.id,
             categoria_opcao_id: categoria.id,
             nome,
             preco_adicional: Number(novoPreco) || 0,
@@ -553,10 +588,10 @@ function CarneDoDiaCategoria({
   }
 
   return (
-    <Card>
+    <Card className="bg-brand-red">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Beef className="h-4 w-4" /> {categoria.nome}
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Sparkles className="h-4 w-4 text-white" /> {categoria.nome}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -565,29 +600,57 @@ function CarneDoDiaCategoria({
             Nenhuma opção cadastrada nessa categoria ainda.
           </p>
         )}
-        {opcoes.map((o) => (
-          <div
-            key={o.id}
-            className="flex items-center justify-between gap-2 rounded-lg border p-2"
-          >
-            <div className="min-w-0">
-              <p className={`truncate text-sm font-medium ${!o.ativo ? "text-muted-foreground line-through" : ""}`}>
-                {o.nome}
-              </p>
-              {o.preco_adicional > 0 && (
-                <p className="text-xs text-muted-foreground">+{brl(o.preco_adicional)}</p>
-              )}
+        {opcoes.map((o) => {
+          const efetivo = pendentes[o.id] ?? o.ativo;
+          const alterado = o.id in pendentes;
+          return (
+            <div
+              key={o.id}
+              className={`flex items-center justify-between gap-2 bg-white rounded-lg border p-2 ${alterado ? "border-brand-red/50 bg-brand-red/5" : ""}`}
+            >
+              <div className="min-w-0">
+                <p className={`truncate text-sm font-medium ${!efetivo ? "text-muted-foreground line-through" : ""}`}>
+                  {o.nome}
+                </p>
+                {o.preco_adicional > 0 && (
+                  <p className="text-xs text-muted-foreground">+{brl(o.preco_adicional)}</p>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {efetivo ? "disponível" : "desligada"}
+                </span>
+                <Switch checked={efetivo} onCheckedChange={(v) => marcarPendente(o, v)} />
+              </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {o.ativo ? "disponível" : "desligada"}
-              </span>
-              <Switch checked={o.ativo} onCheckedChange={(v) => toggle(o, v)} />
+          );
+        })}
+        {pendentesEntries.length > 0 && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-brand-red/40 bg-brand-red/5 p-2 text-xs">
+            <span>
+              {pendentesEntries.length} alteração
+              {pendentesEntries.length > 1 ? "ões" : ""} pendente
+              {pendentesEntries.length > 1 ? "s" : ""}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setPendentes({})}
+                disabled={salvando}
+              >
+                Descartar
+              </Button>
+              <Button type="button" size="sm" onClick={aplicarPendentes} disabled={salvando}>
+                {salvando ? "Salvando..." : "Aplicar alterações"}
+              </Button>
             </div>
           </div>
-        ))}
+        )}
         <div className="flex gap-2 pt-1">
           <Input
+          className="bg-white"
             placeholder="Ex: Peixe"
             value={novoNome}
             onChange={(e) => setNovoNome(e.target.value)}
@@ -604,9 +667,9 @@ function CarneDoDiaCategoria({
             placeholder="+R$"
             value={novoPreco}
             onChange={(e) => setNovoPreco(e.target.value)}
-            className="w-24"
+            className="w-24 bg-white"
           />
-          <Button type="button" size="sm" onClick={adicionar} disabled={busy}>
+          <Button type="button" size="sm" className="border border-2 border-white" onClick={adicionar} disabled={busy}>
             <Plus className="h-3 w-3" />
           </Button>
         </div>
@@ -656,7 +719,7 @@ function ProdutosTab({
         </Button>
       </div>
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {produtos.map((p) => (
+        {produtos.map((p : any) => (
           <ProdutoCardDisplay
             key={p.id}
             p={p}
@@ -748,7 +811,7 @@ function ProdutoEditDialog({
   const [ingredientesDraft, setIngredientesDraft] = useState<
     { nome: string; removivel: boolean }[]
   >(
-    (completa.produtoIngredientes[produto.id] ?? []).map((i) => ({
+    (completa.produtoIngredientes[produto.id] ?? []).map((i : any) => ({
       nome: i.nome,
       removivel: i.removivel,
     })),
@@ -809,7 +872,7 @@ function ProdutoEditDialog({
             }
           >
             <option value="">—</option>
-            {completa.categorias.map((c) => (
+            {completa.categorias.map((c : any) => (
               <option key={c.id} value={c.id}>
                 {c.nome}
               </option>
@@ -1314,7 +1377,6 @@ function EntregaTab({
             gratis_habilitado: !!gratis,
             gratis_acima_de: gratis ? Number(acimaDe) : null,
           },
-          bairros: bairros.filter((b) => b.name.trim().length > 0),
         },
       },
     });
@@ -1488,7 +1550,7 @@ function PersonalizacaoTab({
         <OpcoesSection
           key={co.id}
           categoriaOpcao={co}
-          items={completa.opcoes.filter((o) => o.categoria_opcao_id === co.id)}
+          items={completa.opcoes.filter((o: any) => o.categoria_opcao_id === co.id)}
           completa={completa}
           token={token}
           onSaved={onSaved}
@@ -1630,22 +1692,6 @@ function OpcoesSection({
   const [draft, setDraft] = useState(items);
   const [editandoCategoria, setEditandoCategoria] = useState(false);
 
-  // Liga/desliga direto, sem depender do botão "Salvar" lá embaixo (que
-  // reescreve a lista inteira) — só atualiza o campo ativo no banco e
-  // reflete no draft local.
-  async function toggleAtivo(opcao: OpcaoPersonalizacao, ativo: boolean) {
-    try {
-      await toggleOpcaoAtiva({
-        data: { token, empresaId: completa.empresa.id, opcaoId: opcao.id, ativo },
-      });
-      setDraft((list) => list.map((o) => (o.id === opcao.id ? { ...o, ativo } : o)));
-      toast.success(ativo ? `${opcao.nome} ativada` : `${opcao.nome} desativada`);
-      onSaved();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao atualizar");
-    }
-  }
-
   async function save() {
     const newIds = new Set(draft.map((d) => d.id).filter(Boolean));
     for (const o of items) {
@@ -1664,7 +1710,7 @@ function OpcoesSection({
         data: {
           token,
           empresaId: completa.empresa.id,
-          opcao: { ...o, empresa_id: completa.empresa.id, categoria_opcao_id: categoriaOpcao.id },
+          opcao: { ...o, categoria_opcao_id: categoriaOpcao.id },
         },
       });
     }
@@ -1740,18 +1786,13 @@ function OpcoesSection({
                 setDraft(cp);
               }}
             />
-            <div className="flex shrink-0 items-center gap-1" title={o.id ? "Liga/desliga sem apagar" : "Salve primeiro pra poder ligar/desligar"}>
+            <div className="flex shrink-0 items-center gap-1" title="Liga/desliga — clique em Salvar pra aplicar">
               <Switch
                 checked={o.ativo}
-                disabled={!o.id}
                 onCheckedChange={(v) => {
-                  if (o.id) {
-                    toggleAtivo(o, v);
-                  } else {
-                    const cp = [...draft];
-                    cp[i] = { ...o, ativo: v };
-                    setDraft(cp);
-                  }
+                  const cp = [...draft];
+                  cp[i] = { ...o, ativo: v };
+                  setDraft(cp);
                 }}
               />
             </div>

@@ -281,7 +281,7 @@ export function useDashboardResumo(
 }
 
 // Opções dentro de categorias marcadas com destaque_dashboard=true — é a
-// lista que alimenta o widget "carne do dia".
+// lista que alimenta o widget "Opções do dia" na home do painel.
 export function useOpcoesDestaqueDashboard(
   completa: EmpresaCompleta | null | undefined,
 ): { categoria: CategoriaOpcao; opcoes: OpcaoPersonalizacao[] }[] {
@@ -438,4 +438,4 @@ export function useInvalidateEmpresa() {
 // Re-exports para componentes que só precisam do tipo
 // ============================================================================
 
-export type { Empresa, Categoria, CategoriaOpcao, Produto, OpcaoPersonalizacao, ProdutoIngrediente };
+export type { EmpresaCompleta, Empresa, Categoria, CategoriaOpcao, Produto, OpcaoPersonalizacao, ProdutoIngrediente };

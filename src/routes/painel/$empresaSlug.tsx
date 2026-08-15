@@ -1933,8 +1933,14 @@ function ConfigTab({
             <Input value={pixChave} onChange={(e) => setPixChave(e.target.value)} />
           </div>
           <div>
-            <Label>URL do logo (opcional)</Label>
-            <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
+            <ImageUploadField
+              label="Logo"
+              value={logoUrl}
+              onChange={setLogoUrl}
+              token={token}
+              empresaId={empresa.id}
+              pasta="logo"
+            />
           </div>
           <div className="md:col-span-2">
             <Label>Cidade de entrega (default no checkout)</Label>

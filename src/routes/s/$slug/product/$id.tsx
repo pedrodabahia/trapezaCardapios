@@ -257,7 +257,7 @@ function ProdutoDetalhe() {
         <Label htmlFor="obs">Alguma observação?</Label>
         <Textarea
           id="obs"
-          placeholder="Ex: sem cebola, ponto da carne, etc."
+          placeholder="Ex: Digite aqui sua observação ..."
           value={obs}
           onChange={(e) => setObs(e.target.value)}
           className="mt-1"

@@ -153,7 +153,6 @@ const produtosTag = useMemo(
               </div>
               <div>
                 <div className="font-display font-bold">{freteCard.titulo}</div>
-                <div className="text-xs text-white/80">{freteCard.subtitulo}</div>
                 {pedidoMinimo > 0 && (
                   <div className="mt-1 text-xs font-bold text-white">
                     Pedido mínimo: {brl(pedidoMinimo)}

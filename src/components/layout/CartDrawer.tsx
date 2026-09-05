@@ -196,16 +196,22 @@ export function CartDrawer({ slug, config }: Props) {
                   <span className="text-brand-red">{brl(total)}</span>
                 </div>
               </div>
-              <Link
+ 
+                {total > 30 ? (
+                               <Link
                 to="/s/$slug/checkout"
                 params={{ slug }}
                 onClick={closeDrawer}
                 className="mt-4 block"
               >
-                <Button className="w-full rounded-full bg-brand-red py-6 font-bold text-base hover:bg-brand-red/90">
-                  Finalizar pedido
-                </Button>
-              </Link>
+                  <Button className="w-full rounded-full bg-brand-red py-6 font-bold text-base hover:bg-brand-red/90">
+                    Finalizar pedido
+                  </Button>
+                  </Link>
+                ) : (  <Button className="w-full mt-4 rounded-full bg-brand-red/50 py-6 font-bold text-base hover:bg-brand-red/90">
+                        Compra minima de R${frete.pedido_minimo}
+                      </Button>)}
+              
             </div>
           </>
         )}

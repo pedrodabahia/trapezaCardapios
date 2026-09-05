@@ -104,7 +104,7 @@ const produtosTag = useMemo(
                   </>
                 ) : null}
               </h1>
-              <p className="mt-3 text-sm text-white/85 md:text-base">
+              <p className="mt-3 text-sm text-black/85 md:text-base">
                 {promo.descricao_curta} Só hoje!
               </p>
 

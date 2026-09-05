@@ -24,6 +24,10 @@ export function EntregaTab({
   const [gratis, setGratis] = useState(frete.gratis_habilitado);
   const [acimaDe, setAcimaDe] = useState(frete.gratis_acima_de ?? 0);
   const [bairros, setBairros] = useState<Neighborhood[]>(getBairros(cfg));
+  const [pedidoMinimoHabilitado, setPedidoMinimoHabilitado] = useState(
+    (frete.pedido_minimo ?? 0) > 0,
+  );
+  const [pedidoMinimo, setPedidoMinimo] = useState(frete.pedido_minimo ?? 0);
 
   async function save() {
     await saveEmpresaConfig({
@@ -36,6 +40,7 @@ export function EntregaTab({
             taxa: Number(taxa),
             gratis_habilitado: !!gratis,
             gratis_acima_de: gratis ? Number(acimaDe) : null,
+            pedido_minimo: pedidoMinimoHabilitado ? Number(pedidoMinimo) : 0,
           },
         },
       },
@@ -99,6 +104,35 @@ export function EntregaTab({
           >
             <Plus className="mr-1 h-3 w-3" /> Adicionar bairro
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pedido mínimo para entrega</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Defina um valor mínimo de subtotal (sem contar a taxa de entrega)
+            pra aceitar entregar. Ex: "só entregamos a partir de R$100". Pedidos
+            de retirada (sem endereço) não são afetados por esse limite.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <Switch checked={pedidoMinimoHabilitado} onCheckedChange={setPedidoMinimoHabilitado} />
+              <Label>Exigir pedido mínimo pra entregar</Label>
+            </div>
+            <div>
+              <Label>Valor mínimo (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                disabled={!pedidoMinimoHabilitado}
+                value={pedidoMinimo}
+                onChange={(e) => setPedidoMinimo(Number(e.target.value))}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 

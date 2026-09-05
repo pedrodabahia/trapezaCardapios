@@ -89,6 +89,12 @@ export class PedidoService {
     };
     const bairros = cfg.bairros ?? [];
 
+    // Pedido é de entrega quando a empresa tem bairros cadastrados (nesse
+    // caso o checkout sempre exige endereço) ou quando o cliente informou
+    // um endereço mesmo sem bairros cadastrados. Sem nenhum dos dois, é
+    // retirada — e o pedido mínimo de entrega não se aplica.
+    const ehEntrega = bairros.length > 0 || !!data.endereco?.trim();
+
     // Se a empresa cadastrou bairros com taxa própria, a entrega é sempre
     // calculada pelo bairro escolhido (não pela taxa fixa). Só cai pra taxa
     // fixa se a empresa não tiver nenhum bairro cadastrado (compatibilidade
@@ -102,6 +108,18 @@ export class PedidoService {
       taxaEntregaBase = Number(bairro.fee);
     } else {
       taxaEntregaBase = Number(frete.taxa ?? 0);
+    }
+
+    // Pedido mínimo pra entrega (ex: "só entregamos a partir de R$100").
+    // Compara com o SUBTOTAL (sem taxa de entrega) e nunca bloqueia
+    // retirada — só quem vai receber em casa precisa bater o mínimo.
+    const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
+    if (ehEntrega && pedidoMinimo > 0 && subtotal < pedidoMinimo) {
+      const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const faltam = pedidoMinimo - subtotal;
+      throw new Error(
+        `Pedido mínimo para entrega é de ${brl(pedidoMinimo)}. Faltam ${brl(faltam)} pro seu pedido.`,
+      );
     }
 
     const entregaGratis =

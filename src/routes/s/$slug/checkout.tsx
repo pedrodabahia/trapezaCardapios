@@ -80,6 +80,17 @@ function CheckoutPagina() {
   const desconto = coupon ? (subtotal * coupon.discount) / 100 : 0;
   const total = subtotal + taxaEntrega - desconto;
 
+  // Pedido é de entrega quando a empresa exige endereço (tem bairros
+  // cadastrados) ou quando o cliente preencheu um endereço mesmo sem
+  // bairros configurados. Retirada (sem endereço) nunca é bloqueada pelo
+  // pedido mínimo.
+  const vaiReceberEmCasa = bairros.length > 0 || endereco.trim().length > 0;
+  const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
+  const faltaPraMinimo =
+    vaiReceberEmCasa && pedidoMinimo > 0 && subtotal < pedidoMinimo
+      ? pedidoMinimo - subtotal
+      : 0;
+
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
@@ -113,6 +124,12 @@ function CheckoutPagina() {
   async function finalizar() {
     if (!nome.trim() || !telefone.trim()) {
       toast.error("Preenche seu nome e telefone pra continuar.");
+      return;
+    }
+    if (faltaPraMinimo > 0) {
+      toast.error(
+        `Pedido mínimo para entrega é de ${brl(pedidoMinimo)}. Faltam ${brl(faltaPraMinimo)}.`,
+      );
       return;
     }
     if (bairros.length > 0 && (!rua.trim() || !numero.trim() || !bairroId)) {
@@ -430,16 +447,26 @@ function CheckoutPagina() {
           <span>Total</span>
           <span className="text-brand-red">{brl(total)}</span>
         </div>
+        {faltaPraMinimo > 0 && (
+          <p className="mt-2 rounded-xl bg-brand-yellow/10 p-2 text-xs font-semibold text-brand-brown">
+            Pedido mínimo para entrega: {brl(pedidoMinimo)}. Faltam {brl(faltaPraMinimo)} pra fechar o
+            pedido.
+          </p>
+        )}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card p-4 shadow-2xl">
         <div className="mx-auto max-w-2xl">
           <Button
             onClick={finalizar}
-            disabled={enviando}
+            disabled={enviando || faltaPraMinimo > 0}
             className="h-12 w-full rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90"
           >
-            {enviando ? "Enviando..." : `Confirmar e enviar no WhatsApp · ${brl(total)}`}
+            {enviando
+              ? "Enviando..."
+              : faltaPraMinimo > 0
+                ? `Faltam ${brl(faltaPraMinimo)} pro pedido mínimo`
+                : `Confirmar e enviar no WhatsApp · ${brl(total)}`}
           </Button>
         </div>
       </div>

@@ -51,21 +51,29 @@ const produtosTag = useMemo(
   const bairros = getBairros(config);
   const frete = getFrete(config);
   const temFretePorBairro = bairros.length > 0;
-  const freteCard = temFretePorBairro
-    ? {
-        titulo: "Frete por bairro",
-        subtitulo:
-          frete.gratis_habilitado && frete.gratis_acima_de
-            ? `Grátis em pedidos +${brl(frete.gratis_acima_de)}`
-            : "Valor calculado no checkout",
-      }
-    : {
-        titulo: `Entrega por ${brl(frete.taxa)}`,
-        subtitulo:
-          frete.gratis_habilitado && frete.gratis_acima_de
-            ? `Grátis acima de ${brl(frete.gratis_acima_de)}`
-            : "Taxa fixa pra toda a cidade",
-      };
+  // Se o frete grátis está habilitado e o valor "a partir de" é zero/nulo,
+  // a entrega é sempre grátis (não é um limite, é uma política geral) —
+  // nesse caso mostramos "Entrega grátis" direto, sem falar de limite.
+  const entregaSempreGratis =
+    frete.gratis_habilitado && (frete.gratis_acima_de == null || Number(frete.gratis_acima_de) <= 0);
+  const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
+  const freteCard = entregaSempreGratis
+    ? { titulo: "Entrega grátis", subtitulo: "Sem taxa de entrega" }
+    : temFretePorBairro
+      ? {
+          titulo: "Frete por bairro",
+          subtitulo:
+            frete.gratis_habilitado && frete.gratis_acima_de
+              ? `Grátis em pedidos +${brl(frete.gratis_acima_de)}`
+              : "Valor calculado no checkout",
+        }
+      : {
+          titulo: `Entrega por ${brl(frete.taxa)}`,
+          subtitulo:
+            frete.gratis_habilitado && frete.gratis_acima_de
+              ? `Grátis acima de ${brl(frete.gratis_acima_de)}`
+              : "Taxa fixa pra toda a cidade",
+        };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
@@ -146,6 +154,11 @@ const produtosTag = useMemo(
               <div>
                 <div className="font-display font-bold">{freteCard.titulo}</div>
                 <div className="text-xs text-white/80">{freteCard.subtitulo}</div>
+                {pedidoMinimo > 0 && (
+                  <div className="mt-1 text-xs font-bold text-white">
+                    Pedido mínimo: {brl(pedidoMinimo)}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-3xl bg-card p-5 card-shadow sm:col-span-2 lg:col-span-1">

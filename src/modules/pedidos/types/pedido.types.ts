@@ -109,6 +109,10 @@ export type FreteConfig = {
   taxa: number;
   gratis_acima_de: number | null;
   gratis_habilitado: boolean;
+  // Valor mínimo de subtotal (sem contar taxa de entrega) pra empresa
+  // aceitar entregar. Não afeta pedidos de retirada (sem endereço). Null
+  // ou 0 = sem mínimo.
+  pedido_minimo?: number | null;
 };
 
 export type BairroConfig = {

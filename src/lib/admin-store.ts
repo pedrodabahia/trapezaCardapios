@@ -41,6 +41,9 @@ export type EmpresaConfig = {
     taxa: number;
     gratis_acima_de: number | null;
     gratis_habilitado: boolean;
+    // "Só entregamos a partir de R$X" — compara com o subtotal (sem taxa
+    // de entrega). Não afeta pedidos de retirada. null/0 = sem mínimo.
+    pedido_minimo?: number | null;
   };
   horarios?: Record<
     "domingo" | "segunda" | "terca" | "quarta" | "quinta" | "sexta" | "sabado",
@@ -57,7 +60,12 @@ export type EmpresaConfig = {
 // Helpers de config
 // ============================================================================
 
-const DEFAULT_FRETE = { taxa: 6.9, gratis_acima_de: 80 as number | null, gratis_habilitado: true };
+const DEFAULT_FRETE = {
+  taxa: 6.9,
+  gratis_acima_de: 80 as number | null,
+  gratis_habilitado: true,
+  pedido_minimo: 0 as number | null,
+};
 const DEFAULT_CORES = {
   primary: "#4A6741",
   accent: "#8FA876",
@@ -328,6 +336,7 @@ export function getFrete(
     taxa: f.taxa ?? DEFAULT_FRETE.taxa,
     gratis_acima_de: f.gratis_acima_de ?? DEFAULT_FRETE.gratis_acima_de,
     gratis_habilitado: f.gratis_habilitado ?? DEFAULT_FRETE.gratis_habilitado,
+    pedido_minimo: f.pedido_minimo ?? DEFAULT_FRETE.pedido_minimo,
   };
 }
 

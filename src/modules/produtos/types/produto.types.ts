@@ -1,3 +1,4 @@
+// CAMADA DE TIPOS (produtos) — contratos de dado, sem lógica.
 export type ProdutoTag = "mais-vendido" | "promocao" | "novo";
 
 export type Nutricao = {

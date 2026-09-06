@@ -15,6 +15,7 @@ import {
   type DayHours,
 } from "@/lib/admin-store";
 import { updateEmpresa, saveEmpresaConfig } from "@/lib/admin-server";
+import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
 
 export function ConfigTab({
   completa,
@@ -30,10 +31,12 @@ export function ConfigTab({
   const cores = getCores(cfg);
 
   const [nome, setNome] = useState(empresa.nome);
-  const [whatsapp, setWhatsapp] = useState(empresa.whatsapp);
+  const [whatsapp, setWhatsapp] = useState(empresa.whatsapp ?? "");
   const [endereco, setEndereco] = useState(empresa.endereco ?? "");
   const [pixChave, setPixChave] = useState(empresa.pix_chave ?? "");
   const [logoUrl, setLogoUrl] = useState(empresa.logo_url ?? "");
+  const [categoriaNegocio, setCategoriaNegocio] = useState(empresa.categoria ?? "");
+  const [cidadeNegocio, setCidadeNegocio] = useState(empresa.cidade ?? "");
 
   const [primary, setPrimary] = useState(cores.primary);
   const [accent, setAccent] = useState(cores.accent);
@@ -55,6 +58,8 @@ export function ConfigTab({
           endereco,
           pix_chave: pixChave,
           logo_url: logoUrl,
+          categoria: categoriaNegocio || null,
+          cidade: cidadeNegocio || null,
         },
       },
     });
@@ -126,6 +131,33 @@ export function ConfigTab({
           <div className="md:col-span-2">
             <Label>Cidade de entrega (default no checkout)</Label>
             <Input value={cidade} onChange={(e) => setCidade(e.target.value)} />
+          </div>
+          <div>
+            <Label>Categoria do negócio</Label>
+            <p className="mb-1 text-xs text-muted-foreground">
+              Usada pra sua empresa aparecer nos filtros da página inicial da
+              plataforma.
+            </p>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={categoriaNegocio}
+              onChange={(e) => setCategoriaNegocio(e.target.value)}
+            >
+              <option value="">—</option>
+              {CATEGORIAS_NEGOCIO.map((c) => (
+                <option key={c.valor} value={c.valor}>
+                  {c.emoji} {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label>Cidade (exibida na página inicial da plataforma)</Label>
+            <Input
+              value={cidadeNegocio}
+              onChange={(e) => setCidadeNegocio(e.target.value)}
+              placeholder="Ex: Posto da Mata"
+            />
           </div>
         </CardContent>
       </Card>

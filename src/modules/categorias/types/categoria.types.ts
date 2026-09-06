@@ -1,3 +1,6 @@
+// CAMADA DE TIPOS (categorias) — só define os formatos de dado usados
+// pelas outras camadas (repository/service/controller) deste módulo.
+// Sem lógica aqui, só contratos TypeScript.
 export type Categoria = {
   id: string;
   empresa_id: string;

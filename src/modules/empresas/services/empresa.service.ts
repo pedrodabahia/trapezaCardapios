@@ -1,6 +1,28 @@
 import type { EmpresaRepository, EmpresaPatch } from "../repositories/empresa.repository";
 import type { UsuarioRepository } from "@/modules/usuarios/repositories/usuario.repository";
-import type { Empresa, EmpresaConfigJson, NovaEmpresaInput } from "../types/empresa.types";
+import type {
+  Empresa,
+  EmpresaConfigJson,
+  NovaEmpresaInput,
+  NovaEmpresaExternaInput,
+  EmpresaPlataformaPatch,
+} from "../types/empresa.types";
+
+// Aceita só http/https com host de verdade — pega tanto "não é uma URL"
+// quanto coisas tipo "javascript:..." que passariam num regex ingênuo.
+function validarUrlExterna(url: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(
+      "URL externa inválida. Use um endereço completo, ex: https://www.exemplo.com.br",
+    );
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("URL externa precisa começar com http:// ou https://");
+  }
+}
 
 export class EmpresaService {
   constructor(
@@ -73,5 +95,21 @@ export class EmpresaService {
 
   async remover(empresaId: string) {
     await this.repository.remover(empresaId);
+  }
+
+  // Empresa externa: só entra no diretório (sem login/painel/página
+  // pública). Já nasce ativa — não tem cobrança nem vencimento.
+  async criarExterna(input: NovaEmpresaExternaInput) {
+    validarUrlExterna(input.urlExterna);
+    const empresa = await this.repository.criarExterna(input);
+    return { ok: true as const, empresaId: empresa.id };
+  }
+
+  // Edição do perfil de diretório (nome, categoria, cidade, destaque,
+  // url externa etc) por qualquer tipo de empresa — só super-admin chama
+  // isso (ver authPlatform no controller).
+  async atualizarPlataforma(empresaId: string, patch: EmpresaPlataformaPatch) {
+    if (patch.url_externa) validarUrlExterna(patch.url_externa);
+    await this.repository.atualizarPlataforma(empresaId, patch);
   }
 }

@@ -1,3 +1,9 @@
+// CAMADA DE SERVICE (categorias) — regra de negócio. A maioria dos
+// métodos aqui só repassa pro repository (não tem regra nenhuma pra
+// aplicar), mas manter essa camada existindo já deixa o controller
+// desacoplado do Supabase — se um dia precisar validar algo antes de
+// salvar, o lugar certo pra isso é aqui, sem mexer no controller nem no
+// repository.
 import type { CategoriaRepository } from "../repositories/categoria.repository";
 import type {
   NovaCategoriaInput,

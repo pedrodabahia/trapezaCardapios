@@ -14,6 +14,16 @@ export const createPedido = createServerFn({ method: "POST" })
     return pedidoService.criar(data);
   });
 
+// Público (sem login) — só devolve um número agregado (total de pedidos
+// de todas as empresas), usado no contador de "pedidos realizados" da home.
+// Não expõe nenhum dado de cliente ou de empresa específica.
+export const contarPedidosTotal = createServerFn({ method: "POST" })
+  .validator((d: Record<string, never> | undefined) => d ?? {})
+  .handler(async () => {
+    const pedidoService = container.resolve("pedidoService");
+    return pedidoService.contarTotalPublico();
+  });
+
 export const listPedidosEmpresa = createServerFn({ method: "POST" })
   .validator((d: { token: string; empresaId: string }) => d)
   .handler(async ({ data }) => {

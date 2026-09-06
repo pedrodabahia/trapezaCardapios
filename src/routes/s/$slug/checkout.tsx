@@ -213,7 +213,7 @@ function CheckoutPagina() {
         `Telefone: ${telefone.trim()}`,
       ];
       const msg = encodeURIComponent(linhas.join("\n"));
-      const numeroWhats = empresa.whatsapp.replace(/\D/g, "");
+      const numeroWhats = (empresa.whatsapp ?? "").replace(/\D/g, "");
 
       placeOrder({
         items,

@@ -65,9 +65,14 @@ function PlatformDashboard() {
               {empresas.length} {empresas.length === 1 ? "empresa" : "empresas"} no sistema
             </p>
           </div>
-          <Link to="/plataforma/empresas/nova">
-            <Button>+ Nova empresa</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link to="/plataforma/empresas/nova-externa">
+              <Button variant="outline">+ Empresa externa</Button>
+            </Link>
+            <Link to="/plataforma/empresas/nova">
+              <Button>+ Nova empresa</Button>
+            </Link>
+          </div>
         </div>
 
         {isLoading ? (
@@ -95,7 +100,15 @@ function PlatformDashboard() {
                 <Card className="transition hover:shadow-lg hover:-translate-y-0.5">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="font-display text-lg">{e.nome}</CardTitle>
+                      <div>
+                        <CardTitle className="font-display text-lg">{e.nome}</CardTitle>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <Badge variant={e.tipo === "externa" ? "outline" : "secondary"}>
+                            {e.tipo === "externa" ? "Externa" : "Trapeza"}
+                          </Badge>
+                          {e.destaque && <Badge className="bg-brand-yellow text-brand-brown">Destaque</Badge>}
+                        </div>
+                      </div>
                       <Badge
                         variant={
                           e.status_pagamento === "ativo"
@@ -110,18 +123,26 @@ function PlatformDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
+                    {e.tipo === "externa" ? (
+                      <p>
+                        <span className="text-muted-foreground">Site:</span>{" "}
+                        <span className="break-all">{e.url_externa}</span>
+                      </p>
+                    ) : (
+                      <p>
+                        <span className="text-muted-foreground">Slug:</span>{" "}
+                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                          /s/{e.slug}
+                        </code>
+                      </p>
+                    )}
                     <p>
-                      <span className="text-muted-foreground">Slug:</span>{" "}
-                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                        /s/{e.slug}
-                      </code>
-                    </p>
-                    <p>
-                      <span className="text-muted-foreground">Plano:</span> {e.plano_id}
+                      <span className="text-muted-foreground">Plano:</span>{" "}
+                      {e.tipo === "externa" ? "— (n/a)" : e.plano_id}
                     </p>
                     <p>
                       <span className="text-muted-foreground">WhatsApp:</span>{" "}
-                      {e.whatsapp}
+                      {e.whatsapp ?? "—"}
                     </p>
                   </CardContent>
                 </Card>

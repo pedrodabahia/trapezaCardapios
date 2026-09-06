@@ -1,5 +1,8 @@
+// CAMADA DE REPOSITORY (produtos) — CRUD puro na tabela `produtos`.
+// Mesmo padrão de sempre: `salvar` faz update se vier `id`, insert se não
+// vier; toda query filtra por `empresa_id` como segunda trava de
+// segurança (isolamento de tenant), além do RLS do banco.
 import { adminClient } from "@/core/database/supabase-admin";
-import type { Produto, NovoProdutoInput } from "../types/produto.types";
 
 export interface ProdutoRepository {
   buscarPorId(empresaId: string, produtoId: string): Promise<Produto | null>;

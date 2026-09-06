@@ -28,6 +28,10 @@ export interface PedidoRepository {
   // Conta pedidos (todas as empresas) criados a partir de uma data — usado
   // pelo dashboard do super-admin.
   contarDesde(data: Date): Promise<number>;
+  // Conta TODOS os pedidos de TODAS as empresas, sem filtro de data — usado
+  // só pra estimativa pública de "pedidos realizados" na home. Só expõe um
+  // número agregado, nenhum dado de cliente/empresa.
+  contarTotal(): Promise<number>;
 }
 
 // Único lugar do sistema que acessa a tabela `pedidos` no Supabase.
@@ -77,6 +81,13 @@ export class SupabasePedidoRepository implements PedidoRepository {
       .from("pedidos")
       .select("id", { count: "exact", head: true })
       .gte("criado_em", data.toISOString());
+    return count ?? 0;
+  }
+
+  async contarTotal(): Promise<number> {
+    const { count } = await this.sb()
+      .from("pedidos")
+      .select("id", { count: "exact", head: true });
     return count ?? 0;
   }
 }

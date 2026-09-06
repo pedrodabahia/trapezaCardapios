@@ -7,7 +7,7 @@
 // Tipos
 // ============================================================================
 
-export type { Empresa, EmpresaConfigJson, EmpresaCompleta } from "@/modules/empresas/types/empresa.types";
+export type { Empresa, EmpresaConfigJson, EmpresaCompleta, NovaEmpresaExternaInput, EmpresaPlataformaPatch } from "@/modules/empresas/types/empresa.types";
 export type { Plano } from "@/modules/planos/types/plano.types";
 export type {
   Categoria,
@@ -85,6 +85,8 @@ export {
 export {
   listEmpresasAdmin,
   createEmpresa,
+  createEmpresaExterna,
+  updateEmpresaPlataforma,
   updateEmpresaStatus,
   renovarAssinatura,
   getDashboardStats,
@@ -103,6 +105,7 @@ export { listPlanos, getPlanoDaEmpresa } from "@/modules/planos/controllers/plan
 
 export {
   createPedido,
+  contarPedidosTotal,
   listPedidosEmpresa,
   updatePedidoStatus,
 } from "@/modules/pedidos/controllers/pedido.controller";

@@ -191,4 +191,10 @@ export class PedidoService {
   ): Promise<void> {
     await this.repository.atualizarStatus(pedidoId, empresaId, status);
   }
+
+  // Estimativa pública (home) do total de pedidos já feitos na plataforma,
+  // somando a tabela pedidos de todas as empresas.
+  async contarTotalPublico(): Promise<number> {
+    return this.repository.contarTotal();
+  }
 }

@@ -1,13 +1,41 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { listEmpresasPublicas } from "@/lib/admin-server";
-import type { Empresa } from "@/lib/admin-server";
+import { useMemo, useState } from "react";
+import { listEmpresasPublicas, contarPedidosTotal } from "@/lib/admin-server";
+import { Navbar } from "@/components/home/Navbar";
+import { Hero } from "@/components/home/Hero";
+import { SearchSection } from "@/components/home/SearchSection";
+import { LocationSection, TODAS_CIDADES } from "@/components/home/LocationSection";
+import { CategoriesSection, TODAS_CATEGORIAS } from "@/components/home/CategoriesSection";
+import { FeaturedBusinesses } from "@/components/home/FeaturedBusinesses";
+import { BusinessList } from "@/components/home/BusinessList";
+import { BusinessCTA } from "@/components/home/BusinessCTA";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { AboutTrapeza } from "@/components/home/AboutTrapeza";
+import { Stats } from "@/components/home/Stats";
+import { FinalCTA } from "@/components/home/FinalCTA";
 
 export const Route = createFileRoute("/")({
   component: Landing,
+  head: () => ({
+    meta: [
+      { title: "Trapeza — Encontre empresas, produtos e lojas perto de você" },
+      {
+        name: "description",
+        content:
+          "Encontre empresas, lojas e produtos no Trapeza. Explore catálogos digitais e entre em contato diretamente com os negócios.",
+      },
+      { property: "og:title", content: "Trapeza — Encontre empresas, produtos e lojas perto de você" },
+      {
+        property: "og:description",
+        content:
+          "Encontre empresas, lojas e produtos no Trapeza. Explore catálogos digitais e entre em contato diretamente com os negócios.",
+      },
+    ],
+  }),
 });
+
+const PAGE_SIZE = 9;
 
 function Landing() {
   const { data: empresas = [], isLoading } = useQuery({
@@ -16,123 +44,92 @@ function Landing() {
     staleTime: 30_000,
   });
 
+  const { data: pedidosTotal } = useQuery({
+    queryKey: ["pedidos-total-publico"],
+    queryFn: () => contarPedidosTotal({ data: {} as Record<string, never> }),
+    staleTime: 60_000,
+  });
+
+  const [busca, setBusca] = useState("");
+  const [cidadeFiltro, setCidadeFiltro] = useState<string>(TODAS_CIDADES);
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>(TODAS_CATEGORIAS);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Empresa Trapeza ou externa — as duas entram nos mesmos filtros e
+  // seções; a única diferença é pra onde o card leva ao clicar (ver
+  // BusinessCard).
+  const cidades = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of empresas) if (e.cidade) set.add(e.cidade);
+    return Array.from(set).sort();
+  }, [empresas]);
+
+  const filtradas = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    return empresas.filter((e) => {
+      if (cidadeFiltro !== TODAS_CIDADES && e.cidade !== cidadeFiltro) return false;
+      if (categoriaFiltro !== TODAS_CATEGORIAS && e.categoria !== categoriaFiltro) return false;
+      if (!termo) return true;
+      return (
+        e.nome.toLowerCase().includes(termo) ||
+        (e.cidade ?? "").toLowerCase().includes(termo) ||
+        (e.endereco ?? "").toLowerCase().includes(termo)
+      );
+    });
+  }, [empresas, busca, cidadeFiltro, categoriaFiltro]);
+
+  // Destaque é um campo controlado pelo super-admin no painel (não é
+  // hardcoded por slug) — só cai pro "tem logo" como aproximação enquanto
+  // nenhuma empresa foi marcada como destaque ainda.
+  const destaques = useMemo(() => {
+    const marcadas = empresas.filter((e) => e.destaque);
+    const pool = marcadas.length > 0 ? marcadas : empresas.filter((e) => e.logo_url);
+    return (pool.length > 0 ? pool : empresas).slice(0, 3);
+  }, [empresas]);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <section className="hero-gradient text-white">
-        <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-          <span className="mt-4  font-display text-2xl font-manrope leading-tight  md:text-2xl">
-            TRAPEZA
-          </span>
-          <p className="mt-1 max-w-2xl text-sm font-semibold uppercase tracking-wide text-white/80">
-            Seu negócio à mesa
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-manrope leading-tight md:text-6xl">
-            Cardápios digitais<br />
-            para sua cidade
-            
-          </h1>
-          <p className="mt-4 max-w-2xl text-base text-white/85 md:text-lg">
-            Plataforma multi-tenant: cada empresa com seu link, suas cores,
-            seu cardápio. O cliente final monta o pedido e manda pelo WhatsApp
-            em segundos.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/painel/login">
-              <Button
-                size="lg"
-                className="rounded-full bg-brand-yellow text-brand-brown hover:bg-brand-yellow/90"
-              >
-                Sou dono de empresa →
-              </Button>
-            </Link>
-            <a href="#empresas">
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20"
-              >
-                Ver cardápios
-              </Button>
-            </a>
-          </div>
-        </div>
-      </section>
+      <Navbar />
+      <Hero />
 
-      {/* Lista de empresas */}
-      <section id="empresas" className="mx-auto max-w-6xl px-6 py-16">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h2 className="font-display text-3xl font-bold">
-              Empresas na TRAPEZA
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {empresas.length === 0
-                ? "Nenhuma empresa ativa ainda. Cadastre a primeira pelo painel."
-                : `${empresas.length} ${
-                    empresas.length === 1 ? "empresa ativa" : "empresas ativas"
-                  }`}
-            </p>
-          </div>
-        </div>
+   {/*   <LocationSection
+        cidades={cidades}
+        cidadeAtual={cidadeFiltro !== TODAS_CIDADES ? cidadeFiltro : (cidades[0] ?? null)}
+        cidadeFiltro={cidadeFiltro}
+        onChange={setCidadeFiltro}
+        totalEncontradas={filtradas.length}
+      />
+   */}
+   
+      <CategoriesSection categoriaFiltro={categoriaFiltro} onChange={setCategoriaFiltro} />
 
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        ) : empresas.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                Em breve os primeiros cardápios aqui.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {empresas.map((e) => (
-              <Link
-                key={e.id}
-                to="/s/$slug"
-                params={{ slug: e.slug }}
-                className="group"
-              >
-                <Card className="overflow-hidden transition hover:-translate-y-1 hover:shadow-lg">
-                  {e.logo_url && (
-                    <div className="aspect-[4/3] overflow-hidden bg-muted">
-                      <img
-                        src={e.logo_url}
-                        alt={e.nome}
-                        className="h-full w-full object-cover transition group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-                  <CardContent className="space-y-2 p-4">
-                    <h3 className="font-display text-lg font-semibold">
-                      {e.nome}
-                    </h3>
-                    {e.endereco && (
-                      <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {e.endereco}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 pt-2">
-                      <span className="rounded-full bg-brand-red px-3 py-1 text-xs font-bold text-white">
-                        Ver cardápio →
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
 
-      {/* Footer */}
+
+      <BusinessList
+        empresas={filtradas}
+        totalSemFiltro={empresas.length}
+        visibleCount={visibleCount}
+        onVerMais={() => setVisibleCount((v) => v + PAGE_SIZE)}
+        isLoading={isLoading}
+      />
+
+      <BusinessCTA />
+      <HowItWorks />
+      <AboutTrapeza />
+      {!isLoading && (
+        <Stats
+          empresasCount={empresas.length}
+          cidadesCount={cidades.length}
+          pedidosCount={pedidosTotal ?? null}
+        />
+      )}
+      <FinalCTA />
+
       <footer className="border-t border-border bg-card">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>
-            <strong className="text-foreground">TRAPEZA</strong> · seu negócio à
-            mesa — cardápios digitais multi-tenant
+            <strong className="text-foreground">TRAPEZA</strong> · encontre
+            empresas e produtos perto de você
           </p>
           <div className="flex gap-4">
             <Link to="/painel/login" className="hover:underline">

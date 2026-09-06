@@ -1,3 +1,17 @@
+// CAMADA DE REPOSITORY (categorias) — único lugar que fala direto com o
+// Supabase pra tudo que é categoria de produto, categoria de adicional e
+// opção de personalização. Nada de regra de negócio aqui, só CRUD puro;
+// a camada de cima (service) é quem decide QUANDO chamar cada método.
+//
+// Padrão que se repete em quase todo método "salvarX": se o objeto que
+// chega já tem `id`, faz UPDATE (upsert manual); se não tem, faz INSERT.
+// Isso deixa o mesmo formulário do painel servir tanto pra criar quanto
+// pra editar, sem precisar de duas rotas separadas.
+//
+// Todo método também filtra por `empresa_id` (mesmo quando já filtrou por
+// `id`) — isso é uma camada extra de segurança: mesmo que alguém tente
+// editar/apagar um registro de outra empresa passando um id que não é
+// dela, a query simplesmente não acha nada pra alterar.
 import { adminClient } from "@/core/database/supabase-admin";
 import type {
   Categoria,

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { container } from "@/core/container";
 import { authTenant, authTenantAtivo, authPlatform, requireSession } from "@/core/auth/session";
 import "../container";
-import type { Empresa, EmpresaConfigJson, NovaEmpresaInput } from "../types/empresa.types";
+import type { Empresa, EmpresaConfigJson, NovaEmpresaInput, NovaEmpresaExternaInput, EmpresaPlataformaPatch } from "../types/empresa.types";
 import type { EmpresaPatch } from "../repositories/empresa.repository";
 
 // ============================================================================
@@ -136,5 +136,29 @@ export const deleteEmpresa = createServerFn({ method: "POST" })
     await authPlatform(args.token);
     const empresaService = container.resolve("empresaService");
     await empresaService.remover(args.empresaId);
+    return { ok: true as const };
+  });
+
+// Empresa "externa": cliente com site/sistema próprio que só entra no
+// diretório da home. Não cria usuário/login — não tem painel pra acessar.
+export const createEmpresaExterna = createServerFn({ method: "POST" })
+  .validator((d: { token: string } & NovaEmpresaExternaInput) => d)
+  .handler(async ({ data: args }) => {
+    await authPlatform(args.token);
+    const empresaService = container.resolve("empresaService");
+    const { token: _token, ...input } = args;
+    return empresaService.criarExterna(input);
+  });
+
+// Edita o perfil de diretório de QUALQUER empresa (trapeza ou externa) —
+// nome, categoria, cidade, bairro, logo, capa, descrição, url externa e
+// destaque. Só super-admin: nunca expõe isso pro endpoint de tenant
+// (updateEmpresa), que continua sem esses campos.
+export const updateEmpresaPlataforma = createServerFn({ method: "POST" })
+  .validator((d: { token: string; empresaId: string; patch: EmpresaPlataformaPatch }) => d)
+  .handler(async ({ data: args }) => {
+    await authPlatform(args.token);
+    const empresaService = container.resolve("empresaService");
+    await empresaService.atualizarPlataforma(args.empresaId, args.patch);
     return { ok: true as const };
   });

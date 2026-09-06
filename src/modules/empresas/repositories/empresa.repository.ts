@@ -1,13 +1,33 @@
 import { adminClient } from "@/core/database/supabase-admin";
-import type { Empresa, EmpresaConfigJson, EmpresaDashboardRow } from "../types/empresa.types";
+import type {
+  Empresa,
+  EmpresaConfigJson,
+  EmpresaDashboardRow,
+  NovaEmpresaExternaInput,
+  EmpresaPlataformaPatch,
+} from "../types/empresa.types";
 
 export type EmpresaPatch = Partial<
-  Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url">
+  Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "categoria" | "cidade">
 >;
 
 export type EmpresaPublica = Pick<
   Empresa,
-  "id" | "slug" | "nome" | "whatsapp" | "endereco" | "logo_url" | "status_pagamento"
+  | "id"
+  | "slug"
+  | "nome"
+  | "whatsapp"
+  | "endereco"
+  | "logo_url"
+  | "status_pagamento"
+  | "categoria"
+  | "cidade"
+  | "tipo"
+  | "url_externa"
+  | "descricao"
+  | "bairro"
+  | "capa_url"
+  | "destaque"
 >;
 
 export interface EmpresaRepository {
@@ -42,7 +62,13 @@ export interface EmpresaRepository {
     plano_id: string;
     proximo_vencimento: string;
   }): Promise<{ id: string }>;
+  // Empresa externa: não cria login/painel, só uma linha no diretório
+  // já ativa (não tem cobrança nem vencimento).
+  criarExterna(dados: NovaEmpresaExternaInput): Promise<{ id: string }>;
   remover(empresaId: string): Promise<void>;
+
+  // Edição do perfil de diretório (qualquer tipo), só pelo super-admin.
+  atualizarPlataforma(empresaId: string, patch: EmpresaPlataformaPatch): Promise<void>;
 
   buscarConfig(empresaId: string): Promise<EmpresaConfigJson>;
   salvarConfig(empresaId: string, config: EmpresaConfigJson): Promise<void>;
@@ -86,7 +112,9 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
   async listarPublicasAtivas(): Promise<EmpresaPublica[]> {
     const { data, error } = await this.sb()
       .from("empresas")
-      .select("id, slug, nome, whatsapp, endereco, logo_url, status_pagamento")
+      .select(
+        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categoria, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque",
+      )
       .eq("status_pagamento", "ativo")
       .order("criado_em", { ascending: false });
     if (error) throw new Error(error.message);
@@ -171,6 +199,35 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
   async remover(empresaId: string): Promise<void> {
     // cascade deleta config, categorias, produtos, opcoes via FK on delete cascade
     const { error } = await this.sb().from("empresas").delete().eq("id", empresaId);
+    if (error) throw new Error(error.message);
+  }
+
+  async criarExterna(dados: NovaEmpresaExternaInput): Promise<{ id: string }> {
+    const { data, error } = await this.sb()
+      .from("empresas")
+      .insert({
+        slug: dados.slug,
+        nome: dados.nome,
+        whatsapp: dados.whatsapp || null,
+        categoria: dados.categoria,
+        cidade: dados.cidade,
+        bairro: dados.bairro,
+        logo_url: dados.logoUrl,
+        capa_url: dados.capaUrl,
+        descricao: dados.descricao,
+        url_externa: dados.urlExterna,
+        destaque: dados.destaque,
+        tipo: "externa",
+        status_pagamento: "ativo",
+      })
+      .select("id")
+      .single();
+    if (error || !data) throw new Error(error?.message ?? "Failed to create empresa externa");
+    return { id: data.id as string };
+  }
+
+  async atualizarPlataforma(empresaId: string, patch: EmpresaPlataformaPatch): Promise<void> {
+    const { error } = await this.sb().from("empresas").update(patch).eq("id", empresaId);
     if (error) throw new Error(error.message);
   }
 

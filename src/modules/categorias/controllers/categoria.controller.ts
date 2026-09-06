@@ -1,3 +1,9 @@
+// CAMADA DE CONTROLLER (categorias) — as "server functions" que o
+// front-end realmente chama (via admin-server.ts). Cada uma faz 3
+// coisas, sempre nessa ordem: 1) autentica/autoriza (authTenantAtivo
+// confere se o token pertence a essa empresa E se ela está ativa), 2)
+// chama o service, 3) devolve um formato simples pro front. Nenhuma
+// dessas funções fala com o banco diretamente.
 import { createServerFn } from "@tanstack/react-start";
 import { container } from "@/core/container";
 import { authTenantAtivo } from "@/core/auth/session";

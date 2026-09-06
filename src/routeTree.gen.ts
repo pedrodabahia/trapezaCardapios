@@ -17,6 +17,7 @@ import { Route as PlataformaLoginRouteImport } from './routes/plataforma/login'
 import { Route as SSlugRouteImport } from './routes/s/$slug'
 import { Route as PlataformaEmpresasIdRouteImport } from './routes/plataforma/empresas/$id'
 import { Route as PlataformaEmpresasNovaRouteImport } from './routes/plataforma/empresas/nova'
+import { Route as PlataformaEmpresasNovaExternaRouteImport } from './routes/plataforma/empresas/nova-externa'
 import { Route as SSlugIndexRouteImport } from './routes/s/$slug/index'
 import { Route as SSlugCheckoutRouteImport } from './routes/s/$slug/checkout'
 import { Route as SSlugFavoritesRouteImport } from './routes/s/$slug/favorites'
@@ -67,6 +68,12 @@ const PlataformaEmpresasNovaRoute = PlataformaEmpresasNovaRouteImport.update({
   path: '/plataforma/empresas/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlataformaEmpresasNovaExternaRoute =
+  PlataformaEmpresasNovaExternaRouteImport.update({
+    id: '/plataforma/empresas/nova-externa',
+    path: '/plataforma/empresas/nova-externa',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SSlugIndexRoute = SSlugIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/plataforma/': typeof PlataformaIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
   '/plataforma/empresas/nova': typeof PlataformaEmpresasNovaRoute
+  '/plataforma/empresas/nova-externa': typeof PlataformaEmpresasNovaExternaRoute
   '/s/$slug/checkout': typeof SSlugCheckoutRoute
   '/s/$slug/favorites': typeof SSlugFavoritesRoute
   '/s/$slug/location': typeof SSlugLocationRoute
@@ -140,6 +148,7 @@ export interface FileRoutesByTo {
   '/plataforma': typeof PlataformaIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
   '/plataforma/empresas/nova': typeof PlataformaEmpresasNovaRoute
+  '/plataforma/empresas/nova-externa': typeof PlataformaEmpresasNovaExternaRoute
   '/s/$slug/checkout': typeof SSlugCheckoutRoute
   '/s/$slug/favorites': typeof SSlugFavoritesRoute
   '/s/$slug/location': typeof SSlugLocationRoute
@@ -160,6 +169,7 @@ export interface FileRoutesById {
   '/plataforma/': typeof PlataformaIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
   '/plataforma/empresas/nova': typeof PlataformaEmpresasNovaRoute
+  '/plataforma/empresas/nova-externa': typeof PlataformaEmpresasNovaExternaRoute
   '/s/$slug/checkout': typeof SSlugCheckoutRoute
   '/s/$slug/favorites': typeof SSlugFavoritesRoute
   '/s/$slug/location': typeof SSlugLocationRoute
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/plataforma/'
     | '/plataforma/empresas/$id'
     | '/plataforma/empresas/nova'
+    | '/plataforma/empresas/nova-externa'
     | '/s/$slug/checkout'
     | '/s/$slug/favorites'
     | '/s/$slug/location'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/plataforma'
     | '/plataforma/empresas/$id'
     | '/plataforma/empresas/nova'
+    | '/plataforma/empresas/nova-externa'
     | '/s/$slug/checkout'
     | '/s/$slug/favorites'
     | '/s/$slug/location'
@@ -218,6 +230,7 @@ export interface FileRouteTypes {
     | '/plataforma/'
     | '/plataforma/empresas/$id'
     | '/plataforma/empresas/nova'
+    | '/plataforma/empresas/nova-externa'
     | '/s/$slug/checkout'
     | '/s/$slug/favorites'
     | '/s/$slug/location'
@@ -238,6 +251,7 @@ export interface RootRouteChildren {
   PlataformaIndexRoute: typeof PlataformaIndexRoute
   PlataformaEmpresasIdRoute: typeof PlataformaEmpresasIdRoute
   PlataformaEmpresasNovaRoute: typeof PlataformaEmpresasNovaRoute
+  PlataformaEmpresasNovaExternaRoute: typeof PlataformaEmpresasNovaExternaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -296,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/plataforma/empresas/nova'
       fullPath: '/plataforma/empresas/nova'
       preLoaderRoute: typeof PlataformaEmpresasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plataforma/empresas/nova-externa': {
+      id: '/plataforma/empresas/nova-externa'
+      path: '/plataforma/empresas/nova-externa'
+      fullPath: '/plataforma/empresas/nova-externa'
+      preLoaderRoute: typeof PlataformaEmpresasNovaExternaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$slug/': {
@@ -399,6 +420,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlataformaIndexRoute: PlataformaIndexRoute,
   PlataformaEmpresasIdRoute: PlataformaEmpresasIdRoute,
   PlataformaEmpresasNovaRoute: PlataformaEmpresasNovaRoute,
+  PlataformaEmpresasNovaExternaRoute: PlataformaEmpresasNovaExternaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

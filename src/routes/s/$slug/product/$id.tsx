@@ -328,7 +328,7 @@ function ProdutoDetalhe() {
             onClick={handleAdd}
             className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90"
           >
-            Colocar na sacola
+            Adicionar
           </Button>
           {subtotal >= pedidoMinimo || (qtd * produto.preco) >= pedidoMinimo? (
                       <Button

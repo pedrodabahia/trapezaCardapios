@@ -211,7 +211,7 @@ export function CartDrawer({ slug, config }: Props) {
                     Finalizar pedido
                   </Button>
                   </Link>
-                ) : (  <Button disabled className="w-full mt-4 rounded-full bg-brand-red/50 py-6 font-bold text-base">
+                ) : (  <Button disabled className="w-full mt-4 rounded-full bg-gray-500/65 py-6 font-bold text-base">
                         Compra mínima de {brl(pedidoMinimo)}
                       </Button>)}
               

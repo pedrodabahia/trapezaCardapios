@@ -24,6 +24,16 @@ export const contarPedidosTotal = createServerFn({ method: "POST" })
     return pedidoService.contarTotalPublico();
   });
 
+// Público (sem login) — ranking dos produtos mais vendidos de UMA empresa,
+// pro cardápio dela mostrar "Mais vendidos" com dado real de venda em vez
+// de só a tag manual. Só devolve nome+quantidade, nenhum dado sensível.
+export const getTopVendidos = createServerFn({ method: "POST" })
+  .validator((d: { empresaId: string }) => d)
+  .handler(async ({ data }) => {
+    const pedidoService = container.resolve("pedidoService");
+    return pedidoService.topVendidosPublico(data.empresaId);
+  });
+
 export const listPedidosEmpresa = createServerFn({ method: "POST" })
   .validator((d: { token: string; empresaId: string }) => d)
   .handler(async ({ data }) => {

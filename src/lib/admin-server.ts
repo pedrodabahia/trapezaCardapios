@@ -106,6 +106,7 @@ export { listPlanos, getPlanoDaEmpresa } from "@/modules/planos/controllers/plan
 export {
   createPedido,
   contarPedidosTotal,
+  getTopVendidos,
   listPedidosEmpresa,
   updatePedidoStatus,
 } from "@/modules/pedidos/controllers/pedido.controller";

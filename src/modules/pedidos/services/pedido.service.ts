@@ -76,6 +76,7 @@ export class PedidoService {
         qtd,
         preco_unit: precoUnit,
         obs: it.obs,
+        produto_id: produto.id,
         ingredientes_removidos: it.customization?.ingredientesRemovidos?.length
           ? it.customization.ingredientesRemovidos
           : undefined,
@@ -196,5 +197,16 @@ export class PedidoService {
   // somando a tabela pedidos de todas as empresas.
   async contarTotalPublico(): Promise<number> {
     return this.repository.contarTotal();
+  }
+
+  // "Mais vendidos" de verdade (não é a tag manual do produto) — chamado
+  // pelo cardápio público da empresa. Só devolve produtoId+nome+quantidade
+  // agregada, sem nenhum dado de pedido/cliente; quem chama cruza com a
+  // lista atual de produtos (por id, com fallback pro nome) pra pegar
+  // id/imagem/preço.
+  async topVendidosPublico(
+    empresaId: string,
+  ): Promise<{ produtoId: string | null; nome: string; totalQtd: number }[]> {
+    return this.repository.topVendidosPorEmpresa(empresaId, 6);
   }
 }

@@ -15,6 +15,12 @@ export type PedidoItem = {
   // nomes dos ingredientes que o cliente pediu pra tirar (só os marcados
   // como removível no produto aparecem aqui).
   ingredientes_removidos?: string[];
+  // id do produto no momento da compra. Opcional só por compatibilidade
+  // com pedidos antigos (salvos antes desse campo existir); todo pedido
+  // novo sempre grava isso. É o que permite o ranking de mais vendidos
+  // continuar certo mesmo se o produto for renomeado depois — sem isso, a
+  // única forma de agrupar era pelo nome, que quebra em rename.
+  produto_id?: string;
 };
 
 export type Pedido = {

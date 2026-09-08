@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Search, Clock, Truck, Star } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { brl } from "@/lib/format";
@@ -10,6 +11,7 @@ import {
   getFrete,
   getBairros,
 } from "@/lib/admin-store";
+import { getTopVendidos } from "@/lib/admin-server";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/s/$slug/")({
@@ -28,10 +30,36 @@ function TenantHome() {
     return tagged ?? produtos[0];
   }, [produtos]);
 
-  const maisVendidos = useMemo(
-    () => produtos.filter((p) => p.tag === "mais-vendido"),
-    [produtos],
-  );
+  // "Mais vendidos" 100% a partir de dado real de venda (soma dos itens
+  // dos pedidos), sem depender de nenhuma tag marcada manualmente — de
+  // propósito, pra não parecer manipulado. Mostra o que tiver de verdade
+  // (de 1 a 6 produtos); se ninguém comprou nada ainda, a seção some
+  // sozinha em vez de inventar destaque.
+  const empresaIdParaTop = empresaCompleta?.empresa.id;
+  const { data: topVendidosBruto = [] } = useQuery({
+    queryKey: ["top-vendidos", empresaIdParaTop],
+    queryFn: () => getTopVendidos({ data: { empresaId: empresaIdParaTop! } }),
+    enabled: !!empresaIdParaTop,
+    staleTime: 60_000,
+  });
+
+  const maisVendidosResolved = useMemo(() => {
+    // Casa primeiro pelo produto_id (pedidos novos) — imune a rename do
+    // produto. Só cai pro nome (trim + minúsculas) em pedidos antigos que
+    // ainda não tinham esse campo. Já vem ordenado por quantidade vendida
+    // (do repository, que já exclui pedidos cancelados), só filtra o que
+    // ainda existe/está ativo no catálogo.
+    const porId = new Map(produtos.map((p) => [p.id, p]));
+    const porNome = new Map(produtos.map((p) => [p.nome.trim().toLowerCase(), p]));
+    return topVendidosBruto
+      .map(
+        (v) =>
+          (v.produtoId ? porId.get(v.produtoId) : undefined) ??
+          porNome.get(v.nome.trim().toLowerCase()),
+      )
+      .filter((p): p is (typeof produtos)[number] => !!p && p.ativo !== false)
+      .slice(0, 6);
+  }, [topVendidosBruto, produtos]);
 
 const produtosTag = useMemo(
   () => produtos.filter((p) => p.tag != null ), [produtos],
@@ -231,13 +259,13 @@ const produtosTag = useMemo(
       )}
 
       {/* Mais vendidos */}
-      {maisVendidos.length > 0 && (
+      {maisVendidosResolved.length > 0 && (
         <section className="mt-10">
           <div className="mb-4 flex items-end justify-between">
             <h2 className="font-display text-2xl font-bold">Mais vendidos</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            {maisVendidos.map((p) => (
+            {maisVendidosResolved.map((p) => (
               <ProductCard key={p.id} produto={p} layout="row" slug={slug} />
             ))}
           </div>

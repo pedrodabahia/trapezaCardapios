@@ -9,11 +9,13 @@ const tagStyles: Record<string, string> = {
   "mais-vendido": "bg-brand-yellow text-brand-brown",
   "promocao": "bg-brand-red text-white",
   "novo": "bg-brand-brown text-white",
+  "destaque" : "bg-green-400 text-white"
 };
 const tagLabels: Record<string, string> = {
   "mais-vendido": "Mais vendido",
   "promocao": "Promoção",
   "novo": "Novo",
+  "destaque" : "Destaque"
 };
 
 type Props = {

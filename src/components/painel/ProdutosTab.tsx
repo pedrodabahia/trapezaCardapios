@@ -410,6 +410,7 @@ function ProdutoEditForm({
             <option value="mais-vendido">Mais vendido</option>
             <option value="promocao">Promoção</option>
             <option value="novo">Novo</option>
+            <option value="destaque">Destaque</option>
           </select>
         </div>
         <div className="flex items-center gap-2">

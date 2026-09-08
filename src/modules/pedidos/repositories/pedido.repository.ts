@@ -32,6 +32,16 @@ export interface PedidoRepository {
   // só pra estimativa pública de "pedidos realizados" na home. Só expõe um
   // número agregado, nenhum dado de cliente/empresa.
   contarTotal(): Promise<number>;
+  // Ranking de produtos mais vendidos de UMA empresa, somando a
+  // quantidade pedida em todos os pedidos não cancelados. Agrupa por
+  // produto_id quando o item tem esse dado (pedidos novos); pedidos
+  // antigos, sem produto_id, agrupam pelo nome normalizado (trim +
+  // minúsculas) — quem chama isso ainda deve preferir casar pelo
+  // produtoId quando ele vier preenchido, só caindo pro nome como reserva.
+  topVendidosPorEmpresa(
+    empresaId: string,
+    limite: number,
+  ): Promise<{ produtoId: string | null; nome: string; totalQtd: number }[]>;
 }
 
 // Único lugar do sistema que acessa a tabela `pedidos` no Supabase.
@@ -89,5 +99,52 @@ export class SupabasePedidoRepository implements PedidoRepository {
       .from("pedidos")
       .select("id", { count: "exact", head: true });
     return count ?? 0;
+  }
+
+  async topVendidosPorEmpresa(
+    empresaId: string,
+    limite: number,
+  ): Promise<{ produtoId: string | null; nome: string; totalQtd: number }[]> {
+    // Só traz a coluna itens (jsonb) — a soma por produto é feita aqui em
+    // JS porque itens é um array dentro de jsonb (não dá pra usar SUM/GROUP
+    // BY do SQL direto sem uma view/função extra), e pro volume de pedidos
+    // de um comércio local isso é barato o suficiente.
+    const { data, error } = await this.sb()
+      .from("pedidos")
+      .select("itens")
+      .eq("empresa_id", empresaId)
+      .neq("status", "cancelado");
+    if (error) throw new Error(error.message);
+
+    type Agregado = { produtoId: string | null; nome: string; totalQtd: number };
+    const porChave = new Map<string, Agregado>();
+    for (const row of data ?? []) {
+      const itens = (row.itens ?? []) as Array<{
+        nome: string;
+        qtd: number;
+        produto_id?: string;
+      }>;
+      for (const item of itens) {
+        // Chave prioriza produto_id (pedidos novos); sem ele, cai pro nome
+        // normalizado — assim "Fardo Heineken" e "fardo heineken " (com
+        // espaço/maiúscula diferente) somam junto em vez de virar duas
+        // entradas separadas.
+        const chave = item.produto_id ?? `nome:${item.nome.trim().toLowerCase()}`;
+        const atual = porChave.get(chave);
+        if (atual) {
+          atual.totalQtd += item.qtd ?? 0;
+        } else {
+          porChave.set(chave, {
+            produtoId: item.produto_id ?? null,
+            nome: item.nome,
+            totalQtd: item.qtd ?? 0,
+          });
+        }
+      }
+    }
+
+    return Array.from(porChave.values())
+      .sort((a, b) => b.totalQtd - a.totalQtd)
+      .slice(0, limite);
   }
 }

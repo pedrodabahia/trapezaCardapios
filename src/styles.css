@@ -8,6 +8,14 @@
   font-family: "manrope";
   src: url('../src/Manrope/Manrope-VariableFont_wght.ttf');
 }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

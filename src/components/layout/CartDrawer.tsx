@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { getCartStore, itemUnitPrice, cartSubtotal } from "@/lib/store";
 import { brl } from "@/lib/format";
 import { toast } from "sonner";
-import { getCupons, getFrete, getBairros } from "@/lib/admin-store";
+import { getCupons, getFrete, getBairros, useCategoriasAtivas, useProdutosPorEmpresa, useEmpresaPublica } from "@/lib/admin-store";
 import type { EmpresaCompleta } from "@/lib/admin-server";
+import { ProductCard } from "../ProductCard";
 
 type Props = {
   slug: string;
@@ -21,6 +22,10 @@ export function CartDrawer({ slug, config }: Props) {
   const cupons = getCupons(config);
   const frete = getFrete(config);
   const bairros = getBairros(config);
+
+  const { data: empresaCompleta } = useEmpresaPublica(slug);
+  const categorias = useCategoriasAtivas(empresaCompleta);
+  const produtos = useProdutosPorEmpresa(empresaCompleta);
 
   const subtotal = cartSubtotal(items);
   // Valor mínimo pra fechar pedido, configurado no painel (aba Entrega).
@@ -168,7 +173,47 @@ export function CartDrawer({ slug, config }: Props) {
                   </p>
                 )}
               </div>
+
+      <section>
+    <div className="flex items-center justify-center mt-12 w-full ">
+        <div className="bg-brand-red w-[20px] h-[1px] mx-2" />
+        <h2 className="font-display  text-2xl text-center font-bold">Mais opções para sua sacola</h2>
+        <div className="bg-brand-red w-[20px] h-[1px] mx-2" />
+      </div>
+      {categorias.length > 0 && (
+        categorias.map((c) => {
+          const produtosDaCategoria = produtos.filter((p) => p.categoria_id === c.id);
+          if(produtosDaCategoria.length === 0) return null;
+
+          return(
+<div key={c.id} className="mt-10 ">
+  <div className="mb-4 flex items-end justify-between">
+    <h2 className="font-display text-xl font-bold">{c.nome}</h2>
+  </div>
+
+  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+    {produtosDaCategoria.map((p) => (
+      <div key={p.id} className="w-[180px] shrink-0 sm:w-[200px]">
+        <ProductCard produto={p} slug={slug} />
+      </div>
+    ))}
+  </div>
+</div>
+          )
+        })
+      )}
+      </section>
+
+
+
+
+
             </div>
+
+
+
+
+
 
             <div className="border-t bg-white p-5">
               <div className="space-y-1 text-sm">

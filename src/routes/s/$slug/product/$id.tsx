@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Section } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { brl } from "@/lib/format";
 import { getCartStore, cartSubtotal } from "@/lib/store";
+import { ProductCard } from "@/components/ProductCard";
 import type { CartCustomization, CartCustomizationSelecao, CartItem } from "@/lib/store";
 import {
   useEmpresaPublica,
@@ -15,6 +16,8 @@ import {
   useCategoriasOpcao,
   useIngredientesDoProduto,
   getFrete,
+  useCategoriasAtivas,
+  useProdutosPorEmpresa,
 } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +33,9 @@ function ProdutoDetalhe() {
   const opcoes = useOpcoes(empresaCompleta);
   const categoriasOpcao = useCategoriasOpcao(empresaCompleta);
   const ingredientesProdutoRaw = useIngredientesDoProduto(empresaCompleta, produto?.id);
+
+  const categorias = useCategoriasAtivas(empresaCompleta);
+  const produtos = useProdutosPorEmpresa(empresaCompleta);
 
   const categoria = empresaCompleta?.categorias.find(
     (c) => c.id === produto?.categoria_id,
@@ -305,6 +311,40 @@ function ProdutoDetalhe() {
           className="mt-1"
         />
       </section>
+
+      {/* OUTROS PRODUTOS*/}
+      <section>
+      <div className="flex items-center justify-center mt-12 w-full ">
+        <div className="bg-brand-red w-[20px] h-[1px] mx-2" />
+        <h2 className="font-display  text-2xl font-bold">Aproveite e confira</h2>
+        <div className="bg-brand-red w-[20px] h-[1px] mx-2" />
+
+      </div>
+      {categorias.length > 0 && (
+        categorias.map((c) => {
+          const produtosDaCategoria = produtos.filter((p) => p.categoria_id === c.id);
+          if(produtosDaCategoria.length === 0) return null;
+
+          return(
+<div key={c.id} className="mt-10 ">
+  <div className="mb-4 flex items-end justify-between">
+    <h2 className="font-display text-xl font-bold">{c.nome}</h2>
+  </div>
+
+  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+    {produtosDaCategoria.map((p) => (
+      <div key={p.id} className="w-[180px] shrink-0 sm:w-[200px]">
+        <ProductCard produto={p} slug={slug} />
+      </div>
+    ))}
+  </div>
+</div>
+          )
+        })
+      )}
+      </section>
+
+
 
       {/* Barra fixa inferior */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card p-4 shadow-2xl">

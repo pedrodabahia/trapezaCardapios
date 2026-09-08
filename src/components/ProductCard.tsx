@@ -23,7 +23,7 @@ type Props = {
 };
 
 export function ProductCard({ produto, slug, layout = "grid" }: Props) {
-  const { favorites, toggleFav } = getCartStore(slug)();
+  const { favorites, toggleFav,closeDrawer } = getCartStore(slug)();
   const fav = favorites.includes(produto.id);
 
   if (layout === "row") {
@@ -31,9 +31,9 @@ export function ProductCard({ produto, slug, layout = "grid" }: Props) {
       <Link
         to="/s/$slug/product/$id"
         params={{ slug, id: produto.id }}
-        className="group flex min-w-0 gap-3 rounded-2xl bg-card p-3 card-shadow transition hover:-translate-y-0.5"
+        className="group flex min-w-0 gap-3 rounded-md bg-card p-3 card-shadow transition hover:-translate-y-0.5"
       >
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted">
           {produto.imagem_url && (
             <img
               src={produto.imagem_url}
@@ -98,8 +98,9 @@ export function ProductCard({ produto, slug, layout = "grid" }: Props) {
   return (
     <Link
       to="/s/$slug/product/$id"
+      onClick={closeDrawer}
       params={{ slug, id: produto.id }}
-      className="group relative flex flex-col overflow-hidden rounded-3xl bg-card card-shadow transition hover:-translate-y-1 hover:shadow-lg"
+      className="group relative flex flex-col overflow-hidden rounded-sm bg-card card-shadow transition hover:-translate-y-1 hover:shadow-lg"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {produto.imagem_url && (
@@ -135,7 +136,7 @@ export function ProductCard({ produto, slug, layout = "grid" }: Props) {
         </button>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="font-display text-lg font-semibold leading-tight">
+        <h3 className="font-display text-lg font-semibold leading-tight truncate">
           {produto.nome}
         </h3>
         <p className="line-clamp-2 text-sm text-muted-foreground">

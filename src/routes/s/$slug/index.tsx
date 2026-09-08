@@ -222,7 +222,7 @@ const produtosTag = useMemo(
               Ver tudo →
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {feats.map((p) => (
               <ProductCard key={p.id} produto={p} slug={slug} />
             ))}
@@ -255,7 +255,7 @@ const produtosTag = useMemo(
           <div className="mb-4 flex items-end justify-between">
             <h2 className="font-display text-2xl font-bold">{c.nome}</h2>
           </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {produtosDaCategoria.map((p) => (
             <ProductCard key={p.id} produto={p} slug={slug} />
           ))}

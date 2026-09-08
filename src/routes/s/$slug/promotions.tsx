@@ -22,7 +22,7 @@ function PromocoesPagina() {
           Nenhuma promoção ativa no momento.
         </p>
       ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {promos.map((p) => (
             <ProductCard key={p.id} produto={p} slug={slug} />
           ))}

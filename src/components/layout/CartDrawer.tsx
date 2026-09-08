@@ -23,6 +23,9 @@ export function CartDrawer({ slug, config }: Props) {
   const bairros = getBairros(config);
 
   const subtotal = cartSubtotal(items);
+  // Valor mínimo pra fechar pedido, configurado no painel (aba Entrega).
+  // Sem mínimo configurado (null/0), o botão nunca fica bloqueado por isso.
+  const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
   const entregaGratis =
     frete.gratis_habilitado &&
     frete.gratis_acima_de != null &&
@@ -197,7 +200,7 @@ export function CartDrawer({ slug, config }: Props) {
                 </div>
               </div>
  
-                {total > 30 ? (
+                {total >= pedidoMinimo ? (
                                <Link
                 to="/s/$slug/checkout"
                 params={{ slug }}
@@ -208,8 +211,8 @@ export function CartDrawer({ slug, config }: Props) {
                     Finalizar pedido
                   </Button>
                   </Link>
-                ) : (  <Button className="w-full mt-4 rounded-full bg-brand-red/50 py-6 font-bold text-base hover:bg-brand-red/90">
-                        Compra minima de R${frete.pedido_minimo}
+                ) : (  <Button disabled className="w-full mt-4 rounded-full bg-brand-red/50 py-6 font-bold text-base">
+                        Compra mínima de {brl(pedidoMinimo)}
                       </Button>)}
               
             </div>

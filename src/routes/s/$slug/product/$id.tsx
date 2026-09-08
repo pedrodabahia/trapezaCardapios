@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { brl } from "@/lib/format";
-import { getCartStore } from "@/lib/store";
+import { getCartStore, cartSubtotal } from "@/lib/store";
 import type { CartCustomization, CartCustomizationSelecao, CartItem } from "@/lib/store";
 import {
   useEmpresaPublica,
@@ -14,6 +14,7 @@ import {
   useOpcoes,
   useCategoriasOpcao,
   useIngredientesDoProduto,
+  getFrete,
 } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
 
@@ -135,6 +136,47 @@ function ProdutoDetalhe() {
       duration:1000,
     });
     navigate({ to: "/s/$slug", params: { slug } });
+  }
+
+      const {items,closeDrawer} = getCartStore(slug)();
+      const subtotal = cartSubtotal(items);
+      // Valor mínimo pra fechar pedido, configurado no painel (aba Entrega).
+      const frete = getFrete(empresaCompleta.config);
+      const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
+
+  function handleFinalizar(){
+        const selecoesCarrinho: CartCustomizationSelecao[] = categoriasDoProduto
+      .map((co) => ({
+        categoriaOpcaoId: co.id,
+        categoriaNome: co.nome,
+        valores: selecoes[co.id] ?? [],
+      }))
+      .filter((s) => s.valores.length > 0);
+
+    const customization: CartCustomization = {
+      selecoes: selecoesCarrinho,
+      remover,
+      adicionais: adicionaisSelecionados(),
+      observacoes: obs.trim() || undefined,
+    };
+    const item: CartItem = {
+      id: `${produto!.id}-${Date.now()}`,
+      productId: produto!.id,
+      name: produto!.nome,
+      image: produto!.imagem_url ?? "",
+      basePrice: produto!.preco,
+      quantity: qtd,
+      customization,
+    };
+    getCartStore(slug).getState().addItem(item);
+    toast.success("Adicionado ao carrinho!",{
+      duration:1000,
+    });
+    navigate({to: "/s/$slug/checkout", params: {slug}})
+    closeDrawer();
+    
+    console.log(subtotal);
+    
   }
 
   const precoUnitario =
@@ -286,10 +328,33 @@ function ProdutoDetalhe() {
             onClick={handleAdd}
             className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90"
           >
-            Adicionar · {brl(precoUnitario * qtd)}
+            Colocar na sacola
           </Button>
+          {subtotal >= pedidoMinimo || (qtd * produto.preco) >= pedidoMinimo? (
+                      <Button
+          onClick={handleFinalizar}
+          className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90"
+          >
+            Comprar
+          </Button>
+          ): (          <Button
+          className="h-12 flex-1 rounded-full bg-gray-500/30 text-base font-bold hover:bg-brand-red/90"
+          >
+            Comprar
+          </Button>)}
+
         </div>
       </div>
     </div>
   );
 }
+
+{/*
+  <Link
+                to="/s/$slug/checkout"
+                params={{ slug }}
+                onClick={closeDrawer}
+                className="mt-4 block"
+              ></Link>
+  */}
+ 

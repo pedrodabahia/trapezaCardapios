@@ -178,9 +178,7 @@ function PoupopOpen({cfg}:{cfg: EmpresaCompleta["config"]}){
       <span onClick={() => setShowPopup(false)}>
         <X className="absolute -top-5 -right-5 bg-[rgb(63,39,36)] p-1 text-white rounded-2xl w-12 h-12"/>
       </span>
-      {openPoup ? (
-        <h1>Loja aberta</h1>
-      ) : (
+      {openPoup ? "" : (
         <>
           <img
             className="w-[40%] "

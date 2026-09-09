@@ -1,10 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, ShoppingBag, Search, MapPin, Heart } from "lucide-react";
+import { Home, ShoppingBag, Search, MapPin, Heart, X } from "lucide-react";
 import { cartCount, getCartStore } from "@/lib/store";
 import { getCores, getHorarios, getCidadeEntrega, isStoreOpenNow, useStoreOpenStatus } from "@/lib/admin-store";
 import { CartDrawer } from "./CartDrawer";
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { EmpresaCompleta } from "@/lib/admin-server";
 
 type Props = {
@@ -38,6 +38,7 @@ export function AppShell({ children, empresaCompleta, slug }: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <PoupopOpen cfg={config} />
       <style dangerouslySetInnerHTML={{ __html: cssVars }} />
 
       <CartDrawer slug={slug} config={config} />
@@ -161,6 +162,45 @@ function OpenBadge({ cfg }: { cfg: EmpresaCompleta["config"] }) {
       </span>
     </span>
   );
+}
+
+
+function PoupopOpen({cfg}:{cfg: EmpresaCompleta["config"]}){
+  const openPoup = useStoreOpenStatus(cfg);
+  const [showPopup, setShowPopup] = useState(true);
+
+  if (!showPopup) return null;
+
+  return (
+    <span
+      className="w-[85vw] h-[40vh] grid place-items-center text-center items-start pt-5 fixed left-[7.5vw] top-[60vw] z-100 bg-white shadow-[0_4px_20px_rgba(0,0,0,1)] rounded-sm"
+    >
+      <span onClick={() => setShowPopup(false)}>
+        <X className="absolute -top-5 -right-5 bg-[rgb(63,39,36)] p-1 text-white rounded-2xl w-12 h-12"/>
+      </span>
+      {openPoup ? (
+        <h1>Loja aberta</h1>
+      ) : (
+        <>
+          <img
+            className="w-[40%] "
+            src="/sr.trapezaSleep.svg"
+          />
+
+          <h2 className="text-[12px] w-[80%] -mt-5">
+            Estamos fechados no momento, mas fique à vontade para conferir
+            nossas ofertas!
+          </h2>
+          <button
+          className="w-[70%] h-[80%] text-white rounded-[5px] -mt-5 text-[12px] bg-[rgb(63,39,36)]"
+          type="button"
+          onClick={() => setShowPopup(false)}
+          > CONFERIR OFERTAS </button>
+        </>
+      )}
+    </span>
+  );
+
 }
 
 function CartButton({ slug }: { slug: string }) {

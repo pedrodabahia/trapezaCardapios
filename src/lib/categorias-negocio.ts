@@ -10,13 +10,13 @@ export type CategoriaNegocio = {
 };
 
 export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
-  { valor: "distribuidora", label: "Distribuidoras",imagem_url:  "/armazem.png"},
-  { valor: "lanchonete", label: "Lanchonetes",imagem_url: "/tenda.png"},
-  { valor: "pizzaria", label: "Pizzarias",imagem_url: "/pizza.png"},
-  { valor: "confeitaria", label: "Confeitarias",imagem_url: "/bolo.png"},
-  {valor: "restaurante", label: "Restaurante",imagem_url: "/comida.png"},
-  {valor: "barbearia", label: "Barbearias",imagem_url: "/barba.png"},
-  {valor: "estetica", label: "Estetica",imagem_url: "/makeover.png"},
+  { valor: "distribuidora", label: "Abasteça",imagem_url:  "/armazem.png"},
+  { valor: "lanchonete", label: "Peça um lanche",imagem_url: "/tenda.png"},
+  { valor: "pizzaria", label: "Pizza",imagem_url: "/pizza.png"},
+  { valor: "confeitaria", label: "Docinhos",imagem_url: "/bolo.png"},
+  {valor: "restaurante", label: "Almoço",imagem_url: "/comida.png"},
+  {valor: "barbearia", label: "Corte",imagem_url: "/barba.png"},
+  {valor: "estetica", label: "Cuidados",imagem_url: "/makeover.png"},
 
 
 

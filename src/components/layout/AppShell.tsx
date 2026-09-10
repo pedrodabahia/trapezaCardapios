@@ -173,7 +173,7 @@ function PoupopOpen({cfg}:{cfg: EmpresaCompleta["config"]}){
 
   return (
   <>  
-{showPopup && (
+{!showPopup && (
   <>
     {/* Fundo escurecido */}
     <div

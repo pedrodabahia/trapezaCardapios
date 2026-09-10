@@ -12,7 +12,7 @@ export function PopularProducts({ produtos }: { produtos: TopProdutoPlataforma[]
 
   return (
     <section className="mx-auto max-w-6xl px-4 pt-6">
-      <h2 className="mb-2 font-display text-base font-bold">🔥 Mais procurados</h2>
+      <h2 className="mb-2 font-display text-base font-bold">Mais procurados</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {produtos.slice(0, 8).map((p) => (
           <Link

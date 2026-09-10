@@ -21,56 +21,56 @@ export function PremiumBusinessCard({
 }) {
   const categoriaLabel = labelCategoriaNegocio(empresa.categoria);
 
-  return (
-    <Link to="/s/$slug" params={{ slug: empresa.slug }} className="group block h-full">
-      <Card className="h-full overflow-hidden transition hover:-translate-y-1 hover:shadow-lg">
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-          {empresa.logo_url ? (
-            <img
-              src={empresa.logo_url}
-              alt={empresa.nome}
-              className="h-full w-full object-cover transition group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-5xl">
-              
-            </div>
-          )}
+return (
+  <Link
+    to="/s/$slug"
+    params={{ slug: empresa.slug }}
+    className="group block w-[180px] shrink-0"
+  >
+    <Card className="animate-gold-glow overflow-hidden rounded-md border-2 border-[#D4AF37]">
+      
+      <div className="relative h-28 overflow-hidden bg-muted">
+        {empresa.logo_url ? (
+          <img
+            src={empresa.logo_url}
+            alt={empresa.nome}
+            className="h-full w-full object-cover transition group-hover:scale-105"
+          />
+        ) : (
+          <div className="h-full w-full bg-orange-50" />
+        )}
 
+        {aberto !== undefined && (
           <span
-            className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow"
-            style={{ backgroundColor: "var(--tp-orange, #c65d3a)" }}
+            className={
+              "absolute right-2 top-2 rounded px-1.5 py-0.5 text-[9px] font-bold " +
+              (aberto
+                ? "bg-emerald-500 text-white"
+                : "bg-red-700 text-white")
+            }
           >
-            ⚡ Peça rápido
+            {aberto ? "Aberto" : "Fechado"}
           </span>
+        )}
+      </div>
 
-          {aberto !== undefined && (
-            <span
-              className={
-                "absolute right-2 top-2 rounded-full px-2.5 py-1 text-[11px] font-bold shadow " +
-                (aberto ? "bg-emerald-500 text-white" : "bg-neutral-700 text-white")
-              }
-            >
-              {aberto ? "Aberto agora" : "Fechado"}
-            </span>
-          )}
-        </div>
+      <CardContent className="p-2.5">
+        <h3 className="truncate text-sm font-bold">
+          {empresa.nome}
+        </h3>
 
-        <CardContent className="space-y-1 p-3.5">
-          <h3 className="truncate font-display text-base font-bold leading-tight">
-            {empresa.nome}
-          </h3>
-          <p className="truncate text-xs text-muted-foreground">
-            {[categoriaLabel, empresa.cidade].filter(Boolean).join(" • ")}
-          </p>
-          <span
-            className="mt-1 inline-block text-xs font-bold"
-            style={{ color: "var(--tp-orange, #c65d3a)" }}
-          >
-            Ver cardápio →
-          </span>
-        </CardContent>
-      </Card>
-    </Link>
-  );
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+          {[categoriaLabel, empresa.cidade].filter(Boolean).join(" • ")}
+        </p>
+
+        <span
+          className="mt-1.5 block text-[10px] font-bold"
+          style={{ color: "var(--tp-orange, #c65d3a)" }}
+        >
+          Ver cardápio →
+        </span>
+      </CardContent>
+    </Card>
+  </Link>
+);
 }

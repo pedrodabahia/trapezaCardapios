@@ -31,18 +31,19 @@ export function CategoryScroller({
           >
             <span
               className={cn(
-                "flex h-14 w-14 items-center justify-center rounded-full text-2xl transition",
+                "flex h-14 w-14 items-center border border-2 border-[#763200] justify-center rounded-full text-2xl transition",
                 categoriaFiltro === c.valor
                   ? "text-white"
-                  : "bg-muted text-foreground",
+                  : "bg-white text-foreground",
               )}
+              
               style={
                 categoriaFiltro === c.valor ? { backgroundColor: "var(--tp-orange)" } : undefined
               }
             >
-              {c.emoji}
+            <img className="w-[50%]" src={c.imagem_url} />  
             </span>
-            <span className="text-[11px] font-medium text-muted-foreground">{c.label}</span>
+            <span className="text-[11px] font-bold text-[#763200]">{c.label}</span>
           </button>
         ))}
       </div>

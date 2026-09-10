@@ -12,6 +12,24 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+@keyframes gold-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 3px rgba(212, 175, 55, 0.4),
+      0 0 8px rgba(212, 175, 55, 0.3);
+  }
+
+  50% {
+    box-shadow:
+      0 0 8px rgba(212, 175, 55, 0.9),
+      0 0 20px rgba(212, 175, 55, 0.7),
+      0 0 30px rgba(212, 175, 55, 0.3);
+  }
+}
+
+.animate-gold-glow {
+  animation: gold-glow 2s ease-in-out infinite;
+}
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

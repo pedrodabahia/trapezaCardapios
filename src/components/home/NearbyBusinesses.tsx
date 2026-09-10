@@ -21,7 +21,7 @@ export function NearbyBusinesses({
   return (
     <section className="mx-auto max-w-6xl px-4 pt-5">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-display text-base font-bold">📍 Perto de você</h2>
+        <h2 className="font-display text-base font-bold">Peça em poucos cliques</h2>
         <button
           onClick={onVerMais}
           className="text-xs font-semibold"

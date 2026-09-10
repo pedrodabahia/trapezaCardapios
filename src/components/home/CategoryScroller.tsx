@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export const TODAS_CATEGORIAS = "__todas__";
 
-const VISIVEIS_INICIAL = 6;
+const VISIVEIS_INICIAL =10
 
 // Ícones circulares com scroll horizontal, como no design de referência.
 // "Ver todas" só expande a lista inline — não existe uma página de

@@ -73,6 +73,10 @@ export interface EmpresaRepository {
   buscarConfig(empresaId: string): Promise<EmpresaConfigJson>;
   salvarConfig(empresaId: string, config: EmpresaConfigJson): Promise<void>;
   criarConfigVazia(empresaId: string): Promise<void>;
+  // Config (inclusive horários) de VÁRIAS empresas de uma vez — usado na
+  // home da plataforma pra calcular o selo "Aberto agora"/"Fechado" de
+  // várias empresas Trapeza ao mesmo tempo, sem uma query por empresa.
+  listarConfigsPorEmpresaIds(empresaIds: string[]): Promise<Record<string, EmpresaConfigJson>>;
 }
 
 export class SupabaseEmpresaRepository implements EmpresaRepository {
@@ -249,5 +253,21 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
 
   async criarConfigVazia(empresaId: string): Promise<void> {
     await this.sb().from("empresa_config").insert({ empresa_id: empresaId, data: {} });
+  }
+
+  async listarConfigsPorEmpresaIds(
+    empresaIds: string[],
+  ): Promise<Record<string, EmpresaConfigJson>> {
+    if (empresaIds.length === 0) return {};
+    const { data, error } = await this.sb()
+      .from("empresa_config")
+      .select("empresa_id, data")
+      .in("empresa_id", empresaIds);
+    if (error) throw new Error(error.message);
+    const mapa: Record<string, EmpresaConfigJson> = {};
+    for (const row of data ?? []) {
+      mapa[row.empresa_id as string] = (row.data ?? {}) as EmpresaConfigJson;
+    }
+    return mapa;
   }
 }

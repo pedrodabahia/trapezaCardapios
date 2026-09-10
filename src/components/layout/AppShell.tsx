@@ -172,32 +172,145 @@ function PoupopOpen({cfg}:{cfg: EmpresaCompleta["config"]}){
   if (!showPopup) return null;
 
   return (
-    <span
-      className="w-[85vw] h-[40vh] grid place-items-center text-center items-start pt-5 fixed left-[7.5vw] top-[60vw] z-100 bg-white shadow-[0_4px_20px_rgba(0,0,0,1)] rounded-sm"
-    >
-      <span onClick={() => setShowPopup(false)}>
-        <X className="absolute -top-5 -right-5 bg-[rgb(63,39,36)] p-1 text-white rounded-2xl w-12 h-12"/>
-      </span>
-      {openPoup ? "" : (
-        <>
-          <img
-            className="w-[40%] "
-            src="/sr.trapezaSleep.svg"
-          />
+  <>  
+{showPopup && (
+  <>
+    {/* Fundo escurecido */}
+    <div
+      onClick={() => setShowPopup(false)}
+      className="fixed inset-0 z-[99] bg-black/40 backdrop-blur-[2px]"
+    />
 
-          <h2 className="text-[12px] w-[80%] -mt-5">
-            Estamos fechados no momento, mas fique à vontade para conferir
-            nossas ofertas!
-          </h2>
-          <button
-          className="w-[70%] h-[80%] text-white rounded-[5px] -mt-5 text-[12px] bg-[rgb(63,39,36)]"
-          type="button"
-          onClick={() => setShowPopup(false)}
-          > CONFERIR OFERTAS </button>
-        </>
-      )}
-    </span>
-  );
+    {/* Popup */}
+    <div
+      className="
+        fixed
+        left-1/2
+        top-1/2
+        -translate-x-1/2
+        -translate-y-1/2
+        z-[100]
+
+        w-[88vw]
+        max-w-[380px]
+        min-h-[360px]
+
+        rounded-3xl
+        bg-white
+
+        shadow-[0_20px_60px_rgba(0,0,0,0.25)]
+
+        flex
+        flex-col
+        items-center
+        justify-center
+        text-center
+
+        px-6
+        py-8
+      "
+    >
+
+      {/* Botão fechar */}
+      <button
+        type="button"
+        onClick={() => setShowPopup(false)}
+        className="
+          absolute
+          -top-3
+          -right-3
+          w-11
+          h-11
+          rounded-full
+
+          bg-[rgb(63,39,36)]
+          text-white
+
+          flex
+          items-center
+          justify-center
+
+          shadow-lg
+
+          transition
+          hover:scale-105
+          active:scale-95
+        "
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+
+      {/* Imagem */}
+      <img
+        src="/sr.trapezaSleep.svg"
+        alt="Trapeza fechado"
+        className="
+          w-[55%]
+          max-w-[190px]
+          mb-4
+        "
+      />
+
+
+      {/* Título */}
+      <h2
+        className="
+          text-lg
+          font-bold
+          text-[rgb(63,39,36)]
+          mb-2
+        "
+      >
+        Estamos fechados
+      </h2>
+
+
+      {/* Texto */}
+      <p
+        className="
+          text-sm
+          leading-relaxed
+          text-gray-500
+          w-[90%]
+          mb-6
+        "
+      >
+        Estamos fechados no momento, mas fique à vontade
+        para conferir nossas ofertas!
+      </p>
+
+
+      {/* Botão */}
+      <button
+        type="button"
+        onClick={() => setShowPopup(false)}
+        className="
+          w-full
+          h-12
+
+          rounded-xl
+
+          bg-[rgb(63,39,36)]
+          text-white
+
+          font-semibold
+          text-sm
+
+          shadow-md
+
+          transition
+          hover:brightness-110
+          active:scale-[0.98]
+        "
+      >
+        CONFERIR OFERTAS
+      </button>
+
+    </div>
+  </>
+)}</>    
+);
 
 }
 

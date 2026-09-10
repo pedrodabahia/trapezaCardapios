@@ -12,9 +12,10 @@ export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
   { valor: "distribuidora", label: "Distribuidoras" },
   { valor: "lanchonete", label: "Lanchonetes" },
   { valor: "pizzaria", label: "Pizzarias" },
-  { valor: "mercado", label: "Mercados" },
   { valor: "confeitaria", label: "Confeitarias" },
-  { valor: "outros", label: "Outros" },
+  {valor: "restaurante", label: "Restaurante"}
+
+
 ];
 
 export function labelCategoriaNegocio(valor: string | null | undefined): string | null {

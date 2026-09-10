@@ -35,6 +35,16 @@ export const listEmpresasPublicas = createServerFn({ method: "POST" })
     return empresaService.listarPublicasAtivas();
   });
 
+// Público (sem login) — config (só usamos horários hoje) de várias
+// empresas de uma vez, pra home da plataforma calcular o selo
+// "Aberto"/"Fechado" das empresas Trapeza mostradas em "Perto de você".
+export const getConfigsEmpresas = createServerFn({ method: "POST" })
+  .validator((d: { empresaIds: string[] }) => d)
+  .handler(async ({ data }) => {
+    const empresaService = container.resolve("empresaService");
+    return empresaService.listarConfigsPublico(data.empresaIds);
+  });
+
 // ============================================================================
 // Leitura — autenticada (admin da empresa)
 // ============================================================================

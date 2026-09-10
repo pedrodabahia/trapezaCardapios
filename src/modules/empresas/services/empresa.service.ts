@@ -112,4 +112,11 @@ export class EmpresaService {
     if (patch.url_externa) validarUrlExterna(patch.url_externa);
     await this.repository.atualizarPlataforma(empresaId, patch);
   }
+
+  // Público — config (inclusive horários) de várias empresas de uma vez.
+  // Usado na home da plataforma pra calcular o selo "Aberto"/"Fechado" das
+  // empresas mostradas em "Perto de você" sem uma chamada por empresa.
+  async listarConfigsPublico(empresaIds: string[]) {
+    return this.repository.listarConfigsPorEmpresaIds(empresaIds);
+  }
 }

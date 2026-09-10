@@ -124,3 +124,30 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+/* Paleta própria da HOME da plataforma (routes/index.tsx e
+   src/components/home/*). Isolada de propósito: as variáveis
+   --brand-* acima são customizáveis por empresa (aba Config de cada
+   tenant) e o valor padrão delas não tem nada a ver com o visual
+   quentinho (marrom + laranja) que a home da plataforma precisa. Como a
+   home não pertence a nenhuma empresa, usa essa paleta fixa própria em
+   vez de reaproveitar --brand-red/--brand-yellow/--brand-brown — assim
+   nenhuma loja de cliente muda de cor por causa disso. */
+.trapeza-home {
+  --tp-brown: #3d2a1f;
+  --tp-brown-dark: #2a1c14;
+  --tp-orange: #e8763f;
+  --tp-orange-dark: #d4622c;
+  --tp-cream: #fdf6ec;
+}
+
+@utility trapeza-hero-gradient {
+  background:
+    radial-gradient(circle at 15% 10%, var(--tp-brown-dark), transparent 60%),
+    radial-gradient(circle at 85% 90%, var(--tp-orange), transparent 45%),
+    linear-gradient(160deg, var(--tp-brown), var(--tp-brown-dark));
+}
+
+@utility trapeza-banner-gradient {
+  background: linear-gradient(120deg, var(--tp-orange), var(--tp-orange-dark));
+}

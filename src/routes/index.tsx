@@ -1,19 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listEmpresasPublicas, contarPedidosTotal } from "@/lib/admin-server";
-import { Navbar } from "@/components/home/Navbar";
-import { Hero } from "@/components/home/Hero";
-import { SearchSection } from "@/components/home/SearchSection";
-import { LocationSection, TODAS_CIDADES } from "@/components/home/LocationSection";
-import { CategoriesSection, TODAS_CATEGORIAS } from "@/components/home/CategoriesSection";
-import { FeaturedBusinesses } from "@/components/home/FeaturedBusinesses";
-import { BusinessList } from "@/components/home/BusinessList";
-import { BusinessCTA } from "@/components/home/BusinessCTA";
-import { HowItWorks } from "@/components/home/HowItWorks";
-import { AboutTrapeza } from "@/components/home/AboutTrapeza";
-import { Stats } from "@/components/home/Stats";
-import { FinalCTA } from "@/components/home/FinalCTA";
+import { listEmpresasPublicas, getTopProdutosPlataforma, getConfigsEmpresas, getAnunciosPromocao } from "@/lib/admin-server";
+import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
+import { HomeHero, TODAS_CIDADES } from "@/components/home/HomeHero";
+import { CategoryScroller, TODAS_CATEGORIAS } from "@/components/home/CategoryScroller";
+import { NearbyBusinesses } from "@/components/home/NearbyBusinesses";
+import { PromoCarousel } from "@/components/home/PromoCarousel";
+import { PopularProducts } from "@/components/home/PopularProducts";
+import { ExploreBusinesses } from "@/components/home/ExploreBusinesses";
+import { BusinessCTASmall } from "@/components/home/BusinessCTASmall";
+import { MobileBottomNav } from "@/components/home/MobileBottomNav";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -35,7 +32,7 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 8;
 
 function Landing() {
   const { data: empresas = [], isLoading } = useQuery({
@@ -44,9 +41,15 @@ function Landing() {
     staleTime: 30_000,
   });
 
-  const { data: pedidosTotal } = useQuery({
-    queryKey: ["pedidos-total-publico"],
-    queryFn: () => contarPedidosTotal({ data: {} as Record<string, never> }),
+  const { data: maisProcurados = [] } = useQuery({
+    queryKey: ["top-produtos-plataforma"],
+    queryFn: () => getTopProdutosPlataforma({ data: { limitePorEmpresa: 3 } }),
+    staleTime: 60_000,
+  });
+
+  const { data: anunciosPromocao = [] } = useQuery({
+    queryKey: ["anuncios-promocao"],
+    queryFn: () => getAnunciosPromocao({ data: { limite: 4 } }),
     staleTime: 60_000,
   });
 
@@ -55,15 +58,41 @@ function Landing() {
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>(TODAS_CATEGORIAS);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // Empresa Trapeza ou externa — as duas entram nos mesmos filtros e
-  // seções; a única diferença é pra onde o card leva ao clicar (ver
-  // BusinessCard).
   const cidades = useMemo(() => {
     const set = new Set<string>();
     for (const e of empresas) if (e.cidade) set.add(e.cidade);
     return Array.from(set).sort();
   }, [empresas]);
 
+  // "Perto de você" é a vitrine das empresas do PRÓPRIO sistema Trapeza
+  // (isca pra atrair empresa nova — empresa externa nunca entra aqui,
+  // só no "Explore lojas" junto com todo mundo). Filtra por cidade quando
+  // escolhida (aproximação de localização sem geolocalização real).
+  const pertoDeVoce = useMemo(() => {
+    const trapeza = empresas.filter((e) => e.tipo === "trapeza");
+    if (cidadeFiltro === TODAS_CIDADES) return trapeza;
+    return trapeza.filter((e) => e.cidade === cidadeFiltro);
+  }, [empresas, cidadeFiltro]);
+
+  // Config (horários) das empresas mostradas em "Perto de você", pra
+  // calcular o selo Aberto/Fechado. Só busca pros ids que estão na tela.
+  const idsParaHorario = useMemo(() => pertoDeVoce.slice(0, 6).map((e) => e.id), [pertoDeVoce]);
+  const { data: configsPorEmpresa = {} } = useQuery({
+    queryKey: ["configs-empresas", idsParaHorario],
+    queryFn: () => getConfigsEmpresas({ data: { empresaIds: idsParaHorario } }),
+    enabled: idsParaHorario.length > 0,
+    staleTime: 30_000,
+  });
+  const abertoPorEmpresa = useMemo(() => {
+    const mapa: Record<string, boolean | undefined> = {};
+    for (const id of idsParaHorario) {
+      const cfg = configsPorEmpresa[id];
+      mapa[id] = cfg ? isStoreOpenNow(getHorarios(cfg)) : undefined;
+    }
+    return mapa;
+  }, [configsPorEmpresa, idsParaHorario]);
+
+  // "Explore lojas" já usa todos os filtros (busca + cidade + categoria).
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return empresas.filter((e) => {
@@ -78,34 +107,47 @@ function Landing() {
     });
   }, [empresas, busca, cidadeFiltro, categoriaFiltro]);
 
-  // Destaque é um campo controlado pelo super-admin no painel (não é
-  // hardcoded por slug) — só cai pro "tem logo" como aproximação enquanto
-  // nenhuma empresa foi marcada como destaque ainda.
-  const destaques = useMemo(() => {
-    const marcadas = empresas.filter((e) => e.destaque);
-    const pool = marcadas.length > 0 ? marcadas : empresas.filter((e) => e.logo_url);
-    return (pool.length > 0 ? pool : empresas).slice(0, 3);
-  }, [empresas]);
+  function scrollToExplore() {
+    document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Hero />
-
-   {/*   <LocationSection
+    <div id="topo" className="trapeza-home min-h-screen bg-background pb-16 md:pb-0">
+      <HomeHero
         cidades={cidades}
-        cidadeAtual={cidadeFiltro !== TODAS_CIDADES ? cidadeFiltro : (cidades[0] ?? null)}
         cidadeFiltro={cidadeFiltro}
-        onChange={setCidadeFiltro}
-        totalEncontradas={filtradas.length}
+        onChangeCidade={setCidadeFiltro}
+        busca={busca}
+        onBuscaChange={setBusca}
+        totalLojas={empresas.length}
+        onExplorar={scrollToExplore}
       />
-   */}
-   
-      <CategoriesSection categoriaFiltro={categoriaFiltro} onChange={setCategoriaFiltro} />
 
+     
 
+      {!isLoading && (
+        <NearbyBusinesses
+          empresas={pertoDeVoce}
+          abertoPorEmpresa={abertoPorEmpresa}
+          onVerMais={scrollToExplore}
+        />
+      )}
 
-      <BusinessList
+      <PromoCarousel anuncios={anunciosPromocao} />
+
+      {/*
+        "Mais procurados": os 3 produtos mais vendidos de CADA empresa
+        Trapeza ativa, misturados num ranking só (não inclui empresa
+        externa, que não tem catálogo aqui). Vem de um endpoint novo
+        (getTopProdutosPlataforma) que reaproveita a mesma lógica de
+        "mais vendidos por empresa" já usada dentro do cardápio de cada
+        uma.
+      */}
+      <PopularProducts produtos={maisProcurados} />
+
+      <CategoryScroller categoriaFiltro={categoriaFiltro} onChange={setCategoriaFiltro} />
+
+      <ExploreBusinesses
         empresas={filtradas}
         totalSemFiltro={empresas.length}
         visibleCount={visibleCount}
@@ -113,20 +155,10 @@ function Landing() {
         isLoading={isLoading}
       />
 
-      <BusinessCTA />
-      <HowItWorks />
-      <AboutTrapeza />
-      {!isLoading && (
-        <Stats
-          empresasCount={empresas.length}
-          cidadesCount={cidades.length}
-          pedidosCount={pedidosTotal ?? null}
-        />
-      )}
-      <FinalCTA />
+      <BusinessCTASmall />
 
-      <footer className="border-t border-border bg-card">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+      <footer className="hidden border-t border-border bg-card md:block">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>
             <strong className="text-foreground">TRAPEZA</strong> · encontre
             empresas e produtos perto de você
@@ -141,6 +173,8 @@ function Landing() {
           </div>
         </div>
       </footer>
+
+      <MobileBottomNav />
     </div>
   );
 }

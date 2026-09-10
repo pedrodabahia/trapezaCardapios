@@ -41,9 +41,11 @@ export {
   getEmpresaBySlug,
   getEmpresaById,
   listEmpresasPublicas,
+  getConfigsEmpresas,
 } from "@/modules/empresas/controllers/empresa.controller";
 
-export { getProdutoById } from "@/modules/produtos/controllers/produto.controller";
+export { getProdutoById, getTopProdutosPlataforma, getAnunciosPromocao } from "@/modules/produtos/controllers/produto.controller";
+export type { TopProdutoPlataforma, AnuncioPromocao } from "@/modules/produtos/controllers/produto.controller";
 
 // ============================================================================
 // Leitura — autenticada (admin da empresa)

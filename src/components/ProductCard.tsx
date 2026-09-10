@@ -53,7 +53,7 @@ export function ProductCard({ produto, slug, layout = "grid" }: Props) {
             {produto.tag && (
               <span
                 className={cn(
-                  "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                  "shrink-0 rounded px-2 py-0.5 text-[10px] font-bold uppercase",
                   tagStyles[produto.tag],
                 )}
               >
@@ -116,7 +116,7 @@ export function ProductCard({ produto, slug, layout = "grid" }: Props) {
         {produto.tag && (
           <span
             className={cn(
-              "absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow",
+              "absolute left-3 top-3 rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow",
               tagStyles[produto.tag],
             )}
           >

@@ -95,6 +95,8 @@ export {
   deleteEmpresa,
 } from "@/modules/empresas/controllers/empresa.controller";
 
+export { uploadImagemPlataforma } from "@/modules/midia/controllers/midia.controller";
+
 // ============================================================================
 // Planos
 // ============================================================================

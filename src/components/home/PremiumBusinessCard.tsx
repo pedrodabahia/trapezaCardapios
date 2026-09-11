@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
-import { labelCategoriaNegocio } from "@/lib/categorias-negocio";
+import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import type { EmpresaCard } from "./BusinessCard";
 
 // Card "premium" — bem maior e mais chamativo que o BusinessCard normal,
@@ -19,7 +19,7 @@ export function PremiumBusinessCard({
   // de inventar um status.
   aberto: boolean | undefined;
 }) {
-  const categoriaLabel = labelCategoriaNegocio(empresa.categoria);
+  const categoriaLabel = labelsCategoriasNegocio(empresa.categorias).slice(0, 2).join(" / ");
 
 return (
   <Link

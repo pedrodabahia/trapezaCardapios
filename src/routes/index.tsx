@@ -1,12 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listEmpresasPublicas, getTopProdutosPlataforma, getConfigsEmpresas, getAnunciosPromocao } from "@/lib/admin-server";
+import {
+  listEmpresasPublicas,
+  getTopProdutosPlataforma,
+  getConfigsEmpresas,
+  getAnunciosPromocao,
+} from "@/lib/admin-server";
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
 import { HomeHero, TODAS_CIDADES } from "@/components/home/HomeHero";
 import { CategoryScroller, TODAS_CATEGORIAS } from "@/components/home/CategoryScroller";
 import { NearbyBusinesses } from "@/components/home/NearbyBusinesses";
 import { PromoCarousel } from "@/components/home/PromoCarousel";
+import { IntentCarousel } from "@/components/home/IntentCarousel";
 import { PopularProducts } from "@/components/home/PopularProducts";
 import { ExploreBusinesses } from "@/components/home/ExploreBusinesses";
 import { BusinessCTASmall } from "@/components/home/BusinessCTASmall";
@@ -64,19 +70,41 @@ function Landing() {
     return Array.from(set).sort();
   }, [empresas]);
 
-  // "Perto de você" é a vitrine das empresas do PRÓPRIO sistema Trapeza
-  // (isca pra atrair empresa nova — empresa externa nunca entra aqui,
-  // só no "Explore lojas" junto com todo mundo). Filtra por cidade quando
-  // escolhida (aproximação de localização sem geolocalização real).
-  const pertoDeVoce = useMemo(() => {
-    const trapeza = empresas.filter((e) => e.tipo === "trapeza");
-    if (cidadeFiltro === TODAS_CIDADES) return trapeza;
-    return trapeza.filter((e) => e.cidade === cidadeFiltro);
+  // Empresas na cidade escolhida (aproximação de localização sem
+  // geolocalização real) — base pra todos os carrosséis de intenção.
+  const empresasDaCidade = useMemo(() => {
+    if (cidadeFiltro === TODAS_CIDADES) return empresas;
+    return empresas.filter((e) => e.cidade === cidadeFiltro);
   }, [empresas, cidadeFiltro]);
 
-  // Config (horários) das empresas mostradas em "Perto de você", pra
-  // calcular o selo Aberto/Fechado. Só busca pros ids que estão na tela.
-  const idsParaHorario = useMemo(() => pertoDeVoce.slice(0, 6).map((e) => e.id), [pertoDeVoce]);
+  const porCategoria = (valor: string) =>
+    empresasDaCidade.filter((e) => e.categorias?.includes(valor));
+
+  // "⚡ Peça rápido" — só empresas do PRÓPRIO sistema Trapeza (têm
+  // catálogo/pedido de verdade; é a vitrine/isca pro sistema).
+  const pecaRapido = useMemo(
+    () => empresasDaCidade.filter((e) => e.tipo === "trapeza"),
+    [empresasDaCidade],
+  );
+
+  // Carrosséis por intenção, derivados em memória da MESMA lista de
+  // empresas já carregada (nenhuma query nova por bloco).
+  const praMatarAFome = useMemo(
+    () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["lanchonete", "restaurante", "pizzaria"].includes(c))),
+    [empresasDaCidade],
+  );
+  const pizzarias = useMemo(() => porCategoria("pizzaria"), [empresasDaCidade]);
+  const distribuidoras = useMemo(() => porCategoria("distribuidora"), [empresasDaCidade]);
+  const doces = useMemo(
+    () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["confeitaria", "acai"].includes(c))),
+    [empresasDaCidade],
+  );
+  const visual = useMemo(() => porCategoria("barbearia"), [empresasDaCidade]);
+  const cuidar = useMemo(() => porCategoria("estetica"), [empresasDaCidade]);
+
+  // Config (horários) das empresas do "Peça rápido", pra calcular o selo
+  // Aberto/Fechado. Só busca pros ids que estão na tela.
+  const idsParaHorario = useMemo(() => pecaRapido.slice(0, 12).map((e) => e.id), [pecaRapido]);
   const { data: configsPorEmpresa = {} } = useQuery({
     queryKey: ["configs-empresas", idsParaHorario],
     queryFn: () => getConfigsEmpresas({ data: { empresaIds: idsParaHorario } }),
@@ -92,12 +120,13 @@ function Landing() {
     return mapa;
   }, [configsPorEmpresa, idsParaHorario]);
 
-  // "Explore lojas" já usa todos os filtros (busca + cidade + categoria).
+  // "Descubra negócios da sua cidade" — a seção ampla do fim, com todos os
+  // filtros (busca + cidade + categoria).
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return empresas.filter((e) => {
       if (cidadeFiltro !== TODAS_CIDADES && e.cidade !== cidadeFiltro) return false;
-      if (categoriaFiltro !== TODAS_CATEGORIAS && e.categoria !== categoriaFiltro) return false;
+      if (categoriaFiltro !== TODAS_CATEGORIAS && !e.categorias?.includes(categoriaFiltro)) return false;
       if (!termo) return true;
       return (
         e.nome.toLowerCase().includes(termo) ||
@@ -123,11 +152,9 @@ function Landing() {
         onExplorar={scrollToExplore}
       />
 
-     
-
       {!isLoading && (
         <NearbyBusinesses
-          empresas={pertoDeVoce}
+          empresas={pecaRapido}
           abertoPorEmpresa={abertoPorEmpresa}
           onVerMais={scrollToExplore}
         />
@@ -135,17 +162,54 @@ function Landing() {
 
       <PromoCarousel anuncios={anunciosPromocao} />
 
+      <IntentCarousel
+        titulo="🍔 Pra matar a fome"
+        subtitulo="Do lanche caprichado àquela pizza que salva a noite."
+        empresas={praMatarAFome}
+      />
+
+      <PopularProducts produtos={maisProcurados} />
+
+      <IntentCarousel
+        titulo="🍕 Hoje merece uma pizza"
+        subtitulo="Sextou ou não, pizza nunca precisa de motivo."
+        empresas={pizzarias}
+      />
+
+      <IntentCarousel
+        titulo="🥤 Pra reabastecer o estoque"
+        subtitulo="Bebida acabou? O churrasco tá chegando? Reabastece aqui."
+        empresas={distribuidoras}
+      />
+
+      <IntentCarousel
+        titulo="🍰 Deu vontade de um doce"
+        subtitulo="Porque às vezes o que falta é só um bolo. 😋"
+        empresas={doces}
+      />
+
+      <IntentCarousel
+        titulo="💇 Dar um trato no visual"
+        subtitulo="Cabelo, barba e autoestima em dia."
+        empresas={visual}
+      />
+
+      <IntentCarousel
+        titulo="✨ Hora de se cuidar"
+        subtitulo="Um tempinho pra você também entra na lista."
+        empresas={cuidar}
+      />
+
       {/*
         "Mais procurados": os 3 produtos mais vendidos de CADA empresa
         Trapeza ativa, misturados num ranking só (não inclui empresa
         externa, que não tem catálogo aqui). Vem de um endpoint novo
         (getTopProdutosPlataforma) que reaproveita a mesma lógica de
         "mais vendidos por empresa" já usada dentro do cardápio de cada
-        uma.
+        uma. Some sozinha se não tiver produto vendido suficiente.
       */}
-      <PopularProducts produtos={maisProcurados} />
 
-      <CategoryScroller categoriaFiltro={categoriaFiltro} onChange={setCategoriaFiltro} />
+       <CategoryScroller categoriaFiltro={categoriaFiltro} onChange={setCategoriaFiltro} />
 
       <ExploreBusinesses
         empresas={filtradas}
@@ -153,8 +217,10 @@ function Landing() {
         visibleCount={visibleCount}
         onVerMais={() => setVisibleCount((v) => v + PAGE_SIZE)}
         isLoading={isLoading}
+        categoriaSelecionada={categoriaFiltro !== TODAS_CATEGORIAS ? categoriaFiltro : null}
       />
 
+      <BusinessCTASmall />
 
       <footer className="hidden border-t border-border bg-card md:block">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">

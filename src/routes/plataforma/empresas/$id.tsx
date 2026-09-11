@@ -8,14 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import {
   listEmpresasAdmin,
   updateEmpresaStatus,
@@ -275,7 +269,7 @@ function PerfilDiretorioCard({
   onSaved: () => void;
 }) {
   const [nome, setNome] = useState(empresa.nome);
-  const [categoria, setCategoria] = useState(empresa.categoria ?? "");
+  const [categorias, setCategorias] = useState<string[]>(empresa.categorias ?? []);
   const [cidade, setCidade] = useState(empresa.cidade ?? "");
   const [bairro, setBairro] = useState(empresa.bairro ?? "");
   const [whatsapp, setWhatsapp] = useState(empresa.whatsapp ?? "");
@@ -291,7 +285,7 @@ function PerfilDiretorioCard({
     try {
       const patch: EmpresaPlataformaPatch = {
         nome,
-        categoria: categoria || null,
+        categorias,
         cidade: cidade || null,
         bairro: bairro || null,
         whatsapp: whatsapp || null,
@@ -328,19 +322,32 @@ function PerfilDiretorioCard({
             <Input value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
           <div>
-            <Label>Categoria</Label>
-            <Select value={categoria} onValueChange={setCategoria}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIAS_NEGOCIO.map((c) => (
-                  <SelectItem key={c.valor} value={c.valor}>
-                    {c.emoji} {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Categorias</Label>
+            <p className="mb-2 text-xs text-muted-foreground">Pode marcar mais de uma.</p>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIAS_NEGOCIO.map((c) => {
+                const marcada = categorias.includes(c.valor);
+                return (
+                  <button
+                    key={c.valor}
+                    type="button"
+                    onClick={() =>
+                      setCategorias((atual) =>
+                        marcada ? atual.filter((v) => v !== c.valor) : [...atual, c.valor],
+                      )
+                    }
+                    className={
+                      "rounded-full border px-3 py-1.5 text-xs font-semibold transition " +
+                      (marcada
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-input bg-background text-foreground")
+                    }
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div>
             <Label>Cidade</Label>
@@ -368,14 +375,24 @@ function PerfilDiretorioCard({
               />
             </div>
           )}
-          <div>
-            <Label>URL do logo</Label>
-            <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
-          </div>
-          <div>
-            <Label>URL da capa/imagem</Label>
-            <Input value={capaUrl} onChange={(e) => setCapaUrl(e.target.value)} />
-          </div>
+          <ImageUploadField
+            label="Logo"
+            value={logoUrl}
+            onChange={setLogoUrl}
+            token={token}
+            empresaId={empresa.id}
+            pasta="logo"
+            plataforma
+          />
+          <ImageUploadField
+            label="Capa/imagem"
+            value={capaUrl}
+            onChange={setCapaUrl}
+            token={token}
+            empresaId={empresa.id}
+            pasta="capa"
+            plataforma
+          />
         </div>
         <div>
           <Label>Descrição curta</Label>

@@ -35,7 +35,7 @@ export function ConfigTab({
   const [endereco, setEndereco] = useState(empresa.endereco ?? "");
   const [pixChave, setPixChave] = useState(empresa.pix_chave ?? "");
   const [logoUrl, setLogoUrl] = useState(empresa.logo_url ?? "");
-  const [categoriaNegocio, setCategoriaNegocio] = useState(empresa.categoria ?? "");
+  const [categoriasNegocio, setCategoriasNegocio] = useState<string[]>(empresa.categorias ?? []);
   const [cidadeNegocio, setCidadeNegocio] = useState(empresa.cidade ?? "");
 
   const [primary, setPrimary] = useState(cores.primary);
@@ -58,7 +58,7 @@ export function ConfigTab({
           endereco,
           pix_chave: pixChave,
           logo_url: logoUrl,
-          categoria: categoriaNegocio || null,
+          categorias: categoriasNegocio,
           cidade: cidadeNegocio || null,
         },
       },
@@ -133,23 +133,38 @@ export function ConfigTab({
             <Input value={cidade} onChange={(e) => setCidade(e.target.value)} />
           </div>
           <div>
-            <Label>Categoria do negócio</Label>
-            <p className="mb-1 text-xs text-muted-foreground">
-              Usada pra sua empresa aparecer nos filtros da página inicial da
-              plataforma.
+            <Label>Categorias do negócio</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Pode marcar mais de uma (ex: lanchonete que também vende açaí).
+              Usadas pra sua empresa aparecer nos filtros da página inicial
+              da plataforma.
             </p>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              value={categoriaNegocio}
-              onChange={(e) => setCategoriaNegocio(e.target.value)}
-            >
-              <option value="">—</option>
-              {CATEGORIAS_NEGOCIO.map((c) => (
-                <option key={c.valor} value={c.valor}>
-                  {c.emoji} {c.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIAS_NEGOCIO.map((c) => {
+                const marcada = categoriasNegocio.includes(c.valor);
+                return (
+                  <button
+                    key={c.valor}
+                    type="button"
+                    onClick={() =>
+                      setCategoriasNegocio((atual) =>
+                        marcada
+                          ? atual.filter((v) => v !== c.valor)
+                          : [...atual, c.valor],
+                      )
+                    }
+                    className={
+                      "rounded-full border px-3 py-1.5 text-xs font-semibold transition " +
+                      (marcada
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-input bg-background text-foreground")
+                    }
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div>
             <Label>Cidade (exibida na página inicial da plataforma)</Label>

@@ -6,14 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import { createEmpresaExterna } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
 import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
@@ -43,7 +37,7 @@ function NovaEmpresaExterna() {
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [categoria, setCategoria] = useState("");
+  const [categorias, setCategorias] = useState<string[]>([]);
   const [cidade, setCidade] = useState("");
   const [bairro, setBairro] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -53,6 +47,9 @@ function NovaEmpresaExterna() {
   const [capaUrl, setCapaUrl] = useState("");
   const [destaque, setDestaque] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Pasta temporária no Storage pra logo/capa — a empresa ainda não existe
+  // nesse formulário, então não tem um empresaId real pra usar ainda.
+  const [pastaUploadTemp] = useState(() => crypto.randomUUID());
 
   if (!session) return null;
 
@@ -72,7 +69,7 @@ function NovaEmpresaExterna() {
           token: session.accessToken,
           slug: finalSlug,
           nome,
-          categoria: categoria || null,
+          categorias,
           cidade: cidade || null,
           bairro: bairro || null,
           whatsapp: whatsapp || null,
@@ -157,21 +154,34 @@ function NovaEmpresaExterna() {
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label>Categoria</Label>
-                  <Select value={categoria} onValueChange={setCategoria}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIAS_NEGOCIO.map((c) => (
-                        <SelectItem key={c.valor} value={c.valor}>
-                          {c.emoji} {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div>
+                <Label>Categorias</Label>
+                <p className="mb-2 text-xs text-muted-foreground">Pode marcar mais de uma.</p>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIAS_NEGOCIO.map((c) => {
+                    const marcada = categorias.includes(c.valor);
+                    return (
+                      <button
+                        key={c.valor}
+                        type="button"
+                        onClick={() =>
+                          setCategorias((atual) =>
+                            marcada ? atual.filter((v) => v !== c.valor) : [...atual, c.valor],
+                          )
+                        }
+                        className={
+                          "rounded-full border px-3 py-1.5 text-xs font-semibold transition " +
+                          (marcada
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-input bg-background text-foreground")
+                        }
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
                 <div>
                   <Label htmlFor="cidade">Cidade</Label>
                   <Input id="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} />
@@ -200,14 +210,24 @@ function NovaEmpresaExterna() {
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="logo">URL do logo (opcional)</Label>
-                  <Input id="logo" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="capa">URL da capa/imagem (opcional)</Label>
-                  <Input id="capa" value={capaUrl} onChange={(e) => setCapaUrl(e.target.value)} />
-                </div>
+                <ImageUploadField
+                  label="Logo (opcional)"
+                  value={logoUrl}
+                  onChange={setLogoUrl}
+                  token={session.accessToken}
+                  empresaId={pastaUploadTemp}
+                  pasta="logo"
+                  plataforma
+                />
+                <ImageUploadField
+                  label="Capa/imagem (opcional)"
+                  value={capaUrl}
+                  onChange={setCapaUrl}
+                  token={session.accessToken}
+                  empresaId={pastaUploadTemp}
+                  pasta="capa"
+                  plataforma
+                />
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={destaque} onCheckedChange={setDestaque} />

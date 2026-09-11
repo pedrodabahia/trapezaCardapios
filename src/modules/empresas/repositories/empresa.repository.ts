@@ -8,7 +8,7 @@ import type {
 } from "../types/empresa.types";
 
 export type EmpresaPatch = Partial<
-  Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "categoria" | "cidade">
+  Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "categorias" | "cidade">
 >;
 
 export type EmpresaPublica = Pick<
@@ -20,7 +20,7 @@ export type EmpresaPublica = Pick<
   | "endereco"
   | "logo_url"
   | "status_pagamento"
-  | "categoria"
+  | "categorias"
   | "cidade"
   | "tipo"
   | "url_externa"
@@ -117,7 +117,7 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
     const { data, error } = await this.sb()
       .from("empresas")
       .select(
-        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categoria, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque",
+        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque",
       )
       .eq("status_pagamento", "ativo")
       .order("criado_em", { ascending: false });
@@ -213,7 +213,7 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
         slug: dados.slug,
         nome: dados.nome,
         whatsapp: dados.whatsapp || null,
-        categoria: dados.categoria,
+        categorias: dados.categorias,
         cidade: dados.cidade,
         bairro: dados.bairro,
         logo_url: dados.logoUrl,

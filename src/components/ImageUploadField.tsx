@@ -4,12 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
-import { uploadImagem } from "@/lib/admin-server";
+import { uploadImagem, uploadImagemPlataforma } from "@/lib/admin-server";
 
 // Campo de imagem com duas formas de preencher: colar uma URL, ou enviar um
 // arquivo do dispositivo (computador ou celular — o <input type="file"> já
 // abre o seletor nativo, que no celular inclui câmera/galeria sem precisar
-// de código extra). Usado tanto no form de Produto quanto no de Categoria.
+// de código extra). Usado no form de Produto, Categoria e Logo (auth de
+// dono de empresa) e também nos formulários de /plataforma (auth de
+// super-admin) — nesse segundo caso, passe `plataforma`.
 export function ImageUploadField({
   label,
   value,
@@ -17,13 +19,19 @@ export function ImageUploadField({
   token,
   empresaId,
   pasta,
+  plataforma = false,
 }: {
   label: string;
   value: string;
   onChange: (url: string) => void;
   token: string;
+  // No modo normal, precisa ser o id real da empresa (auth confere se o
+  // token pertence a ela). No modo `plataforma`, só organiza a pasta no
+  // Storage — pode ser um id temporário quando a empresa ainda não existe
+  // (formulário de cadastro de empresa externa nova).
   empresaId: string;
-  pasta: "produtos" | "categorias" | "logo";
+  pasta: "produtos" | "categorias" | "logo" | "capa";
+  plataforma?: boolean;
 }) {
   const [enviando, setEnviando] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,9 +67,13 @@ export function ImageUploadField({
     setEnviando(true);
     try {
       const base64Data = await lerArquivoComoBase64(file);
-      const result = await uploadImagem({
-        data: { token, empresaId, pasta, contentType: file.type, base64Data },
-      });
+      const result = plataforma
+        ? await uploadImagemPlataforma({
+            data: { token, pastaId: empresaId, pasta, contentType: file.type, base64Data },
+          })
+        : await uploadImagem({
+            data: { token, empresaId, pasta, contentType: file.type, base64Data },
+          });
       onChange(result.url);
       toast.success("Imagem enviada");
     } catch (err) {

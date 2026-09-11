@@ -1,10 +1,23 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listEmpresasAdmin } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
+import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+
+const TODOS = "__todos__";
 
 export const Route = createFileRoute("/plataforma/")({
   beforeLoad: () => {
@@ -26,6 +39,27 @@ function PlatformDashboard() {
     queryFn: () => listEmpresasAdmin({ data: { token: session!.accessToken } }),
     enabled: !!session,
   });
+
+  const [busca, setBusca] = useState("");
+  const [tipoFiltro, setTipoFiltro] = useState<string>(TODOS);
+  const [statusFiltro, setStatusFiltro] = useState<string>(TODOS);
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>(TODOS);
+
+  const filtradas = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    return empresas.filter((e) => {
+      if (tipoFiltro !== TODOS && e.tipo !== tipoFiltro) return false;
+      if (statusFiltro !== TODOS && e.status_pagamento !== statusFiltro) return false;
+      if (categoriaFiltro !== TODOS && !e.categorias?.includes(categoriaFiltro)) return false;
+      if (!termo) return true;
+      return (
+        e.nome.toLowerCase().includes(termo) ||
+        e.slug.toLowerCase().includes(termo) ||
+        (e.cidade ?? "").toLowerCase().includes(termo) ||
+        (e.whatsapp ?? "").includes(termo)
+      );
+    });
+  }, [empresas, busca, tipoFiltro, statusFiltro, categoriaFiltro]);
 
   if (!session) return null;
 
@@ -62,7 +96,8 @@ function PlatformDashboard() {
           <div>
             <h2 className="font-display text-2xl font-bold">Empresas cadastradas</h2>
             <p className="text-sm text-muted-foreground">
-              {empresas.length} {empresas.length === 1 ? "empresa" : "empresas"} no sistema
+              {filtradas.length} de {empresas.length}{" "}
+              {empresas.length === 1 ? "empresa" : "empresas"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -73,6 +108,52 @@ function PlatformDashboard() {
               <Button>+ Nova empresa</Button>
             </Link>
           </div>
+        </div>
+
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por nome, slug, cidade ou WhatsApp..."
+              className="pl-8"
+            />
+          </div>
+          <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
+            <SelectTrigger className="sm:w-44">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODOS}>Todos os tipos</SelectItem>
+              <SelectItem value="trapeza">Trapeza</SelectItem>
+              <SelectItem value="externa">Externa</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+            <SelectTrigger className="sm:w-44">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODOS}>Todos os status</SelectItem>
+              <SelectItem value="ativo">Ativo</SelectItem>
+              <SelectItem value="atrasado">Atrasado</SelectItem>
+              <SelectItem value="suspenso">Suspenso</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
+            <SelectTrigger className="sm:w-44">
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODOS}>Todas as categorias</SelectItem>
+              {CATEGORIAS_NEGOCIO.map((c) => (
+                <SelectItem key={c.valor} value={c.valor}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoading ? (
@@ -88,9 +169,13 @@ function PlatformDashboard() {
               </Link>
             </CardContent>
           </Card>
+        ) : filtradas.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Nenhuma empresa encontrada com esse filtro.
+          </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {empresas.map((e) => (
+            {filtradas.map((e) => (
               <Link
                 key={e.id}
                 to="/plataforma/empresas/$id"

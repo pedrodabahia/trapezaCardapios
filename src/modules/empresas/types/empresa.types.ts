@@ -17,10 +17,12 @@ export type Empresa = {
   plano_id: string;
   proximo_vencimento: string | null;
   criado_em?: string;
-  // Categoria de negócio (ver src/lib/categorias-negocio.ts) e cidade,
+  // Categorias de negócio (ver src/lib/categorias-negocio.ts) e cidade,
   // preenchidas pelo dono no painel — alimentam busca/filtro da home
-  // pública.
-  categoria: string | null;
+  // pública. Uma empresa pode se encaixar em mais de uma categoria (ex:
+  // lanchonete que também vende açaí) — por isso é uma lista, não um
+  // valor só. Lista vazia = sem categoria definida ainda.
+  categorias: string[];
   cidade: string | null;
   // "trapeza" = usa a estrutura normal (página pública em /s/slug,
   // painel, pedidos). "externa" = cliente com site/sistema próprio que
@@ -95,7 +97,7 @@ export type NovaEmpresaInput = {
 export type NovaEmpresaExternaInput = {
   slug: string;
   nome: string;
-  categoria: string | null;
+  categorias: string[];
   cidade: string | null;
   bairro: string | null;
   whatsapp: string | null;
@@ -119,7 +121,7 @@ export type EmpresaPlataformaPatch = Partial<
     | "logo_url"
     | "capa_url"
     | "descricao"
-    | "categoria"
+    | "categorias"
     | "cidade"
     | "bairro"
     | "url_externa"

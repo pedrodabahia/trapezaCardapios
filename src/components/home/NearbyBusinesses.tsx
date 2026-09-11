@@ -1,11 +1,11 @@
 import { PremiumBusinessCard } from "./PremiumBusinessCard";
 import type { EmpresaCard } from "./BusinessCard";
 
-// "Perto de você" — só mostra empresas do PRÓPRIO sistema Trapeza
-// (empresa externa nunca entra aqui; essa vitrine é justamente a isca
-// pra atrair empresas novas pro sistema, mostrando o card bonito que só
-// quem tem Trapeza ganha). Cards grandes/premium, não a listagem
-// compacta usada em "Explore lojas".
+// "⚡ Peça rápido" — só mostra empresas do PRÓPRIO sistema Trapeza
+// (empresa externa nunca entra aqui; essa vitrine é a isca pra atrair
+// empresa nova pro sistema, mostrando o card "premium" que só quem tem
+// Trapeza ganha). Card grande/dourado, diferente do card padrão usado nos
+// outros carrosséis de intenção.
 export function NearbyBusinesses({
   empresas,
   abertoPorEmpresa,
@@ -20,8 +20,8 @@ export function NearbyBusinesses({
 
   return (
     <section className="mx-auto max-w-6xl px-4 pt-5">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-display text-base font-bold">Peça em poucos cliques</h2>
+      <div className="mb-0.5 flex items-center justify-between">
+        <h2 className="font-display text-base font-bold">⚡ Peça rápido</h2>
         <button
           onClick={onVerMais}
           className="text-xs font-semibold"
@@ -30,8 +30,9 @@ export function NearbyBusinesses({
           Ver mais
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {empresas.slice(0, 6).map((e) => (
+      <p className="text-xs text-muted-foreground">Bateu aquela fome? Resolve rapidinho.</p>
+      <div className="mt-3 flex gap-3 overflow-x-auto no-scrollbar pb-1">
+        {empresas.slice(0, 12).map((e) => (
           <PremiumBusinessCard key={e.id} empresa={e} aberto={abertoPorEmpresa[e.id]} />
         ))}
       </div>

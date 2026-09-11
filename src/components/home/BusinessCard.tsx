@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { labelCategoriaNegocio } from "@/lib/categorias-negocio";
+import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import type { Empresa } from "@/lib/admin-server";
 
 // listEmpresasPublicas devolve só um subconjunto de campos da empresa (não
@@ -13,7 +13,7 @@ export type EmpresaCard = Pick<
   | "nome"
   | "logo_url"
   | "endereco"
-  | "categoria"
+  | "categorias"
   | "cidade"
   | "tipo"
   | "url_externa"
@@ -35,7 +35,9 @@ export function BusinessCard({
   variant?: "grid" | "row";
   className?: string;
 }) {
-  const categoriaLabel = labelCategoriaNegocio(empresa.categoria);
+  // Card compacto: mostra no máximo 2 categorias (área pequena demais
+  // pra listar todas se a empresa marcou várias).
+  const categoriaLabel = labelsCategoriasNegocio(empresa.categorias).slice(0, 2).join(" / ");
   const ehExterna = empresa.tipo === "externa";
 
   const imagem = empresa.logo_url ? (
@@ -54,7 +56,7 @@ export function BusinessCard({
     variant === "row" ? (
       <Card className={cardClass(destaque, className)}>
         <CardContent className="flex items-center gap-3 p-2.5">
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">{imagem}</div>
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-muted">{imagem}</div>
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-display text-sm font-semibold leading-tight">
               {empresa.nome}
@@ -77,7 +79,7 @@ export function BusinessCard({
             {[categoriaLabel, empresa.cidade].filter(Boolean).join(" • ")}
           </p>
           <span
-            className="inline-block rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
+            className="inline-block rounded px-2.5 py-1 text-[11px] font-bold text-white"
             style={{ backgroundColor: "var(--tp-orange, #c65d3a)" }}
           >
             {ehExterna ? "Visitar site →" : "Ver loja →"}

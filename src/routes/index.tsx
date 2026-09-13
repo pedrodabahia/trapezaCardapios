@@ -153,16 +153,16 @@ function Landing() {
 
       <CategoryScroller categoriaFiltro={TODAS_CATEGORIAS} />
 
-      {!isLoading && (
+      <PromoCarousel anuncios={anunciosHome} />
+
+
+      {/*!isLoading && (
         <NearbyBusinesses
           empresas={pecaRapido}
           abertoPorEmpresa={abertoPorEmpresa}
           onVerMais={scrollToExplore}
         />
-      )}
-
-
-      <PromoCarousel anuncios={anunciosHome} />
+      )*/}
 
       <IntentCarousel
         titulo="🍔 Pra matar a fome"

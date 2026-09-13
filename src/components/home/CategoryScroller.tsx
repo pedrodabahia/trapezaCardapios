@@ -47,7 +47,7 @@ export function CategoryScroller({
           >
             <span
               className="flex h-14 w-14 items-center justify-center rounded-full"
-              style={{ backgroundColor: "var(--tp-cream, #fdf6ec)" }}
+              style={{ backgroundColor: "var(--tp-cream, #63baab" }}
             >
               <MoreHorizontal className="h-6 w-6" style={{ color: "#763200" }} />
             </span>
@@ -79,7 +79,7 @@ function CategoriaIcone({ categoria: c, ativa }: { categoria: CategoriaNegocio; 
           "text-2xl transition-all duration-200",
           ativa && "scale-105",
         )}
-        style={{ backgroundColor: ativa ? "var(--tp-orange)" : "var(--tp-cream, #fdf6ec)" }}
+        style={{ backgroundColor: ativa ? "var(--tp-orange)" : "#e9e9ff" }}
       >
         <img className="w-[50%]" src={c.imagem_url} />
       </span>

@@ -66,12 +66,12 @@ function PlatformDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="min-w-0">
             <h1 className="font-display text-xl font-bold">TRAPEZA · plataforma</h1>
-            <p className="text-xs text-muted-foreground">{session.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{session.email}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link to="/plataforma/anuncios">
               <Button variant="outline" size="sm">
                 Anúncios da home
@@ -96,8 +96,8 @@ function PlatformDashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold">Empresas cadastradas</h2>
             <p className="text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ function PlatformDashboard() {
               {empresas.length === 1 ? "empresa" : "empresas"}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link to="/plataforma/empresas/nova-externa">
               <Button variant="outline">+ Empresa externa</Button>
             </Link>

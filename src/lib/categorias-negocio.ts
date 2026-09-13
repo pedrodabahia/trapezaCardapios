@@ -15,14 +15,14 @@ export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
   {
     valor: "distribuidora",
     label: "Distribuidoras",
-    imagem_url: "/armazem.png",
+    imagem_url: "/distrib.png",
     cor: "#E8F8EC",
   },
 
   {
     valor: "lanchonete",
     label: "Lanchonetes",
-    imagem_url: "/tenda.png",
+    imagem_url: "/lanchonete.png",
     cor: "#FFF0DC",
   },
 
@@ -85,14 +85,21 @@ export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
   {
     valor: "servico",
     label: "Serviços",
-    imagem_url: "/makeover.png",
+    imagem_url: "/servico.png",
     cor: "#FFE8F0",
   },
   
   {
     valor: "taxi",
-    label: "Taxi/Moto",
-    imagem_url: "/makeover.png",
+    label: "Taxi",
+    imagem_url: "/taxi.png",
+    cor: "#FFE8F0",
+  },
+    
+  {
+    valor: "mototaxi",
+    label: "Moto-Taxi",
+    imagem_url: "/mototaxi.png",
     cor: "#FFE8F0",
   },
 

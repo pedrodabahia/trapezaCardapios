@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Search, MapPin, ChevronDown, Menu, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import trapezaimg from "../../../public/logo.svg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,9 +45,15 @@ export function HomeHero({
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-8 pt-3">
         {/* topo: logo + menu */}
         <div className="flex items-center justify-between">
-          <Link to="/" className="font-display text-lg font-bold lowercase tracking-tight">
-            trapeza
+          <Link to="/" className="font-display flex items-center text-lg tracking-tight">
+          <img className="w-10 mr-2" src={trapezaimg} />
+            <div>
+              <h1 className="font-bold -mb-[2px]">TRAPEZA</h1>
+              <p className="text-[10px] ml-[2px] font-regular">Tudo perto de você</p>
+            </div>
           </Link>
+  
+  {/*
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -65,9 +72,13 @@ export function HomeHero({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+*/}
+
         </div>
 
         {/* localização */}
+  
+{/*
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="mt-3 flex items-center gap-1 text-xs font-semibold text-white/85">
@@ -87,6 +98,8 @@ export function HomeHero({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+*/}
+
 
         {/* busca */}
         <div id="busca" className="relative mt-3">
@@ -109,13 +122,6 @@ export function HomeHero({
             <p className="mt-2 text-sm text-white/80">
               Lojas, produtos e serviços da sua cidade — encontre e compre agora.
             </p>
-            <button
-              onClick={onExplorar}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold text-white"
-              style={{ backgroundColor: "var(--tp-orange)" }}
-            >
-              Explorar agora <ArrowRight className="h-4 w-4" />
-            </button>
           </div>
 
           {/* Ilustração simples (formas/emoji) no lugar do mascote do
@@ -127,15 +133,6 @@ export function HomeHero({
           </div>
         </div>
 
-        {/* estatísticas — só dado real; sem "avaliação" (não existe
-            sistema de nota) nem "produtos" (não existe contagem
-            cross-empresa ainda). */}
-        <div className="mt-6 flex gap-6 border-t border-white/15 pt-4 text-sm">
-          <div>
-            <p className="font-display text-lg font-bold">{totalLojas}</p>
-            <p className="text-xs text-white/70">{totalLojas === 1 ? "Loja ativa" : "Lojas ativas"}</p>
-          </div>
-        </div>
       </div>
     </section>
   );

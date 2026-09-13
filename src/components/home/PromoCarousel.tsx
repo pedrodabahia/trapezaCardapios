@@ -5,10 +5,9 @@ import type { AnuncioHome } from "@/lib/admin-server";
 const INTERVALO_MS = 5000;
 
 // Carrossel de propaganda — 100% controlado pelo super-admin em
-// /plataforma/anuncios (ver AnuncioHome). Substituiu a ideia anterior de
-// sortear automaticamente um produto em promoção; agora é curadoria
-// manual mesma. Troca sozinho a cada 5s; os pontinhos embaixo deixam
-// claro que tem mais de um anúncio (e dá pra clicar pra pular direto).
+// /plataforma/anuncios. Layout maior (estilo banner de app de e-commerce:
+// texto grande à esquerda, foto redonda grande à direita, CTA embaixo do
+// texto) em vez do banner fino de antes. Troca sozinho a cada 5s.
 export function PromoCarousel({ anuncios }: { anuncios: AnuncioHome[] }) {
   const [indice, setIndice] = useState(0);
 
@@ -26,32 +25,46 @@ export function PromoCarousel({ anuncios }: { anuncios: AnuncioHome[] }) {
   const ehExterno = anuncio.link_url?.startsWith("http");
 
   const conteudo = (
-    <div className="trapeza-banner-gradient relative flex items-center gap-3 overflow-hidden rounded-2xl p-3 text-white shadow-sm">
-      <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
-
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/15">
-        {anuncio.imagem_url ? (
-          <img src={anuncio.imagem_url} alt={anuncio.titulo} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl">🔥</div>
-        )}
-      </div>
+    <div
+      className={
+        "relative flex min-h-[150px] items-center gap-4 overflow-hidden rounded p-5 py-1 pr-1 text-white shadow-md sm:min-h-[170px] sm:p-6 " +
+        (anuncio.cor_fundo ? "" : "trapeza-banner-gradient")
+      }
+      style={anuncio.cor_fundo ? { backgroundColor: anuncio.cor_fundo } : undefined}
+    >
+      <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10" />
+      <div className="absolute -bottom-8 left-1/3 h-20 w-20 rounded-full bg-white/5" />
 
       <div className="relative min-w-0 flex-1">
-        <p className="truncate font-display text-sm font-bold">{anuncio.titulo}</p>
+        <p className="font-display text-xl font-extrabold leading-tight sm:text-2xl">
+          {anuncio.titulo}
+        </p>
         {anuncio.subtitulo && (
-          <p className="truncate text-xs text-white/80">{anuncio.subtitulo}</p>
+          <p className="mt-1.5 text-sm text-white/80">{anuncio.subtitulo}</p>
+        )}
+        {anuncio.link_url && (
+          <div
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold"
+            style={{ color: "var(--tp-brown)" }}
+          >
+            Ver mais <ArrowRight className="h-3.5 w-3.5" />
+          </div>
         )}
       </div>
 
-      {anuncio.link_url && (
-        <div
-          className="relative flex shrink-0 items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold"
-          style={{ color: "var(--tp-brown)" }}
-        >
-          Ver mais <ArrowRight className="h-3.5 w-3.5" />
-        </div>
-      )}
+      <div className="relative h-[150px] w-[40%] shrink-0 overflow-hidden rounded border-4 border-white/20 sm:h-32 sm:w-32">
+        {anuncio.imagem_url ? (
+          <img
+            src={anuncio.imagem_url}
+            alt={anuncio.titulo}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-white/10 text-4xl">
+            🔥
+          </div>
+        )}
+      </div>
     </div>
   );
 

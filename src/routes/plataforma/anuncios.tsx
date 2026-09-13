@@ -34,10 +34,17 @@ function blankAnuncio(ordem: number): AnuncioHome {
     subtitulo: "",
     imagem_url: "",
     link_url: "",
+    cor_fundo: null,
     ativo: true,
     ordem,
   };
 }
+
+// O banner tem pouco espaço (texto ao lado de uma foto grande) — título e
+// subtítulo longos quebram feio. Limita os dois a 25 caracteres direto no
+// input (atributo maxLength nativo do HTML — o navegador já impede
+// digitar/colar mais do que isso, sem precisar de JS pra cortar depois).
+const MAX_CARACTERES = 25;
 
 function AnunciosPlataforma() {
   const session = useAuthSession((s) => s.session);
@@ -76,9 +83,9 @@ function AnunciosPlataforma() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <h1 className="font-display text-xl font-bold">Anúncios da home</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => setEditando(blankAnuncio(anuncios.length))}>
               + Novo anúncio
             </Button>
@@ -91,7 +98,7 @@ function AnunciosPlataforma() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
         <p className="text-sm text-muted-foreground">
           Esses são os slides do carrossel de propaganda da home (entre
           "Peça rápido" e "Pra matar a fome"). Só os marcados como "Ativo"
@@ -108,7 +115,7 @@ function AnunciosPlataforma() {
           <div className="space-y-3">
             {anuncios.map((a) => (
               <Card key={a.id}>
-                <CardContent className="flex items-center gap-3 p-4">
+                <CardContent className="flex flex-wrap items-center gap-3 p-4">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                     {a.imagem_url && (
                       <img src={a.imagem_url} alt="" className="h-full w-full object-cover" />
@@ -120,7 +127,7 @@ function AnunciosPlataforma() {
                       Ordem {a.ordem} · {a.link_url || "sem link"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Switch checked={a.ativo} onCheckedChange={() => onToggleAtivo(a)} />
                     <Button size="sm" variant="outline" onClick={() => setEditando(a)}>
                       Editar
@@ -189,14 +196,25 @@ function FormAnuncio({
       <CardContent className="space-y-4">
         <div>
           <Label>Título</Label>
-          <Input value={draft.titulo} onChange={(e) => setDraft({ ...draft, titulo: e.target.value })} />
+          <Input
+            value={draft.titulo}
+            maxLength={MAX_CARACTERES}
+            onChange={(e) => setDraft({ ...draft, titulo: e.target.value })}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {draft.titulo.length}/{MAX_CARACTERES} caracteres — curto pra não quebrar no banner.
+          </p>
         </div>
         <div>
           <Label>Subtítulo (opcional)</Label>
           <Textarea
             value={draft.subtitulo ?? ""}
+            maxLength={MAX_CARACTERES}
             onChange={(e) => setDraft({ ...draft, subtitulo: e.target.value })}
           />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {(draft.subtitulo ?? "").length}/{MAX_CARACTERES} caracteres.
+          </p>
         </div>
         <ImageUploadField
           label="Imagem"
@@ -207,6 +225,30 @@ function FormAnuncio({
           pasta="anuncios"
           plataforma
         />
+        <div>
+          <Label>Cor de fundo (opcional)</Label>
+          <div className="flex flex-wrap items-center gap-3">
+            <Input
+              type="color"
+              className="h-10 w-16 p-1"
+              value={draft.cor_fundo ?? "#c65d3a"}
+              onChange={(e) => setDraft({ ...draft, cor_fundo: e.target.value })}
+            />
+            <span className="text-xs text-muted-foreground">
+              {draft.cor_fundo ?? "Sem cor definida — usa o gradiente padrão"}
+            </span>
+            {draft.cor_fundo && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setDraft({ ...draft, cor_fundo: null })}
+              >
+                Remover
+              </Button>
+            )}
+          </div>
+        </div>
         <div>
           <Label>Link ao clicar (opcional)</Label>
           <Input

@@ -100,8 +100,8 @@ function EmpresaDetail() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h1 className="font-display text-xl font-bold">{empresa.nome}</h1>
             <Badge variant={ehExterna ? "outline" : "secondary"}>
               {ehExterna ? "Externa" : "Trapeza"}
@@ -126,7 +126,7 @@ function EmpresaDetail() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
         <Card>
           <CardHeader>
             <CardTitle>Dados</CardTitle>

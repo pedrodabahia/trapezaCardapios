@@ -5,7 +5,7 @@ import {
   listEmpresasPublicas,
   getTopProdutosPlataforma,
   getConfigsEmpresas,
-  getAnunciosPromocao,
+  getAnunciosHome,
 } from "@/lib/admin-server";
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
 import { HomeHero, TODAS_CIDADES } from "@/components/home/HomeHero";
@@ -53,15 +53,14 @@ function Landing() {
     staleTime: 60_000,
   });
 
-  const { data: anunciosPromocao = [] } = useQuery({
-    queryKey: ["anuncios-promocao"],
-    queryFn: () => getAnunciosPromocao({ data: { limite: 4 } }),
+  const { data: anunciosHome = [] } = useQuery({
+    queryKey: ["anuncios-home"],
+    queryFn: () => getAnunciosHome({ data: {} as Record<string, never> }),
     staleTime: 60_000,
   });
 
   const [busca, setBusca] = useState("");
   const [cidadeFiltro, setCidadeFiltro] = useState<string>(TODAS_CIDADES);
-  const [categoriaFiltro, setCategoriaFiltro] = useState<string>(TODAS_CATEGORIAS);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const cidades = useMemo(() => {
@@ -120,13 +119,13 @@ function Landing() {
     return mapa;
   }, [configsPorEmpresa, idsParaHorario]);
 
-  // "Descubra negócios da sua cidade" — a seção ampla do fim, com todos os
-  // filtros (busca + cidade + categoria).
+  // "Descubra negócios da sua cidade" — a seção ampla do fim, com busca +
+  // cidade (o filtro por categoria agora vive nas páginas dedicadas em
+  // /categoria/$valor, pra onde os ícones da home levam).
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return empresas.filter((e) => {
       if (cidadeFiltro !== TODAS_CIDADES && e.cidade !== cidadeFiltro) return false;
-      if (categoriaFiltro !== TODAS_CATEGORIAS && !e.categorias?.includes(categoriaFiltro)) return false;
       if (!termo) return true;
       return (
         e.nome.toLowerCase().includes(termo) ||
@@ -134,7 +133,7 @@ function Landing() {
         (e.endereco ?? "").toLowerCase().includes(termo)
       );
     });
-  }, [empresas, busca, cidadeFiltro, categoriaFiltro]);
+  }, [empresas, busca, cidadeFiltro]);
 
   function scrollToExplore() {
     document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -152,6 +151,8 @@ function Landing() {
         onExplorar={scrollToExplore}
       />
 
+      <CategoryScroller categoriaFiltro={TODAS_CATEGORIAS} />
+
       {!isLoading && (
         <NearbyBusinesses
           empresas={pecaRapido}
@@ -160,7 +161,8 @@ function Landing() {
         />
       )}
 
-      <PromoCarousel anuncios={anunciosPromocao} />
+
+      <PromoCarousel anuncios={anunciosHome} />
 
       <IntentCarousel
         titulo="🍔 Pra matar a fome"
@@ -209,7 +211,7 @@ function Landing() {
         uma. Some sozinha se não tiver produto vendido suficiente.
       */}
 
-       <CategoryScroller categoriaFiltro={categoriaFiltro} onChange={setCategoriaFiltro} />
+       
 
       <ExploreBusinesses
         empresas={filtradas}
@@ -217,7 +219,7 @@ function Landing() {
         visibleCount={visibleCount}
         onVerMais={() => setVisibleCount((v) => v + PAGE_SIZE)}
         isLoading={isLoading}
-        categoriaSelecionada={categoriaFiltro !== TODAS_CATEGORIAS ? categoriaFiltro : null}
+        categoriaSelecionada={null}
       />
 
       <BusinessCTASmall />

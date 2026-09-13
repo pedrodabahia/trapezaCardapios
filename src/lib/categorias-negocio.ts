@@ -14,56 +14,84 @@ export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
 
   {
     valor: "distribuidora",
-    label: "Abasteça",
+    label: "Distribuidoras",
     imagem_url: "/armazem.png",
     cor: "#E8F8EC",
   },
 
   {
     valor: "lanchonete",
-    label: "Peça um lanche",
+    label: "Lanchonetes",
     imagem_url: "/tenda.png",
     cor: "#FFF0DC",
   },
 
   {
     valor: "pizzaria",
-    label: "Pizza",
+    label: "Pizzarias",
     imagem_url: "/pizza.png",
     cor: "#FFE5E1",
   },
 
   {
     valor: "confeitaria",
-    label: "Docinhos",
+    label: "Confeitarias",
     imagem_url: "/bolo.png",
     cor: "#F8E8F5",
   },
 
   {
     valor: "restaurante",
-    label: "Almoço",
+    label: "Restaurante",
     imagem_url: "/comida.png",
     cor: "#FFF4D6",
   },
 
   {
-    valor: "acai",
-    label: "Açaí",
-    imagem_url: "/acai.png",
+    valor: "sorvete",
+    label: "Sorveteria/Açaí",
+    imagem_url: "/sorvete.png",
     cor: "#F3E8FF",
   },
 
   {
     valor: "barbearia",
-    label: "Corte",
+    label: "Barbearias",
     imagem_url: "/barba.png",
     cor: "#EAE6FF",
   },
 
   {
     valor: "estetica",
-    label: "Cuidados",
+    label: "Estética/Beleza",
+    imagem_url: "/lindo.png",
+    cor: "#FFE8F0",
+  },  
+  
+  {
+    valor: "farmacia",
+    label: "Farmácias",
+    imagem_url: "/farmacia.png",
+    cor: "#FFE8F0",
+  },
+  
+  {
+    valor: "mercado",
+    label: "Mercados",
+    imagem_url: "/carrinho-de-compras.png",
+    cor: "#FFE8F0",
+  },
+  
+  {
+    valor: "servico",
+    label: "Serviços",
+    imagem_url: "/makeover.png",
+    cor: "#FFE8F0",
+  },
+  
+  {
+    valor: "taxi",
+    label: "Taxi/Moto",
     imagem_url: "/makeover.png",
     cor: "#FFE8F0",
   },

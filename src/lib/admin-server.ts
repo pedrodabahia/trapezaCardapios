@@ -97,6 +97,14 @@ export {
 
 export { uploadImagemPlataforma } from "@/modules/midia/controllers/midia.controller";
 
+export {
+  getAnunciosHome,
+  listAnunciosAdmin,
+  saveAnuncioHome,
+  deleteAnuncioHome,
+} from "@/modules/anuncios/controllers/anuncio.controller";
+export type { AnuncioHome, NovoAnuncioInput } from "@/modules/anuncios/types/anuncio.types";
+
 // ============================================================================
 // Planos
 // ============================================================================

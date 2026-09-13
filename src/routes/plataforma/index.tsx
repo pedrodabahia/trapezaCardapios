@@ -72,6 +72,11 @@ function PlatformDashboard() {
             <p className="text-xs text-muted-foreground">{session.email}</p>
           </div>
           <div className="flex gap-2">
+            <Link to="/plataforma/anuncios">
+              <Button variant="outline" size="sm">
+                Anúncios da home
+              </Button>
+            </Link>
             <Link to="/">
               <Button variant="outline" size="sm">
                 Ver site

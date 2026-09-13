@@ -38,7 +38,7 @@ export class MidiaService {
   // isso antes de mandar).
   async uploadImagem(opts: {
     empresaId: string;
-    pasta: "produtos" | "categorias" | "logo" | "capa";
+    pasta: "produtos" | "categorias" | "logo" | "capa" | "anuncios";
     contentType: string;
     base64Data: string;
   }): Promise<{ url: string }> {

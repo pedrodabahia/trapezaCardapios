@@ -12,7 +12,7 @@ export const uploadImagem = createServerFn({ method: "POST" })
     (d: {
       token: string;
       empresaId: string;
-      pasta: "produtos" | "categorias" | "logo" | "capa";
+      pasta: "produtos" | "categorias" | "logo" | "capa" | "anuncios";
       contentType: string;
       base64Data: string;
     }) => d,
@@ -41,7 +41,7 @@ export const uploadImagemPlataforma = createServerFn({ method: "POST" })
     (d: {
       token: string;
       pastaId: string;
-      pasta: "produtos" | "categorias" | "logo" | "capa";
+      pasta: "produtos" | "categorias" | "logo" | "capa" | "anuncios";
       contentType: string;
       base64Data: string;
     }) => d,

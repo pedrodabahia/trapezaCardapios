@@ -30,7 +30,7 @@ export function ImageUploadField({
   // Storage — pode ser um id temporário quando a empresa ainda não existe
   // (formulário de cadastro de empresa externa nova).
   empresaId: string;
-  pasta: "produtos" | "categorias" | "logo" | "capa";
+  pasta: "produtos" | "categorias" | "logo" | "capa" | "anuncios";
   plataforma?: boolean;
 }) {
   const [enviando, setEnviando] = useState(false);

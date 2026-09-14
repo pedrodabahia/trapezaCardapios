@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   listEmpresasPublicas,
   getTopProdutosPlataforma,
   getConfigsEmpresas,
   getAnunciosHome,
+  buscarProdutosPlataforma,
 } from "@/lib/admin-server";
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
+import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import { HomeHero, TODAS_CIDADES } from "@/components/home/HomeHero";
 import { CategoryScroller, TODAS_CATEGORIAS } from "@/components/home/CategoryScroller";
 import { NearbyBusinesses } from "@/components/home/NearbyBusinesses";
@@ -119,21 +121,56 @@ function Landing() {
     return mapa;
   }, [configsPorEmpresa, idsParaHorario]);
 
-  // "Descubra negócios da sua cidade" — a seção ampla do fim, com busca +
-  // cidade (o filtro por categoria agora vive nas páginas dedicadas em
-  // /categoria/$valor, pra onde os ícones da home levam).
-  const filtradas = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
-    return empresas.filter((e) => {
-      if (cidadeFiltro !== TODAS_CIDADES && e.cidade !== cidadeFiltro) return false;
-      if (!termo) return true;
+  // Resultados da busca, tipo Google: aparecem numa lista suspensa embaixo
+  // do campo de busca (dentro do HomeHero), sem mexer em mais nada da
+  // página. Casa por nome, categoria e tipo (trapeza/externa) — basta
+  // digitar "h" pra começar a achar tudo que tem "h" em algum desses
+  // campos, e vai afunilando conforme mais letras entram.
+
+
+
+const resultadosBusca = useMemo(() => {
+  const termo = busca.trim().toLowerCase();
+
+  if (!termo) return [];
+
+  return empresas
+    .filter((e) => {
+      const categoriasTexto = labelsCategoriasNegocio(e.categorias)
+        .join(" ")
+        .toLowerCase();
+
+      const tipoTexto = e.tipo === "externa" ? "externa" : "trapeza";
+
       return (
         e.nome.toLowerCase().includes(termo) ||
-        (e.cidade ?? "").toLowerCase().includes(termo) ||
-        (e.endereco ?? "").toLowerCase().includes(termo)
+        categoriasTexto.includes(termo) ||
+        tipoTexto.includes(termo) ||
+        (e.cidade ?? "").toLowerCase().includes(termo)
       );
-    });
-  }, [empresas, busca, cidadeFiltro]);
+    })
+    .slice(0, 8);
+}, [empresas, busca]);  // Busca de PRODUTO ("digitei 'skol', onde vende?") cruza catálogo de
+  // várias empresas ao mesmo tempo — isso é uma consulta no banco, então
+  // usa um debounce de 300ms (espera parar de digitar) em vez de
+  // disparar uma chamada a cada letra.
+  const [buscaDebounced, setBuscaDebounced] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setBuscaDebounced(busca.trim()), 300);
+    return () => clearTimeout(id);
+  }, [busca]);
+
+  const { data: resultadosProdutos = [] } = useQuery({
+    queryKey: ["busca-produtos-plataforma", buscaDebounced],
+    queryFn: () => buscarProdutosPlataforma({ data: { termo: buscaDebounced, limite: 8 } }),
+    enabled: buscaDebounced.length > 0,
+    staleTime: 15_000,
+  });
+
+  // "Descubra negócios da sua cidade" — só filtra por cidade. A busca NÃO
+  // filtra mais essa seção (ela só alimenta a lista suspensa do HomeHero
+  // agora) — por isso reaproveita direto o `empresasDaCidade` já calculado
+  // acima pros carrosséis de intenção.
 
   function scrollToExplore() {
     document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -147,6 +184,8 @@ function Landing() {
         onChangeCidade={setCidadeFiltro}
         busca={busca}
         onBuscaChange={setBusca}
+        resultadosBusca={resultadosBusca}
+        resultadosProdutos={resultadosProdutos}
         totalLojas={empresas.length}
         onExplorar={scrollToExplore}
       />
@@ -214,7 +253,7 @@ function Landing() {
        
 
       <ExploreBusinesses
-        empresas={filtradas}
+        empresas={empresasDaCidade}
         totalSemFiltro={empresas.length}
         visibleCount={visibleCount}
         onVerMais={() => setVisibleCount((v) => v + PAGE_SIZE)}

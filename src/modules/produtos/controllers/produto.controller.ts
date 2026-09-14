@@ -173,3 +173,54 @@ export const getAnunciosPromocao = createServerFn({ method: "POST" })
 
     return anuncios;
   });
+
+export type ProdutoBuscaGlobal = {
+  produtoId: string;
+  nome: string;
+  precoAtual: number;
+  imagemUrl: string | null;
+  empresaId: string;
+  empresaNome: string;
+  empresaSlug: string;
+};
+
+// Público (sem login) — busca produto pelo nome em TODAS as empresas
+// Trapeza ativas ao mesmo tempo ("digitei 'skol', onde vende?"). Usado na
+// lista suspensa de busca da home, junto com o resultado de empresas.
+export const buscarProdutosPlataforma = createServerFn({ method: "POST" })
+  .validator((d: { termo: string; limite?: number }) => d)
+  .handler(async ({ data }): Promise<ProdutoBuscaGlobal[]> => {
+    const termo = data.termo.trim();
+    const limite = data.limite ?? 8;
+    if (!termo) return [];
+
+    const produtoRepository = container.resolve("produtoRepository");
+    const empresaRepository = container.resolve("empresaRepository");
+
+    // Busca uma folga a mais (limite*3) porque parte dos achados pode
+    // pertencer a empresa suspensa/externa e vai ser descartada abaixo.
+    const produtos = await produtoRepository.buscarPorNomeGlobal(termo, limite * 3);
+    if (produtos.length === 0) return [];
+
+    const empresasAtivas = (await empresaRepository.listarPublicasAtivas()).filter(
+      (e) => e.tipo === "trapeza",
+    );
+    const empresaPorId = new Map(empresasAtivas.map((e) => [e.id, e]));
+
+    const resultado: ProdutoBuscaGlobal[] = [];
+    for (const p of produtos) {
+      const empresa = empresaPorId.get(p.empresa_id);
+      if (!empresa) continue; // empresa suspensa/inativa — não mostra
+      resultado.push({
+        produtoId: p.id,
+        nome: p.nome,
+        precoAtual: p.preco,
+        imagemUrl: p.imagem_url,
+        empresaId: empresa.id,
+        empresaNome: empresa.nome,
+        empresaSlug: empresa.slug,
+      });
+      if (resultado.length >= limite) break;
+    }
+    return resultado;
+  });

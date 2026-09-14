@@ -2,6 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { Search, MapPin, ChevronDown, Menu, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import trapezaimg from "../../../public/logo.svg";
+import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
+import { brl } from "@/lib/format";
+import type { EmpresaCard } from "./BusinessCard";
+import type { ProdutoBuscaGlobal } from "@/lib/admin-server";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +31,8 @@ export function HomeHero({
   onChangeCidade,
   busca,
   onBuscaChange,
+  resultadosBusca,
+  resultadosProdutos,
   totalLojas,
   onExplorar,
 }: {
@@ -35,13 +41,15 @@ export function HomeHero({
   onChangeCidade: (v: string) => void;
   busca: string;
   onBuscaChange: (v: string) => void;
+  resultadosBusca: EmpresaCard[];
+  resultadosProdutos: ProdutoBuscaGlobal[];
   totalLojas: number;
   onExplorar: () => void;
 }) {
   const cidadeAtual = cidadeFiltro !== TODAS_CIDADES ? cidadeFiltro : "Todas as cidades";
 
   return (
-    <section className="trapeza-hero-gradient relative overflow-hidden text-white">
+    <section className="trapeza-hero-gradient relative overflow-visible text-white">
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-8 pt-3">
         {/* topo: logo + menu */}
         <div className="flex items-center justify-between">
@@ -110,6 +118,104 @@ export function HomeHero({
             placeholder="O que você está procurando?"
             className="h-11 rounded-2xl border-0 bg-white pl-10 text-sm text-foreground shadow-md"
           />
+
+          {/* Resultado da busca tipo Google: lista suspensa embaixo do
+              campo, sem filtrar mais nada da página — só aparece
+              enquanto tiver texto digitado. Duas seções: empresas (nome/
+              categoria/tipo/cidade) e produtos ("digitei 'skol', onde
+              vende?" — mostra o produto e em qual empresa ele está). */}
+          {busca.trim() && (
+            <div className="absolute inset-x-0 top-full z-30 mt-2 max-h-96 overflow-y-auto rounded-2xl bg-white text-left text-foreground shadow-xl">
+              {resultadosBusca.length === 0 && resultadosProdutos.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">
+                  Nenhum resultado pra "{busca}".
+                </p>
+              ) : (
+                <>
+                  {resultadosBusca.length > 0 && (
+                    <div>
+                      <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                        Empresas
+                      </p>
+                      {resultadosBusca.map((e) => {
+                        const ehExterna = e.tipo === "externa";
+                        const linhaInfo = [
+                          labelsCategoriasNegocio(e.categorias).join(" / "),
+                          e.cidade,
+                        ]
+                          .filter(Boolean)
+                          .join(" • ");
+                        const conteudo = (
+                          <div className="flex items-center gap-3 border-b border-border/50 p-3 last:border-0 hover:bg-muted">
+                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                              {e.logo_url && (
+                                <img
+                                  src={e.logo_url}
+                                  alt={e.nome}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold">{e.nome}</p>
+                              {linhaInfo && (
+                                <p className="truncate text-xs text-muted-foreground">{linhaInfo}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                        return ehExterna ? (
+                          <a key={e.id} href={e.url_externa ?? "#"} target="_blank" rel="noreferrer">
+                            {conteudo}
+                          </a>
+                        ) : (
+                          <Link key={e.id} to="/s/$slug" params={{ slug: e.slug }}>
+                            {conteudo}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {resultadosProdutos.length > 0 && (
+                    <div>
+                      <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                        Produtos
+                      </p>
+                      {resultadosProdutos.map((p) => (
+                        <Link
+                          key={p.produtoId}
+                          to="/s/$slug/product/$id"
+                          params={{ slug: p.empresaSlug, id: p.produtoId }}
+                        >
+                          <div className="flex items-center gap-3 border-b border-border/50 p-3 last:border-0 hover:bg-muted">
+                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                              {p.imagemUrl && (
+                                <img
+                                  src={p.imagemUrl}
+                                  alt={p.nome}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold">{p.nome}</p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                Vendido em {p.empresaNome}
+                              </p>
+                            </div>
+                            <span className="shrink-0 text-xs font-bold" style={{ color: "var(--tp-orange)" }}>
+                              {brl(p.precoAtual)}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* headline + CTA + ilustração */}

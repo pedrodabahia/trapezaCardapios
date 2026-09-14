@@ -15,6 +15,11 @@ export interface ProdutoRepository {
   // os que estão pausados também).
   listarTodosPorEmpresa(empresaId: string): Promise<Produto[]>;
   contarPorEmpresa(empresaId: string): Promise<number>;
+  // Busca por nome em TODAS as empresas (não filtra por empresa_id) —
+  // usado na busca global da home ("digitei 'skol', onde vende?"). Só
+  // produtos ativos; quem chama isso ainda precisa cruzar com a lista de
+  // empresas ativas/trapeza pra descartar produto de empresa suspensa.
+  buscarPorNomeGlobal(termo: string, limite: number): Promise<Produto[]>;
   salvar(empresaId: string, produto: NovoProdutoInput): Promise<{ id: string }>;
   remover(empresaId: string, produtoId: string): Promise<void>;
 }
@@ -74,6 +79,17 @@ export class SupabaseProdutoRepository implements ProdutoRepository {
       .select("id", { count: "exact", head: true })
       .eq("empresa_id", empresaId);
     return count ?? 0;
+  }
+
+  async buscarPorNomeGlobal(termo: string, limite: number): Promise<Produto[]> {
+    const { data, error } = await this.sb()
+      .from("produtos")
+      .select("*")
+      .ilike("nome", `%${termo}%`)
+      .eq("ativo", true)
+      .limit(limite);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Produto[];
   }
 
   async salvar(empresaId: string, produto: NovoProdutoInput): Promise<{ id: string }> {

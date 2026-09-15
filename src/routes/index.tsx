@@ -179,6 +179,7 @@ const resultadosBusca = useMemo(() => {
 
   return (
     <div id="topo" className="trapeza-home min-h-screen bg-background pb-16 md:pb-0">
+      <link rel="manifest" href="/manifest.webmanifest?v=2"></link>
       <HomeHero
         cidades={cidades}
         cidadeFiltro={cidadeFiltro}

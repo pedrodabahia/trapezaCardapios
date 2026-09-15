@@ -15,91 +15,91 @@ export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
   {
     valor: "distribuidora",
     label: "Distribuidoras",
-    imagem_url: "/distrib.png",
+    imagem_url: "/icons/distrib.png",
     cor: "#E8F8EC",
   },
 
   {
     valor: "lanchonete",
     label: "Lanchonetes",
-    imagem_url: "/lanchonete.png",
+    imagem_url: "/icons/lanchonete.png",
     cor: "#FFF0DC",
   },
 
   {
     valor: "pizzaria",
     label: "Pizzarias",
-    imagem_url: "/pizza.png",
+    imagem_url: "/icons/pizza.png",
     cor: "#FFE5E1",
   },
 
   {
     valor: "confeitaria",
     label: "Confeitarias",
-    imagem_url: "/bolo.png",
+    imagem_url: "/icons/bolo.png",
     cor: "#F8E8F5",
   },
 
   {
     valor: "restaurante",
     label: "Restaurante",
-    imagem_url: "/comida.png",
+    imagem_url: "/icons/comida.png",
     cor: "#FFF4D6",
   },
 
   {
     valor: "sorvete",
     label: "Sorveteria/Açaí",
-    imagem_url: "/sorvete.png",
+    imagem_url: "/icons/sorvete.png",
     cor: "#F3E8FF",
   },
 
   {
     valor: "barbearia",
     label: "Barbearias",
-    imagem_url: "/barba.png",
+    imagem_url: "/icons/barba.png",
     cor: "#EAE6FF",
   },
 
   {
     valor: "estetica",
     label: "Estética/Beleza",
-    imagem_url: "/lindo.png",
+    imagem_url: "/icons/lindo.png",
     cor: "#FFE8F0",
   },  
   
   {
     valor: "farmacia",
     label: "Farmácias",
-    imagem_url: "/farmacia.png",
+    imagem_url: "/icons/farmacia.png",
     cor: "#FFE8F0",
   },
   
   {
     valor: "mercado",
     label: "Mercados",
-    imagem_url: "/carrinho-de-compras.png",
+    imagem_url: "/icons/carrinho-de-compras.png",
     cor: "#FFE8F0",
   },
   
   {
     valor: "servico",
     label: "Serviços",
-    imagem_url: "/servico.png",
+    imagem_url: "/icons/servico.png",
     cor: "#FFE8F0",
   },
   
   {
     valor: "taxi",
     label: "Taxi",
-    imagem_url: "/taxi.png",
+    imagem_url: "/icons/taxi.png",
     cor: "#FFE8F0",
   },
     
   {
     valor: "mototaxi",
     label: "Moto-Taxi",
-    imagem_url: "/mototaxi.png",
+    imagem_url: "/icons/mototaxi.png",
     cor: "#FFE8F0",
   },
 

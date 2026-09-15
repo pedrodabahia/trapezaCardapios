@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Search, MapPin, ChevronDown, Menu, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import trapezaimg from "../../../public/logo.svg";
+import trapezaimg from "../../../public/icons/logo.svg";
 import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import { brl } from "@/lib/format";
 import type { EmpresaCard } from "./BusinessCard";

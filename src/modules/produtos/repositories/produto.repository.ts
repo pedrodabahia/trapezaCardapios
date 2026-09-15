@@ -2,6 +2,7 @@
 // Mesmo padrão de sempre: `salvar` faz update se vier `id`, insert se não
 // vier; toda query filtra por `empresa_id` como segunda trava de
 // segurança (isolamento de tenant), além do RLS do banco.
+import {Produto, NovoProdutoInput} from "../types/produto.types";
 import { adminClient } from "@/core/database/supabase-admin";
 
 export interface ProdutoRepository {

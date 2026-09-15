@@ -35,6 +35,11 @@ export type Empresa = {
   // Controlado só pelo super-admin (área /plataforma) — decide quem
   // aparece em "Empresas em destaque" na home.
   destaque: boolean;
+  // Palavras-chave livres pra melhorar o "achamento" na busca da home
+  // (ex: "bebidas, gelo, água, cerveja, distribuidora em Posto da Mata").
+  // Soma-se ao que a busca já compara (nome/categoria/tipo/cidade) — não
+  // substitui nada da lógica existente. Só editada pelo super-admin.
+  palavras_chave: string | null;
 };
 
 export type EmpresaConfigJson = {
@@ -126,5 +131,6 @@ export type EmpresaPlataformaPatch = Partial<
     | "bairro"
     | "url_externa"
     | "destaque"
+    | "palavras_chave"
   >
 >;

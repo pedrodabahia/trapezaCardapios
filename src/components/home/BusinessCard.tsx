@@ -82,29 +82,19 @@ export function BusinessCard({
             className="inline-block rounded px-2.5 py-1 text-[11px] font-bold text-white"
             style={{ backgroundColor: "var(--tp-orange, #c65d3a)" }}
           >
-            {ehExterna ? "Visitar site →" : "Ver loja →"}
+            Ver empresa →
           </span>
         </CardContent>
       </Card>
     );
 
-  // Empresa externa aponta pra fora do Trapeza; empresa Trapeza abre a
-  // página interna /s/slug.
-  if (ehExterna) {
-    return (
-      <a
-        href={empresa.url_externa ?? "#"}
-        target="_blank"
-        rel="noreferrer"
-        className="group block h-full"
-      >
-        {conteudo}
-      </a>
-    );
-  }
-
+  // Todo card agora abre a página de perfil da empresa dentro do Trapeza
+  // primeiro (/empresa/$slug) — de lá o cliente segue pro WhatsApp, ou
+  // pro cardápio completo quando a empresa tiver (ver página de perfil).
+  // Antes, empresa externa ia direto pro link/WhatsApp dela e empresa
+  // Trapeza ia direto pro cardápio — isso mudou de propósito.
   return (
-    <Link to="/s/$slug" params={{ slug: empresa.slug }} className="group block h-full">
+    <Link to="/empresa/$slug" params={{ slug: empresa.slug }} className="group block h-full">
       {conteudo}
     </Link>
   );

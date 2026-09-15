@@ -89,6 +89,7 @@ export {
   createEmpresa,
   createEmpresaExterna,
   updateEmpresaPlataforma,
+  saveEmpresaConfigPlataforma,
   updateEmpresaStatus,
   renovarAssinatura,
   getDashboardStats,

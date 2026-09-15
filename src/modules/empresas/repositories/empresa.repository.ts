@@ -28,6 +28,7 @@ export type EmpresaPublica = Pick<
   | "bairro"
   | "capa_url"
   | "destaque"
+  | "palavras_chave"
 >;
 
 export interface EmpresaRepository {
@@ -117,7 +118,7 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
     const { data, error } = await this.sb()
       .from("empresas")
       .select(
-        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque",
+        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque, palavras_chave",
       )
       .eq("status_pagamento", "ativo")
       .order("criado_em", { ascending: false });

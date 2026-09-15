@@ -14,11 +14,14 @@ import {
   listEmpresasAdmin,
   updateEmpresaStatus,
   updateEmpresaPlataforma,
+  saveEmpresaConfigPlataforma,
+  getConfigsEmpresas,
   deleteEmpresa,
   changeClientPassword,
   type Empresa,
   type EmpresaPlataformaPatch,
 } from "@/lib/admin-server";
+import { getHorarios, type DayHours } from "@/lib/admin-store";
 import { useAuthSession } from "@/lib/auth-session";
 import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
 
@@ -160,6 +163,8 @@ function EmpresaDetail() {
           onSaved={refetch}
         />
 
+        <HorarioCard token={session.accessToken} empresaId={empresa.id} />
+
         <Card>
           <CardHeader>
             <CardTitle>Status</CardTitle>
@@ -200,13 +205,21 @@ function EmpresaDetail() {
             <CardTitle>Acesso rápido</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
+            <a
+              href={`/empresa/${empresa.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-brand-red px-4 py-2 text-sm font-semibold text-white"
+            >
+              Ver página da empresa
+            </a>
             {ehExterna ? (
               empresa.url_externa && (
                 <a
                   href={empresa.url_externa}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full bg-brand-red px-4 py-2 text-sm font-semibold text-white"
+                  className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold"
                 >
                   Visitar site da empresa
                 </a>
@@ -217,7 +230,7 @@ function EmpresaDetail() {
                   href={`/s/${empresa.slug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full bg-brand-red px-4 py-2 text-sm font-semibold text-white"
+                  className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold"
                 >
                   Ver cardápio público
                 </a>
@@ -272,11 +285,13 @@ function PerfilDiretorioCard({
   const [categorias, setCategorias] = useState<string[]>(empresa.categorias ?? []);
   const [cidade, setCidade] = useState(empresa.cidade ?? "");
   const [bairro, setBairro] = useState(empresa.bairro ?? "");
+  const [endereco, setEndereco] = useState(empresa.endereco ?? "");
   const [whatsapp, setWhatsapp] = useState(empresa.whatsapp ?? "");
   const [descricao, setDescricao] = useState(empresa.descricao ?? "");
   const [logoUrl, setLogoUrl] = useState(empresa.logo_url ?? "");
   const [capaUrl, setCapaUrl] = useState(empresa.capa_url ?? "");
   const [urlExterna, setUrlExterna] = useState(empresa.url_externa ?? "");
+  const [palavrasChave, setPalavrasChave] = useState(empresa.palavras_chave ?? "");
   const [destaque, setDestaque] = useState(empresa.destaque);
   const [busy, setBusy] = useState(false);
 
@@ -288,10 +303,12 @@ function PerfilDiretorioCard({
         categorias,
         cidade: cidade || null,
         bairro: bairro || null,
+        endereco: endereco || null,
         whatsapp: whatsapp || null,
         descricao: descricao || null,
         logo_url: logoUrl || null,
         capa_url: capaUrl || null,
+        palavras_chave: palavrasChave || null,
         destaque,
       };
       if (ehExterna) patch.url_externa = urlExterna.trim();
@@ -357,6 +374,14 @@ function PerfilDiretorioCard({
             <Label>Bairro (opcional)</Label>
             <Input value={bairro} onChange={(e) => setBairro(e.target.value)} />
           </div>
+          <div className="sm:col-span-2">
+            <Label>Endereço</Label>
+            <Input
+              value={endereco}
+              onChange={(e) => setEndereco(e.target.value)}
+              placeholder="Rua, número, bairro — usado no mapa da página da empresa"
+            />
+          </div>
           <div>
             <Label>WhatsApp {ehExterna && "(opcional)"}</Label>
             <Input
@@ -398,6 +423,19 @@ function PerfilDiretorioCard({
           <Label>Descrição curta</Label>
           <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} />
         </div>
+        <div>
+          <Label>Palavras-chave de busca (opcional)</Label>
+          <p className="mb-1 text-xs text-muted-foreground">
+            Separadas por vírgula — somam com o que a busca já compara (nome,
+            categoria, cidade). Ex: "bebidas, gelo, água, cerveja,
+            distribuidora em Posto da Mata".
+          </p>
+          <Textarea
+            value={palavrasChave}
+            onChange={(e) => setPalavrasChave(e.target.value)}
+            placeholder="bebidas, gelo, água, cerveja"
+          />
+        </div>
         <div className="flex items-center gap-2">
           <Switch checked={destaque} onCheckedChange={setDestaque} />
           <Label>Destaque na home (aparece em "Empresas em destaque")</Label>
@@ -405,6 +443,116 @@ function PerfilDiretorioCard({
         <Button onClick={onSave} disabled={busy}>
           {busy ? "Salvando..." : "Salvar perfil"}
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Editor de horário de funcionamento pra QUALQUER empresa (trapeza ou
+// externa), pelo super-admin. Mesma UI/lógica que já existe no painel do
+// tenant (aba Config), só que salvando via saveEmpresaConfigPlataforma
+// (autorização de super-admin) em vez de saveEmpresaConfig (autorização
+// de dono da empresa) — empresa externa não tem login próprio pra usar a
+// segunda opção.
+function HorarioCard({ token, empresaId }: { token: string; empresaId: string }) {
+  const { data: configs, refetch } = useQuery({
+    queryKey: ["config-empresa-plataforma", empresaId],
+    queryFn: () => getConfigsEmpresas({ data: { empresaIds: [empresaId] } }),
+  });
+  const cfg = configs?.[empresaId] ?? {};
+  const [horarios, setHorarios] = useState<DayHours[] | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Só inicializa o estado local quando o config chegar pela primeira vez
+  // (evita sobrescrever edição em andamento se o refetch disparar de novo).
+  if (horarios === null && configs) {
+    setHorarios(getHorarios(cfg));
+  }
+
+  async function onSave() {
+    if (!horarios) return;
+    setBusy(true);
+    try {
+      await saveEmpresaConfigPlataforma({
+        data: {
+          token,
+          empresaId,
+          data: {
+            ...cfg,
+            horarios: Object.fromEntries(
+              horarios.map((h) => [
+                ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"][h.day],
+                { abre: h.open, fecha: h.close, fechado: h.closed },
+              ]),
+            ),
+          },
+        },
+      });
+      toast.success("Horário salvo");
+      refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar horário");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Horário de funcionamento</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Usado pro selo "Aberto agora"/"Fechado" na home e na página da
+          empresa.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {!horarios ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : (
+          <>
+            {horarios.map((h, i) => (
+              <div key={h.day} className="flex flex-wrap items-center gap-3">
+                <span className="w-24 text-sm font-semibold">{h.label}</span>
+                <Switch
+                  checked={!h.closed}
+                  onCheckedChange={(v) => {
+                    const cp = [...horarios];
+                    cp[i] = { ...h, closed: !v };
+                    setHorarios(cp);
+                  }}
+                />
+                <Input
+                  type="time"
+                  value={h.open}
+                  onChange={(e) => {
+                    const cp = [...horarios];
+                    cp[i] = { ...h, open: e.target.value };
+                    setHorarios(cp);
+                  }}
+                  disabled={h.closed}
+                  className="w-28"
+                />
+                <span>até</span>
+                <Input
+                  type="time"
+                  value={h.close}
+                  onChange={(e) => {
+                    const cp = [...horarios];
+                    cp[i] = { ...h, close: e.target.value };
+                    setHorarios(cp);
+                  }}
+                  disabled={h.closed}
+                  className="w-28"
+                />
+                {h.closed && <Badge variant="secondary">fechado</Badge>}
+              </div>
+            ))}
+            <Button onClick={onSave} disabled={busy} className="mt-2">
+              {busy ? "Salvando..." : "Salvar horário"}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );

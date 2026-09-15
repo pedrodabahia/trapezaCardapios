@@ -97,7 +97,7 @@ function Landing() {
   const pizzarias = useMemo(() => porCategoria("pizzaria"), [empresasDaCidade]);
   const distribuidoras = useMemo(() => porCategoria("distribuidora"), [empresasDaCidade]);
   const doces = useMemo(
-    () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["confeitaria", "acai"].includes(c))),
+    () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["confeitaria", "sorvete"].includes(c))),
     [empresasDaCidade],
   );
   const visual = useMemo(() => porCategoria("barbearia"), [empresasDaCidade]);
@@ -146,7 +146,8 @@ const resultadosBusca = useMemo(() => {
         e.nome.toLowerCase().includes(termo) ||
         categoriasTexto.includes(termo) ||
         tipoTexto.includes(termo) ||
-        (e.cidade ?? "").toLowerCase().includes(termo)
+        (e.cidade ?? "").toLowerCase().includes(termo) ||
+        (e.palavras_chave ?? "").toLowerCase().includes(termo)
       );
     })
     .slice(0, 8);

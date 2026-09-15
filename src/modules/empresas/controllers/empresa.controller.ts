@@ -172,3 +172,17 @@ export const updateEmpresaPlataforma = createServerFn({ method: "POST" })
     await empresaService.atualizarPlataforma(args.empresaId, args.patch);
     return { ok: true as const };
   });
+
+// Salva a config (horário de funcionamento etc) de QUALQUER empresa
+// (trapeza ou externa), como super-admin. Reaproveita o mesmo
+// `salvarConfig` que o tenant já usa pra si mesmo (saveEmpresaConfig) —
+// só muda a autorização (authPlatform em vez de authTenantAtivo), pra
+// funcionar com empresa externa também (que não tem login/token próprio).
+export const saveEmpresaConfigPlataforma = createServerFn({ method: "POST" })
+  .validator((d: { token: string; empresaId: string; data: EmpresaConfigJson }) => d)
+  .handler(async ({ data: args }) => {
+    await authPlatform(args.token);
+    const empresaService = container.resolve("empresaService");
+    await empresaService.salvarConfig(args.empresaId, args.data);
+    return { ok: true as const };
+  });

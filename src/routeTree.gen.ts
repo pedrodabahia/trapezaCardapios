@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CategoriaValorRouteImport } from './routes/categoria/$valor'
+import { Route as EmpresaSlugRouteImport } from './routes/empresa/$slug'
 import { Route as PainelEmpresaSlugRouteImport } from './routes/painel/$empresaSlug'
 import { Route as PainelLoginRouteImport } from './routes/painel/login'
 import { Route as PlataformaIndexRouteImport } from './routes/plataforma/index'
@@ -38,6 +39,11 @@ const IndexRoute = IndexRouteImport.update({
 const CategoriaValorRoute = CategoriaValorRouteImport.update({
   id: '/categoria/$valor',
   path: '/categoria/$valor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmpresaSlugRoute = EmpresaSlugRouteImport.update({
+  id: '/empresa/$slug',
+  path: '/empresa/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PainelEmpresaSlugRoute = PainelEmpresaSlugRouteImport.update({
@@ -135,6 +141,7 @@ const SSlugProductIdRoute = SSlugProductIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/categoria/$valor': typeof CategoriaValorRoute
+  '/empresa/$slug': typeof EmpresaSlugRoute
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
   '/painel/login': typeof PainelLoginRoute
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/categoria/$valor': typeof CategoriaValorRoute
+  '/empresa/$slug': typeof EmpresaSlugRoute
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
   '/painel/login': typeof PainelLoginRoute
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/categoria/$valor': typeof CategoriaValorRoute
+  '/empresa/$slug': typeof EmpresaSlugRoute
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
   '/painel/login': typeof PainelLoginRoute
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/categoria/$valor'
+    | '/empresa/$slug'
     | '/painel/$empresaSlug'
     | '/painel/login'
     | '/plataforma/anuncios'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/categoria/$valor'
+    | '/empresa/$slug'
     | '/painel/$empresaSlug'
     | '/painel/login'
     | '/plataforma/anuncios'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/categoria/$valor'
+    | '/empresa/$slug'
     | '/painel/$empresaSlug'
     | '/painel/login'
     | '/plataforma/anuncios'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CategoriaValorRoute: typeof CategoriaValorRoute
+  EmpresaSlugRoute: typeof EmpresaSlugRoute
   PainelEmpresaSlugRoute: typeof PainelEmpresaSlugRoute
   PainelLoginRoute: typeof PainelLoginRoute
   PlataformaAnunciosRoute: typeof PlataformaAnunciosRoute
@@ -294,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/categoria/$valor'
       fullPath: '/categoria/$valor'
       preLoaderRoute: typeof CategoriaValorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/empresa/$slug': {
+      id: '/empresa/$slug'
+      path: '/empresa/$slug'
+      fullPath: '/empresa/$slug'
+      preLoaderRoute: typeof EmpresaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/painel/$empresaSlug': {
@@ -454,6 +474,7 @@ const SSlugRouteWithChildren = SSlugRoute._addFileChildren(SSlugRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriaValorRoute: CategoriaValorRoute,
+  EmpresaSlugRoute: EmpresaSlugRoute,
   PainelEmpresaSlugRoute: PainelEmpresaSlugRoute,
   PainelLoginRoute: PainelLoginRoute,
   PlataformaAnunciosRoute: PlataformaAnunciosRoute,

@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import {
   listCategoriasNegocioAdmin,
@@ -137,15 +143,19 @@ function CategoriasNegocioPlataforma() {
         )}
 
         {editando && (
-          <FormCategoria
-            token={session.accessToken}
-            categoria={editando}
-            onClose={() => setEditando(null)}
-            onSaved={() => {
-              setEditando(null);
-              refetch();
-            }}
-          />
+          <Dialog open onOpenChange={(open) => !open && setEditando(null)}>
+            <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+              <FormCategoria
+                token={session.accessToken}
+                categoria={editando}
+                onClose={() => setEditando(null)}
+                onSaved={() => {
+                  setEditando(null);
+                  refetch();
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </main>
     </div>
@@ -182,11 +192,11 @@ function FormCategoria({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{isNew ? "Nova categoria" : `Editar: ${categoria.label}`}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <>
+      <DialogHeader>
+        <DialogTitle>{isNew ? "Nova categoria" : `Editar: ${categoria.label}`}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
         <div>
           <Label>Nome (aparece pro usuário)</Label>
           <Input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
@@ -250,7 +260,7 @@ function FormCategoria({
             Cancelar
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </>
   );
 }

@@ -43,7 +43,7 @@ function NovaEmpresa() {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
-  const [planoId, setPlanoId] = useState("start");
+  const [planoId, setPlanoId] = useState("gratuito");
   const [adminEmail, setAdminEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listEmpresasAdmin } from "@/lib/admin-server";
+import { listEmpresasAdmin, getCategoriasNegocio } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
 import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
 
@@ -38,6 +38,15 @@ function PlatformDashboard() {
     queryKey: ["plataforma-empresas"],
     queryFn: () => listEmpresasAdmin({ data: { token: session!.accessToken } }),
     enabled: !!session,
+  });
+
+  // Lista de categorias vem do banco agora (gerenciável em
+  // /plataforma/categorias-negocio) — CATEGORIAS_NEGOCIO fica só como
+  // placeholder enquanto a consulta ainda não voltou.
+  const { data: categoriasNegocio = CATEGORIAS_NEGOCIO } = useQuery({
+    queryKey: ["categorias-negocio"],
+    queryFn: () => getCategoriasNegocio({ data: {} as Record<string, never> }),
+    staleTime: 60_000,
   });
 
   const [busca, setBusca] = useState("");
@@ -72,6 +81,11 @@ function PlatformDashboard() {
             <p className="truncate text-xs text-muted-foreground">{session.email}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link to="/plataforma/categorias-negocio">
+              <Button variant="outline" size="sm">
+                Categorias
+              </Button>
+            </Link>
             <Link to="/plataforma/anuncios">
               <Button variant="outline" size="sm">
                 Anúncios da home
@@ -152,7 +166,7 @@ function PlatformDashboard() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={TODOS}>Todas as categorias</SelectItem>
-              {CATEGORIAS_NEGOCIO.map((c) => (
+              {categoriasNegocio.map((c) => (
                 <SelectItem key={c.valor} value={c.valor}>
                   {c.label}
                 </SelectItem>

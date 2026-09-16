@@ -1,11 +1,14 @@
 import { createFileRoute, redirect, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LogOut, Menu, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuthSession } from "@/lib/auth-session";
 import { useEmpresaAdmin, useInvalidateEmpresa } from "@/lib/admin-store";
+import { listPlanos } from "@/lib/admin-server";
+import { PainelGratuito } from "@/components/painel/PainelGratuito";
 import { InicioTab } from "@/components/painel/InicioTab";
 import { ProdutosTab } from "@/components/painel/ProdutosTab";
 import { CategoriasTab } from "@/components/painel/CategoriasTab";
@@ -67,6 +70,17 @@ function PainelTenant() {
   const invalidate = () =>
     invalidateRaw({ slug: completa?.empresa.slug, empresaId: session?.empresaId ?? undefined });
 
+  // Plano gratuito trava o painel pra só mostrar o formulário básico
+  // (PainelGratuito) em vez das abas inteiras. `listPlanos` é público, sem
+  // custo de auth extra.
+  const { data: planos = [] } = useQuery({
+    queryKey: ["planos"],
+    queryFn: () => listPlanos({ data: undefined }),
+    staleTime: 5 * 60_000,
+  });
+  const planoAtual = planos.find((p) => p.id === completa?.empresa.plano_id);
+  const ehGratuito = planoAtual?.gratuito === true;
+
   if (!session) return null;
 
   if (isLoading || !completa) {
@@ -97,7 +111,7 @@ function PainelTenant() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sheet open={navOpen} onOpenChange={setNavOpen}>
+      <Sheet open={navOpen && !ehGratuito} onOpenChange={setNavOpen}>
         <SheetContent side="left" className="flex w-3/4 flex-col gap-0 p-0 sm:max-w-xs">
           <SheetHeader className="border-b bg-brand-cream p-5 text-left">
             <SheetTitle className="font-display text-lg">Menu do painel</SheetTitle>
@@ -127,15 +141,17 @@ function PainelTenant() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 md:hidden"
-              onClick={() => setNavOpen(true)}
-            >
-              <Menu className="h-4 w-4" />
-              <span className="sr-only">Abrir menu</span>
-            </Button>
+            {!ehGratuito && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 md:hidden"
+                onClick={() => setNavOpen(true)}
+              >
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Abrir menu</span>
+              </Button>
+            )}
             <div className="min-w-0">
               <h1 className="truncate font-display text-xl font-bold">{empresa.nome}</h1>
               <p className="truncate text-xs text-muted-foreground">
@@ -144,10 +160,16 @@ function PainelTenant() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <a href={`/s/${empresa.slug}`} target="_blank" rel="noreferrer">
+            <a
+              href={ehGratuito ? `/empresa/${empresa.slug}` : `/s/${empresa.slug}`}
+              target="_blank"
+              rel="noreferrer"
+            >
               <Button variant="outline" size="sm" className="px-2 sm:px-3">
                 <ExternalLink className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Ver cardápio</span>
+                <span className="hidden sm:inline">
+                  {ehGratuito ? "Ver minha página" : "Ver cardápio"}
+                </span>
               </Button>
             </a>
             <Link to="/painel/login">
@@ -183,6 +205,9 @@ function PainelTenant() {
             </div>
           </div>
         )}
+        {ehGratuito ? (
+          <PainelGratuito completa={completa} token={session.accessToken} onSaved={invalidate} />
+        ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Desktop: abas normais. Mobile: escondidas — usamos o botão de
               seção atual + menu lateral logo abaixo em vez disso. */}
@@ -248,6 +273,7 @@ function PainelTenant() {
             <SegurancaTab token={session.accessToken} />
           </TabsContent>
         </Tabs>
+        )}
       </main>
     </div>
   );

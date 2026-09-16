@@ -16,6 +16,7 @@ import { Route as PainelEmpresaSlugRouteImport } from './routes/painel/$empresaS
 import { Route as PainelLoginRouteImport } from './routes/painel/login'
 import { Route as PlataformaIndexRouteImport } from './routes/plataforma/index'
 import { Route as PlataformaAnunciosRouteImport } from './routes/plataforma/anuncios'
+import { Route as PlataformaCategoriasNegocioRouteImport } from './routes/plataforma/categorias-negocio'
 import { Route as PlataformaLoginRouteImport } from './routes/plataforma/login'
 import { Route as SSlugRouteImport } from './routes/s/$slug'
 import { Route as PlataformaEmpresasIdRouteImport } from './routes/plataforma/empresas/$id'
@@ -66,6 +67,12 @@ const PlataformaAnunciosRoute = PlataformaAnunciosRouteImport.update({
   path: '/plataforma/anuncios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlataformaCategoriasNegocioRoute =
+  PlataformaCategoriasNegocioRouteImport.update({
+    id: '/plataforma/categorias-negocio',
+    path: '/plataforma/categorias-negocio',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PlataformaLoginRoute = PlataformaLoginRouteImport.update({
   id: '/plataforma/login',
   path: '/plataforma/login',
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
   '/painel/login': typeof PainelLoginRoute
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
+  '/plataforma/categorias-negocio': typeof PlataformaCategoriasNegocioRoute
   '/plataforma/login': typeof PlataformaLoginRoute
   '/s/$slug': typeof SSlugRouteWithChildren
   '/plataforma/': typeof PlataformaIndexRoute
@@ -168,6 +176,7 @@ export interface FileRoutesByTo {
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
   '/painel/login': typeof PainelLoginRoute
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
+  '/plataforma/categorias-negocio': typeof PlataformaCategoriasNegocioRoute
   '/plataforma/login': typeof PlataformaLoginRoute
   '/plataforma': typeof PlataformaIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
   '/painel/login': typeof PainelLoginRoute
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
+  '/plataforma/categorias-negocio': typeof PlataformaCategoriasNegocioRoute
   '/plataforma/login': typeof PlataformaLoginRoute
   '/s/$slug': typeof SSlugRouteWithChildren
   '/plataforma/': typeof PlataformaIndexRoute
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/painel/$empresaSlug'
     | '/painel/login'
     | '/plataforma/anuncios'
+    | '/plataforma/categorias-negocio'
     | '/plataforma/login'
     | '/s/$slug'
     | '/plataforma/'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/painel/$empresaSlug'
     | '/painel/login'
     | '/plataforma/anuncios'
+    | '/plataforma/categorias-negocio'
     | '/plataforma/login'
     | '/plataforma'
     | '/plataforma/empresas/$id'
@@ -261,6 +273,7 @@ export interface FileRouteTypes {
     | '/painel/$empresaSlug'
     | '/painel/login'
     | '/plataforma/anuncios'
+    | '/plataforma/categorias-negocio'
     | '/plataforma/login'
     | '/s/$slug'
     | '/plataforma/'
@@ -285,6 +298,7 @@ export interface RootRouteChildren {
   PainelEmpresaSlugRoute: typeof PainelEmpresaSlugRoute
   PainelLoginRoute: typeof PainelLoginRoute
   PlataformaAnunciosRoute: typeof PlataformaAnunciosRoute
+  PlataformaCategoriasNegocioRoute: typeof PlataformaCategoriasNegocioRoute
   PlataformaLoginRoute: typeof PlataformaLoginRoute
   SSlugRoute: typeof SSlugRouteWithChildren
   PlataformaIndexRoute: typeof PlataformaIndexRoute
@@ -342,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/plataforma/anuncios'
       fullPath: '/plataforma/anuncios'
       preLoaderRoute: typeof PlataformaAnunciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plataforma/categorias-negocio': {
+      id: '/plataforma/categorias-negocio'
+      path: '/plataforma/categorias-negocio'
+      fullPath: '/plataforma/categorias-negocio'
+      preLoaderRoute: typeof PlataformaCategoriasNegocioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plataforma/login': {
@@ -478,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   PainelEmpresaSlugRoute: PainelEmpresaSlugRoute,
   PainelLoginRoute: PainelLoginRoute,
   PlataformaAnunciosRoute: PlataformaAnunciosRoute,
+  PlataformaCategoriasNegocioRoute: PlataformaCategoriasNegocioRoute,
   PlataformaLoginRoute: PlataformaLoginRoute,
   SSlugRoute: SSlugRouteWithChildren,
   PlataformaIndexRoute: PlataformaIndexRoute,

@@ -8,7 +8,7 @@ import type {
 } from "../types/empresa.types";
 
 export type EmpresaPatch = Partial<
-  Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "categorias" | "cidade">
+  Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "capa_url" | "categorias" | "cidade">
 >;
 
 export type EmpresaPublica = Pick<

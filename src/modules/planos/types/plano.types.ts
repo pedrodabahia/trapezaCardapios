@@ -8,4 +8,7 @@ export type Plano = {
   tem_shopping?: boolean;
   tem_destaque?: boolean;
   tem_tv?: boolean;
+  // Plano gratuito trava o painel do tenant pra só editar o básico
+  // (nome, logo, capa, endereço, horário) — ver PainelGratuito.tsx.
+  gratuito?: boolean;
 };

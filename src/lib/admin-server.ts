@@ -106,6 +106,17 @@ export {
 } from "@/modules/anuncios/controllers/anuncio.controller";
 export type { AnuncioHome, NovoAnuncioInput } from "@/modules/anuncios/types/anuncio.types";
 
+export {
+  getCategoriasNegocio,
+  listCategoriasNegocioAdmin,
+  saveCategoriaNegocio,
+  deleteCategoriaNegocio,
+} from "@/modules/categorias-negocio/controllers/categoria-negocio.controller";
+export type {
+  CategoriaNegocioDb,
+  NovaCategoriaNegocioInput,
+} from "@/modules/categorias-negocio/types/categoria-negocio.types";
+
 // ============================================================================
 // Planos
 // ============================================================================

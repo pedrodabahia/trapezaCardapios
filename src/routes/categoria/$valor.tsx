@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { ChevronLeft } from "lucide-react";
 import { listEmpresasPublicas } from "@/lib/admin-server";
-import { CATEGORIAS_NEGOCIO, labelCategoriaNegocio } from "@/lib/categorias-negocio";
+import { CATEGORIAS_NEGOCIO, useCategoriasNegocio, labelCategoriaNegocio } from "@/lib/categorias-negocio";
 import { BusinessCard } from "@/components/home/BusinessCard";
 
 // Página "todos os comércios da categoria X" — pra onde o clique num
@@ -23,8 +23,9 @@ function PaginaCategoria() {
     staleTime: 30_000,
   });
 
-  const categoria = CATEGORIAS_NEGOCIO.find((c) => c.valor === valor);
-  const label = labelCategoriaNegocio(valor) ?? valor;
+  const { data: categorias = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
+  const categoria = categorias.find((c) => c.valor === valor);
+  const label = labelCategoriaNegocio(valor, categorias) ?? valor;
 
   const empresasDaCategoria = useMemo(
     () => empresas.filter((e) => e.categorias?.includes(valor)),

@@ -15,7 +15,7 @@ import {
   type DayHours,
 } from "@/lib/admin-store";
 import { updateEmpresa, saveEmpresaConfig } from "@/lib/admin-server";
-import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+import { CATEGORIAS_NEGOCIO, useCategoriasNegocio } from "@/lib/categorias-negocio";
 
 export function ConfigTab({
   completa,
@@ -46,6 +46,8 @@ export function ConfigTab({
   const [cidade, setCidade] = useState(getCidadeEntrega(cfg));
 
   const [horarios, setHorarios] = useState<DayHours[]>(() => getHorarios(cfg));
+
+  const { data: categoriasDisponiveis = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
 
   async function saveAll() {
     await updateEmpresa({
@@ -140,7 +142,7 @@ export function ConfigTab({
               da plataforma.
             </p>
             <div className="flex flex-wrap gap-2">
-              {CATEGORIAS_NEGOCIO.map((c) => {
+              {categoriasDisponiveis.map((c) => {
                 const marcada = categoriasNegocio.includes(c.valor);
                 return (
                   <button

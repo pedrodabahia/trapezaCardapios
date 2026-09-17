@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { MoreHorizontal } from "lucide-react";
-import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+import { CATEGORIAS_NEGOCIO, useCategoriasNegocio, type CategoriaNegocio } from "@/lib/categorias-negocio";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
@@ -15,8 +15,6 @@ export const TODAS_CATEGORIAS = "__todas__";
 // precisar de "Mais" (o scroll já resolve o espaço).
 const VISIVEIS_MOBILE = 7;
 
-type CategoriaNegocio = (typeof CATEGORIAS_NEGOCIO)[number];
-
 // Ícones circulares. Clicar leva pra página com TODOS os comércios
 // daquela categoria (/categoria/$valor) — não filtra mais a própria home.
 // `categoriaFiltro` continua existindo só pra manter o destaque visual
@@ -28,8 +26,12 @@ export function CategoryScroller({
 }) {
   const [abrirTodas, setAbrirTodas] = useState(false);
 
-  const primeirasMobile = CATEGORIAS_NEGOCIO.slice(0, VISIVEIS_MOBILE);
-  const restoMobile = CATEGORIAS_NEGOCIO.slice(VISIVEIS_MOBILE);
+  // Lista vem do banco (gerenciável em /plataforma/categorias-negocio) —
+  // só cai no fallback fixo se a consulta ainda não voltou.
+  const { data: categorias = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
+
+  const primeirasMobile = categorias.slice(0, VISIVEIS_MOBILE);
+  const restoMobile = categorias.slice(VISIVEIS_MOBILE);
 
   return (
     <section id="categorias" className="mx-auto max-w-6xl px-4 pt-5">
@@ -60,7 +62,7 @@ export function CategoryScroller({
 
       {/* Tablet/desktop: scroll horizontal com todas as categorias */}
       <div className="hidden gap-4 overflow-x-auto no-scrollbar pb-1 sm:flex">
-        {CATEGORIAS_NEGOCIO.map((c) => (
+        {categorias.map((c) => (
           <CategoriaIcone key={c.valor} categoria={c} ativa={categoriaFiltro === c.valor} />
         ))}
       </div>
@@ -73,7 +75,7 @@ export function CategoryScroller({
             <SheetTitle>Todas as categorias</SheetTitle>
           </SheetHeader>
           <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-5 pb-6">
-            {CATEGORIAS_NEGOCIO.map((c) => (
+            {categorias.map((c) => (
               <div key={c.valor} onClick={() => setAbrirTodas(false)}>
                 <CategoriaIcone categoria={c} ativa={categoriaFiltro === c.valor} />
               </div>

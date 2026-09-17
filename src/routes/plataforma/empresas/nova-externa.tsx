@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { createEmpresaExterna } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
-import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+import { CATEGORIAS_NEGOCIO, useCategoriasNegocio } from "@/lib/categorias-negocio";
+
 
 function slugify(s: string): string {
   return s
@@ -50,6 +51,7 @@ function NovaEmpresaExterna() {
   // Pasta temporária no Storage pra logo/capa — a empresa ainda não existe
   // nesse formulário, então não tem um empresaId real pra usar ainda.
   const [pastaUploadTemp] = useState(() => crypto.randomUUID());
+  const { data: categoriasNegocio = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
 
   if (!session) return null;
 
@@ -88,6 +90,8 @@ function NovaEmpresaExterna() {
       setSubmitting(false);
     }
   }
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -158,7 +162,8 @@ function NovaEmpresaExterna() {
                 <Label>Categorias</Label>
                 <p className="mb-2 text-xs text-muted-foreground">Pode marcar mais de uma.</p>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIAS_NEGOCIO.map((c) => {
+
+                  {categoriasNegocio.map((c) => {
                     const marcada = categorias.includes(c.valor);
                     return (
                       <button

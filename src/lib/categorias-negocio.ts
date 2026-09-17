@@ -3,12 +3,33 @@
 // no painel (aba Config) pra empresa se autoclassificar. Isso é diferente
 // das "categorias" do módulo de produtos (que são as categorias do
 // cardápio de cada empresa, tipo "Bebidas", "Hot dogs").
+//
+// A lista de verdade agora mora no banco (tabela categorias_negocio,
+// gerenciável em /plataforma/categorias-negocio) — use o hook
+// `useCategoriasNegocio()` abaixo pra pegar a lista atualizada. O array
+// `CATEGORIAS_NEGOCIO` aqui embaixo virou só um FALLBACK/placeholder
+// (mostra algo enquanto a consulta ao banco ainda não voltou, ou pros
+// poucos lugares que ainda não foram religados na consulta) — não edite
+// essa lista esperando que ela apareça em algum lugar; edite pelo painel.
+import { useQuery } from "@tanstack/react-query";
+import { getCategoriasNegocio } from "@/lib/admin-server";
+
 export type CategoriaNegocio = {
   valor: string;
   label: string;
   imagem_url: string;
   cor: string;
 };
+
+// Busca a lista de categorias direto do banco (público, sem login) —
+// use isso em qualquer componente que precise mostrar/filtrar categorias.
+export function useCategoriasNegocio() {
+  return useQuery({
+    queryKey: ["categorias-negocio"],
+    queryFn: () => getCategoriasNegocio({ data: {} as Record<string, never> }),
+    staleTime: 60_000,
+  });
+}
 
 export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
 
@@ -105,18 +126,24 @@ export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [
 
 ];
 
-export function labelCategoriaNegocio(valor: string | null | undefined): string | null {
+export function labelCategoriaNegocio(
+  valor: string | null | undefined,
+  lista: CategoriaNegocio[] = CATEGORIAS_NEGOCIO,
+): string | null {
   if (!valor) return null;
-  return CATEGORIAS_NEGOCIO.find((c) => c.valor === valor)?.label ?? valor;
+  return lista.find((c) => c.valor === valor)?.label ?? valor;
 }
 
 // Versão em lista, pra empresa que tem mais de uma categoria — devolve os
 // labels na mesma ordem salva, ignorando valor que não existe mais na
 // taxonomia (categoria antiga removida, por exemplo).
-export function labelsCategoriasNegocio(valores: string[] | null | undefined): string[] {
+export function labelsCategoriasNegocio(
+  valores: string[] | null | undefined,
+  lista: CategoriaNegocio[] = CATEGORIAS_NEGOCIO,
+): string[] {
   if (!valores || valores.length === 0) return [];
   return valores
-    .map((v) => labelCategoriaNegocio(v))
+    .map((v) => labelCategoriaNegocio(v, lista))
     .filter((l): l is string => !!l);
 }
 

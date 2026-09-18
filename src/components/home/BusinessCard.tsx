@@ -47,8 +47,14 @@ export function BusinessCard({
       className="h-full w-full object-cover transition group-hover:scale-105"
     />
   ) : (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
-      
+    <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
+       <h1>{empresa.nome.trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(palavra => palavra[0])
+    .join("")
+    .toUpperCase()}</h1>
+    <p className="text-[8px]">{empresa.nome}</p>
     </div>
   );
 

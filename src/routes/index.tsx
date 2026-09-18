@@ -19,6 +19,7 @@ import { PopularProducts } from "@/components/home/PopularProducts";
 import { ExploreBusinesses } from "@/components/home/ExploreBusinesses";
 import { BusinessCTASmall } from "@/components/home/BusinessCTASmall";
 import { MobileBottomNav } from "@/components/home/MobileBottomNav";
+import { LogoLoader } from "@/components/LogoLoader";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -179,6 +180,11 @@ const resultadosBusca = useMemo(() => {
 
   return (
     <div id="topo" className="trapeza-home min-h-screen bg-background pb-16 md:pb-0">
+      {isLoading && (
+  <div className="flex min-h-screen items-center justify-center">
+    <LogoLoader size={120} />
+  </div>
+)}
       <link rel="manifest" href="/manifest.webmanifest?v=2"></link>
       <HomeHero
         cidades={cidades}

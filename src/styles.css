@@ -169,3 +169,84 @@
 @utility trapeza-banner-gradient {
   background: linear-gradient(120deg, var(--tp-orange), var(--tp-orange-dark));
 }
+
+/* ============================================================
+   LogoLoader — efeito "desenhado à mão com pincel"
+   Cole isso no seu src/styles.css (pode ser no final do arquivo).
+   ============================================================ */
+
+.logoloader-stroke {
+  /* pathLength="1" no SVG faz 1 = comprimento total do traço, então dá
+     pra animar sem saber o tamanho real de cada curva. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: logoloader-draw 2.2s var(--i, 0s) infinite cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.logoloader-fill path {
+  opacity: 0;
+  animation: logoloader-paint 2.2s infinite ease-out;
+}
+
+/* Traço "nasce" (offset 1 → 0), fica visível um instante, e desaparece
+   rápido no fim do ciclo pra recomeçar — como se o pincel levantasse e
+   voltasse a desenhar. */
+@keyframes logoloader-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0.4;
+  }
+  8% {
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  85% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+/* Preenchimento "encorpa" bem depois que o traço já desenhou a forma
+   inteira, e some junto no fim do ciclo. */
+@keyframes logoloader-paint {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Quem tiver "reduzir movimento" ligado no sistema não precisa ver a
+   animação inteira — só um fade simples. */
+@media (prefers-reduced-motion: reduce) {
+  .logoloader-stroke,
+  .logoloader-fill path {
+    animation: logoloader-fade-only 1.4s infinite ease-in-out;
+    stroke-dashoffset: 0;
+  }
+
+  @keyframes logoloader-fade-only {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}

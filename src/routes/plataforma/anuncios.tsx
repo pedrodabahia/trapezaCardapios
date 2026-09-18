@@ -16,6 +16,14 @@ import {
   type AnuncioHome,
 } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
+import { labelPosicaoCarrossel } from "@/lib/anuncios-posicoes";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/plataforma/anuncios")({
   beforeLoad: () => {
@@ -35,8 +43,10 @@ function blankAnuncio(ordem: number): AnuncioHome {
     imagem_url: "",
     link_url: "",
     cor_fundo: null,
+    posicao: "1",
     ativo: true,
     ordem,
+    criado_em : "",
   };
 }
 
@@ -100,9 +110,10 @@ function AnunciosPlataforma() {
 
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
         <p className="text-sm text-muted-foreground">
-          Esses são os slides do carrossel de propaganda da home (entre
-          "Peça rápido" e "Pra matar a fome"). Só os marcados como "Ativo"
-          aparecem pro público, na ordem definida abaixo.
+          Esses são os slides dos carrosséis de propaganda da home. Cada
+          anúncio tem uma posição (veja abaixo do título de cada card) — só
+          os marcados como "Ativo" aparecem pro público, na ordem definida
+          dentro de cada posição.
         </p>
 
         {anuncios.length === 0 ? (
@@ -124,7 +135,7 @@ function AnunciosPlataforma() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{a.titulo}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      Ordem {a.ordem} · {a.link_url || "sem link"}
+                      {labelPosicaoCarrossel(a.posicao)} · Ordem {a.ordem} · {a.link_url || "sem link"}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -278,6 +289,32 @@ function FormAnuncio({
             <Label>Ativo</Label>
           </div>
         </div>
+        <div>
+          <div>
+<div className="space-y-2">
+  <Label>Posição</Label>
+
+  <Select
+    value={draft.posicao || undefined}
+    onValueChange={(value) =>
+      setDraft({ ...draft, posicao: value })
+    }
+  >
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Selecione uma posição" />
+    </SelectTrigger>
+
+    <SelectContent>
+      <SelectItem value="1">Posição 1 — Principal</SelectItem>
+      <SelectItem value="2">Posição 2 — Intermediário</SelectItem>
+      <SelectItem value="3">Posição 3 — Intermediário</SelectItem>
+      <SelectItem value="4">Posição 4 — Final</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+</div>
+
+          </div>
         <div className="flex gap-2">
           <Button onClick={onSave} disabled={busy || !draft.titulo.trim()}>
             {busy ? "Salvando..." : "Salvar"}

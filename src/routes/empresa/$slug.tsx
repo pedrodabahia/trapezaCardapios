@@ -102,11 +102,19 @@ function PaginaEmpresa() {
           <div className="aspect-[16/7] w-full overflow-hidden bg-muted">
             {empresa.capa_url ? (
               <img src={empresa.capa_url} alt="" className="h-full w-full object-cover" />
-            ) : imagemCategoria ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <img src={imagemCategoria} alt="" className="h-16 w-16" />
-              </div>
-            ) : null}
+            ) : (
+              
+                  <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
+       <h1>{empresa.nome.trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(palavra => palavra[0])
+    .join("")
+    .toUpperCase()}</h1>
+    <p className="text-[8px]">{empresa.nome}</p>
+    </div>
+
+            )}
           </div>
         </div>
 
@@ -114,11 +122,16 @@ function PaginaEmpresa() {
           <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-background bg-white shadow-md">
             {empresa.logo_url ? (
               <img src={empresa.logo_url} alt={empresa.nome} className="h-full w-full object-cover" />
-            ) : imagemCategoria ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <img src={imagemCategoria} alt="" className="h-10 w-10" />
-              </div>
-            ) : null}
+            ) : (
+                  <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
+       <h1>{empresa.nome.trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(palavra => palavra[0])
+    .join("")
+    .toUpperCase()}</h1>
+    </div>
+             )}
           </div>
           {aberto !== undefined && (
             <span

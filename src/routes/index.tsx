@@ -62,6 +62,11 @@ function Landing() {
     staleTime: 60_000,
   });
 
+  // Cada posição de carrossel só mostra os anúncios ativos marcados pra
+  // ela no painel (/plataforma/anuncios) — nenhuma consulta nova, só
+  // filtra em memória a mesma lista já buscada acima.
+  const anunciosPorPosicao = (valor: string) => anunciosHome.filter((a) => a.posicao === valor);
+
   const [busca, setBusca] = useState("");
   const [cidadeFiltro, setCidadeFiltro] = useState<string>(TODAS_CIDADES);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -200,7 +205,7 @@ const resultadosBusca = useMemo(() => {
 
       <CategoryScroller categoriaFiltro={TODAS_CATEGORIAS} />
 
-      <PromoCarousel anuncios={anunciosHome} />
+      <PromoCarousel anuncios={anunciosPorPosicao("1")} />
 
 
       {/*!isLoading && (
@@ -217,7 +222,7 @@ const resultadosBusca = useMemo(() => {
         empresas={praMatarAFome}
       />
 
-      <PopularProducts produtos={maisProcurados} />
+      <PopularProducts produtos={maisProcurados} posicao={"1"} />
 
       <IntentCarousel
         titulo="🍕 Hoje merece uma pizza"
@@ -236,6 +241,8 @@ const resultadosBusca = useMemo(() => {
         subtitulo="Porque às vezes o que falta é só um bolo. 😋"
         empresas={doces}
       />
+      
+      <PromoCarousel anuncios={anunciosPorPosicao("2")} />
 
       <IntentCarousel
         titulo="💇 Dar um trato no visual"
@@ -248,6 +255,8 @@ const resultadosBusca = useMemo(() => {
         subtitulo="Um tempinho pra você também entra na lista."
         empresas={cuidar}
       />
+
+      <PromoCarousel anuncios={anunciosPorPosicao("3")} />
 
       {/*
         "Mais procurados": os 3 produtos mais vendidos de CADA empresa
@@ -268,6 +277,8 @@ const resultadosBusca = useMemo(() => {
         isLoading={isLoading}
         categoriaSelecionada={null}
       />
+
+      <PromoCarousel anuncios={anunciosPorPosicao("4")} />
 
       <BusinessCTASmall />
 

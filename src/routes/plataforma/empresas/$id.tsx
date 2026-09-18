@@ -23,7 +23,7 @@ import {
 } from "@/lib/admin-server";
 import { getHorarios, type DayHours } from "@/lib/admin-store";
 import { useAuthSession } from "@/lib/auth-session";
-import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+import { CATEGORIAS_NEGOCIO, useCategoriasNegocio } from "@/lib/categorias-negocio";
 
 export const Route = createFileRoute("/plataforma/empresas/$id")({
   beforeLoad: () => {
@@ -49,7 +49,7 @@ function EmpresaDetail() {
   });
 
   const empresa = empresas.find((e) => e.id === id);
-
+  
   if (!session) return null;
   if (!empresa) {
     return (
@@ -281,6 +281,7 @@ function PerfilDiretorioCard({
   ehExterna: boolean;
   onSaved: () => void;
 }) {
+  const { data: categoriasNegocio = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
   const [nome, setNome] = useState(empresa.nome);
   const [categorias, setCategorias] = useState<string[]>(empresa.categorias ?? []);
   const [cidade, setCidade] = useState(empresa.cidade ?? "");
@@ -342,7 +343,7 @@ function PerfilDiretorioCard({
             <Label>Categorias</Label>
             <p className="mb-2 text-xs text-muted-foreground">Pode marcar mais de uma.</p>
             <div className="flex flex-wrap gap-2">
-              {CATEGORIAS_NEGOCIO.map((c) => {
+              {categoriasNegocio.map((c) => {
                 const marcada = categorias.includes(c.valor);
                 return (
                   <button

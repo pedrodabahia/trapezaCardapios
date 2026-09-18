@@ -147,7 +147,6 @@ function NovaEmpresaExterna() {
                 <Label htmlFor="url">URL externa</Label>
                 <Input
                   id="url"
-                  required
                   type="url"
                   placeholder="https://www.exemplo.com.br"
                   value={urlExterna}

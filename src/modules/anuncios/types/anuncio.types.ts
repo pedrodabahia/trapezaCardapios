@@ -10,11 +10,14 @@ export type AnuncioHome = {
   // Cor de fundo do card (hex, ex: "#c65d3a"). Quando null, o carrossel
   // usa o gradiente padrão (trapeza-banner-gradient) da marca.
   cor_fundo: string | null;
+  // Em qual carrossel da home esse anúncio aparece — ver POSICOES_CARROSSEL
+  // em src/lib/anuncios-posicoes.ts pras posições disponíveis hoje.
+  posicao: string;
   ativo: boolean;
   ordem: number;
   criado_em?: string;
 };
 
-export type NovoAnuncioInput = Partial<Pick<AnuncioHome, "id" | "subtitulo" | "imagem_url" | "link_url" | "cor_fundo" | "ativo" | "ordem">> & {
+export type NovoAnuncioInput = Partial<Pick<AnuncioHome, "id" | "subtitulo" | "imagem_url" | "link_url" | "cor_fundo" | "posicao" | "ativo" | "ordem">> & {
   titulo: string;
 };

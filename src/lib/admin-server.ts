@@ -20,6 +20,7 @@ export type {
   ProdutoIngredienteInput,
 } from "@/modules/produtos/types/produto.types";
 export type { Pedido } from "@/modules/pedidos/types/pedido.types";
+export type { CadastroInteresse } from "@/modules/cadastros-interesse/types/cadastro-interesse.types";
 
 // ============================================================================
 // Auth
@@ -122,6 +123,16 @@ export type {
 // ============================================================================
 
 export { listPlanos, getPlanoDaEmpresa } from "@/modules/planos/controllers/plano.controller";
+
+// ============================================================================
+// Cadastros de interesse — público para envio, super-admin para leitura
+// ============================================================================
+
+export {
+  criarCadastroInteresse,
+  listarCadastrosInteresseRecentes,
+  removerCadastroInteresse,
+} from "@/modules/cadastros-interesse/controllers/cadastro-interesse.controller";
 
 // ============================================================================
 // Pedidos

@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,22 @@ function NovaEmpresaExterna() {
   const [pastaUploadTemp] = useState(() => crypto.randomUUID());
   const { data: categoriasNegocio = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
 
+  // Dados enviados no formulário público, transferidos pelo dashboard ao
+  // escolher transformar o lead em empresa externa.
+  useEffect(() => {
+    const bruto = window.localStorage.getItem("trapeza:cadastro-pendente");
+    if (!bruto) return;
+    try {
+      const lead = JSON.parse(bruto) as { nome?: string; whatsapp?: string; cidade?: string; categoriaValor?: string };
+      setNome(lead.nome ?? "");
+      setWhatsapp((lead.whatsapp ?? "").replace(/\D/g, ""));
+      setCidade(lead.cidade ?? "");
+      setCategorias(lead.categoriaValor ? [lead.categoriaValor] : []);
+    } catch {
+      // Dado antigo/inválido não deve impedir o cadastro manual.
+    }
+  }, []);
+
   if (!session) return null;
 
   const finalSlug = slugTouched ? slug : slugify(nome);
@@ -82,6 +98,7 @@ function NovaEmpresaExterna() {
           destaque,
         },
       });
+      window.localStorage.removeItem("trapeza:cadastro-pendente");
       toast.success(`Empresa externa "${nome}" cadastrada no diretório.`);
       navigate({ to: "/plataforma" });
     } catch (err) {

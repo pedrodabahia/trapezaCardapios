@@ -18,6 +18,7 @@ import { IntentCarousel } from "@/components/home/IntentCarousel";
 import { PopularProducts } from "@/components/home/PopularProducts";
 import { ExploreBusinesses } from "@/components/home/ExploreBusinesses";
 import { BusinessCTASmall } from "@/components/home/BusinessCTASmall";
+import { BusinessSignupCTA } from "@/components/home/BusinessSignupCTA";
 import { MobileBottomNav } from "@/components/home/MobileBottomNav";
 import { LogoLoader } from "@/components/LogoLoader";
 
@@ -235,6 +236,8 @@ const resultadosBusca = useMemo(() => {
         subtitulo="Bebida acabou? O churrasco tá chegando? Reabastece aqui."
         empresas={distribuidoras}
       />
+
+            <BusinessSignupCTA />
 
       <IntentCarousel
         titulo="🍰 Deu vontade de um doce"

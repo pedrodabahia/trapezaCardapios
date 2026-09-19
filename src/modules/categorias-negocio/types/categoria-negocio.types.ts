@@ -8,10 +8,13 @@ export type CategoriaNegocioDb = {
   ativo: boolean;
   ordem: number;
   criado_em?: string;
+  // null = é uma categoria PAI (nível principal). Preenchido = é uma
+  // subcategoria, e o valor é o id da categoria pai dela.
+  categoria_pai_id: string | null;
 };
 
 export type NovaCategoriaNegocioInput = Partial<
-  Pick<CategoriaNegocioDb, "id" | "imagem_url" | "cor" | "ativo" | "ordem">
+  Pick<CategoriaNegocioDb, "id" | "imagem_url" | "cor" | "ativo" | "ordem" | "categoria_pai_id">
 > & {
   valor: string;
   label: string;

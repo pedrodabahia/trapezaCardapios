@@ -7,13 +7,21 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 
 export const TODAS_CATEGORIAS = "__todas__";
 
-// No mobile mostra só as 7 primeiras + um botão "Mais" (grade 4 colunas:
-// 4 numa linha, 3 + "Mais" na outra). Clicar em "Mais" abre uma folha
-// (Sheet) subindo de baixo pra cima com TODAS as categorias — fecha no X
-// do canto ou clicando fora, comportamento padrão do componente Sheet.
-// No tablet/desktop (sm+) continua em scroll horizontal com todas, sem
-// precisar de "Mais" (o scroll já resolve o espaço).
+// A home mostra sete categorias-pai mais úteis e o botão "Mais" em todos
+// os tamanhos. Assim não mistura categorias principais com subcategorias
+// específicas logo na primeira tela. O botão abre a lista completa, sempre
+// só com categorias-pai.
 const VISIVEIS_MOBILE = 7;
+
+const PRIORIDADE_HOME = [
+  "lanchonete",
+  "restaurante",
+  "pizzaria",
+  "mercado",
+  "farmacia",
+  "distribuidora",
+  "barbearia",
+];
 
 // Ícones circulares. Clicar leva pra página com TODOS os comércios
 // daquela categoria (/categoria/$valor) — não filtra mais a própria home.
@@ -30,8 +38,17 @@ export function CategoryScroller({
   // só cai no fallback fixo se a consulta ainda não voltou.
   const { data: categorias = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
 
-  const primeirasMobile = categorias.slice(0, VISIVEIS_MOBILE);
-  const restoMobile = categorias.slice(VISIVEIS_MOBILE);
+  // `== null` também trata o fallback local (que não tem a propriedade)
+  // como categoria pai até a lista atualizada do banco chegar.
+  const categoriasPai = categorias.filter((categoria) => categoria.categoria_pai_id == null);
+  const categoriasOrdenadas = [...categoriasPai].sort((a, b) => {
+    const prioridadeA = PRIORIDADE_HOME.indexOf(a.valor);
+    const prioridadeB = PRIORIDADE_HOME.indexOf(b.valor);
+    const ordemA = prioridadeA === -1 ? PRIORIDADE_HOME.length : prioridadeA;
+    const ordemB = prioridadeB === -1 ? PRIORIDADE_HOME.length : prioridadeB;
+    return ordemA - ordemB;
+  });
+  const visiveis = categoriasOrdenadas.slice(0, VISIVEIS_MOBILE);
 
   return (
     <section id="categorias" className="mx-auto max-w-6xl px-4 pt-5">
@@ -39,12 +56,11 @@ export function CategoryScroller({
         <h2 className="font-display text-base font-bold">O que você está procurando?</h2>
       </div>
 
-      {/* Mobile: grade fixa 4 colunas (2 linhas = 7 categorias + "Mais") */}
-      <div className="grid grid-cols-4 gap-x-2 gap-y-4 sm:hidden">
-        {primeirasMobile.map((c) => (
+      <div className="grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-8 sm:gap-x-4">
+        {visiveis.map((c) => (
           <CategoriaIcone key={c.valor} categoria={c} ativa={categoriaFiltro === c.valor} />
         ))}
-        {restoMobile.length > 0 && (
+        {categoriasOrdenadas.length > 0 && (
           <button
             onClick={() => setAbrirTodas(true)}
             className="flex flex-col items-center gap-1.5"
@@ -60,22 +76,14 @@ export function CategoryScroller({
         )}
       </div>
 
-      {/* Tablet/desktop: scroll horizontal com todas as categorias */}
-      <div className="hidden gap-4 overflow-x-auto no-scrollbar pb-1 sm:flex">
-        {categorias.map((c) => (
-          <CategoriaIcone key={c.valor} categoria={c} ativa={categoriaFiltro === c.valor} />
-        ))}
-      </div>
-
-      {/* Folha subindo de baixo com todas as categorias (só relevante no
-          mobile, mas o Sheet funciona igual em qualquer tamanho de tela). */}
+      {/* Folha subindo de baixo com todas as categorias-pai. */}
       <Sheet open={abrirTodas} onOpenChange={setAbrirTodas}>
         <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-3xl">
           <SheetHeader>
-            <SheetTitle>Todas as categorias</SheetTitle>
+            <SheetTitle>Explore por categoria</SheetTitle>
           </SheetHeader>
           <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-5 pb-6">
-            {categorias.map((c) => (
+            {categoriasOrdenadas.map((c) => (
               <div key={c.valor} onClick={() => setAbrirTodas(false)}>
                 <CategoriaIcone categoria={c} ativa={categoriaFiltro === c.valor} />
               </div>

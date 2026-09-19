@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   listCategoriasNegocioAdmin,
   saveCategoriaNegocio,
   deleteCategoriaNegocio,
@@ -41,6 +48,7 @@ function blankCategoria(ordem: number): CategoriaNegocioDb {
     cor: "#FFE8F0",
     ativo: true,
     ordem,
+    categoria_pai_id: null,
   };
 }
 
@@ -124,7 +132,12 @@ function CategoriasNegocioPlataforma() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{c.label}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      valor: {c.valor} · ordem {c.ordem}
+                      valor: {c.valor} · ordem {c.ordem} ·{" "}
+                      {c.categoria_pai_id ? (
+                        <>subcategoria de “{categorias.find((p) => p.id === c.categoria_pai_id)?.label ?? "?"}”</>
+                      ) : (
+                        "categoria pai"
+                      )}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -148,6 +161,7 @@ function CategoriasNegocioPlataforma() {
               <FormCategoria
                 token={session.accessToken}
                 categoria={editando}
+                todasCategorias={categorias}
                 onClose={() => setEditando(null)}
                 onSaved={() => {
                   setEditando(null);
@@ -165,11 +179,13 @@ function CategoriasNegocioPlataforma() {
 function FormCategoria({
   token,
   categoria,
+  todasCategorias,
   onClose,
   onSaved,
 }: {
   token: string;
   categoria: CategoriaNegocioDb;
+  todasCategorias: CategoriaNegocioDb[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -177,6 +193,14 @@ function FormCategoria({
   const [busy, setBusy] = useState(false);
   const [pastaUploadTemp] = useState(() => crypto.randomUUID());
   const isNew = !categoria.id;
+
+  // Só categorias PAI (sem pai delas mesmas) podem ser escolhidas como
+  // pai de outra — evita subcategoria dentro de subcategoria. Também tira
+  // a própria categoria da lista (não pode ser pai de si mesma).
+  const categoriasPaiDisponiveis = todasCategorias.filter(
+    (c) => c.categoria_pai_id === null && c.id !== draft.id,
+  );
+  const ehSubcategoria = draft.categoria_pai_id !== null;
 
   async function onSave() {
     setBusy(true);
@@ -248,12 +272,73 @@ function FormCategoria({
             />
           </div>
         </div>
+        <div>
+          <Label>Tipo</Label>
+          <Select
+            value={ehSubcategoria ? "sub" : "pai"}
+            onValueChange={(v) =>
+              setDraft({
+                ...draft,
+                // ao trocar pra "categoria pai", limpa o vínculo; ao trocar
+                // pra "subcategoria", deixa em branco até escolher uma no
+                // select de baixo.
+                categoria_pai_id: v === "sub" ? (draft.categoria_pai_id ?? "") : null,
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pai">Categoria pai</SelectItem>
+              <SelectItem value="sub" disabled={categoriasPaiDisponiveis.length === 0}>
+                Subcategoria
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {categoriasPaiDisponiveis.length === 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ainda não tem nenhuma categoria pai cadastrada pra vincular uma
+              subcategoria.
+            </p>
+          )}
+        </div>
+
+        {ehSubcategoria && (
+          <div>
+            <Label>Categoria pai</Label>
+            <Select
+              value={draft.categoria_pai_id ?? ""}
+              onValueChange={(v) => setDraft({ ...draft, categoria_pai_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a categoria pai" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoriasPaiDisponiveis.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <Switch checked={draft.ativo} onCheckedChange={(v) => setDraft({ ...draft, ativo: v })} />
           <Label>Ativa</Label>
         </div>
         <div className="flex gap-2">
-          <Button onClick={onSave} disabled={busy || !draft.label.trim() || !draft.valor.trim()}>
+          <Button
+            onClick={onSave}
+            disabled={
+              busy ||
+              !draft.label.trim() ||
+              !draft.valor.trim() ||
+              (ehSubcategoria && !draft.categoria_pai_id)
+            }
+          >
             {busy ? "Salvando..." : "Salvar"}
           </Button>
           <Button variant="outline" onClick={onClose}>

@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,21 @@ function NovaEmpresa() {
   const [submitting, setSubmitting] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
+  // Quando o super-admin vem de um cadastro de interesse, a tela abre com
+  // os dados que o dono já informou. O plano continua uma decisão manual.
+  useEffect(() => {
+    const bruto = window.localStorage.getItem("trapeza:cadastro-pendente");
+    if (!bruto) return;
+    try {
+      const lead = JSON.parse(bruto) as { nome?: string; whatsapp?: string; email?: string };
+      setNome(lead.nome ?? "");
+      setWhatsapp((lead.whatsapp ?? "").replace(/\D/g, ""));
+      setAdminEmail(lead.email ?? "");
+    } catch {
+      // Dado antigo/inválido não deve impedir o cadastro manual.
+    }
+  }, []);
+
   const { data: planos = [] } = useQuery({
     queryKey: ["planos"],
     queryFn: () => listPlanos({ data: {} as Record<string, never> }),
@@ -73,6 +88,7 @@ function NovaEmpresa() {
         },
       });
       setTempPassword(res.tempPassword);
+      window.localStorage.removeItem("trapeza:cadastro-pendente");
       toast.success(`Empresa ${nome} criada. Senha temporária gerada.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao criar empresa");

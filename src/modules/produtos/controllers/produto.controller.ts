@@ -184,6 +184,49 @@ export type ProdutoBuscaGlobal = {
   empresaSlug: string;
 };
 
+export type ProdutoCategoriaPlataforma = {
+  produtoId: string;
+  nome: string;
+  descricaoCurta: string | null;
+  precoAtual: number;
+  imagemUrl: string | null;
+  empresaId: string;
+  empresaNome: string;
+  empresaSlug: string;
+};
+
+// Produtos de empresas que pertencem a uma ou mais categorias de negócio.
+// É a base da página de uma categoria-pai: o front manda os valores das
+// subcategorias selecionadas, e o servidor reúne só cardápios Trapeza ativos.
+export const listarProdutosPorCategoriasNegocio = createServerFn({ method: "POST" })
+  .validator((d: { categorias: string[] }) => d)
+  .handler(async ({ data }): Promise<ProdutoCategoriaPlataforma[]> => {
+    const categorias = [...new Set(data.categorias.filter(Boolean))];
+    if (categorias.length === 0) return [];
+
+    const empresaRepository = container.resolve("empresaRepository");
+    const produtoRepository = container.resolve("produtoRepository");
+    const empresas = (await empresaRepository.listarPublicasAtivas()).filter(
+      (empresa) => empresa.tipo === "trapeza" && empresa.categorias?.some((categoria) => categorias.includes(categoria)),
+    );
+    const empresaPorId = new Map(empresas.map((empresa) => [empresa.id, empresa]));
+    const produtos = await produtoRepository.listarAtivosPorEmpresas(empresas.map((empresa) => empresa.id));
+
+    return produtos.map((produto) => {
+      const empresa = empresaPorId.get(produto.empresa_id)!;
+      return {
+        produtoId: produto.id,
+        nome: produto.nome,
+        descricaoCurta: produto.descricao_curta ?? null,
+        precoAtual: produto.preco,
+        imagemUrl: produto.imagem_url ?? null,
+        empresaId: empresa.id,
+        empresaNome: empresa.nome,
+        empresaSlug: empresa.slug,
+      };
+    });
+  });
+
 // Público (sem login) — busca produto pelo nome em TODAS as empresas
 // Trapeza ativas ao mesmo tempo ("digitei 'skol', onde vende?"). Usado na
 // lista suspensa de busca da home, junto com o resultado de empresas.

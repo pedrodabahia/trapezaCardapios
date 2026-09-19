@@ -45,8 +45,8 @@ export {
   getConfigsEmpresas,
 } from "@/modules/empresas/controllers/empresa.controller";
 
-export { getProdutoById, getTopProdutosPlataforma, getAnunciosPromocao, buscarProdutosPlataforma } from "@/modules/produtos/controllers/produto.controller";
-export type { TopProdutoPlataforma, AnuncioPromocao, ProdutoBuscaGlobal } from "@/modules/produtos/controllers/produto.controller";
+export { getProdutoById, getTopProdutosPlataforma, getAnunciosPromocao, buscarProdutosPlataforma, listarProdutosPorCategoriasNegocio } from "@/modules/produtos/controllers/produto.controller";
+export type { TopProdutoPlataforma, AnuncioPromocao, ProdutoBuscaGlobal, ProdutoCategoriaPlataforma } from "@/modules/produtos/controllers/produto.controller";
 
 // ============================================================================
 // Leitura — autenticada (admin da empresa)

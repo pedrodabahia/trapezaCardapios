@@ -12,6 +12,7 @@ export interface ProdutoRepository {
   buscarPorIdIgnorandoAtivo(empresaId: string, produtoId: string): Promise<Produto | null>;
   // Só produtos ativos — usado no cardápio público.
   listarAtivosPorEmpresa(empresaId: string): Promise<Produto[]>;
+  listarAtivosPorEmpresas(empresaIds: string[]): Promise<Produto[]>;
   // Todos, ativos ou não — usado no painel autenticado (admin precisa ver
   // os que estão pausados também).
   listarTodosPorEmpresa(empresaId: string): Promise<Produto[]>;
@@ -58,6 +59,18 @@ export class SupabaseProdutoRepository implements ProdutoRepository {
       .from("produtos")
       .select("*")
       .eq("empresa_id", empresaId)
+      .eq("ativo", true)
+      .order("ordem");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Produto[];
+  }
+
+  async listarAtivosPorEmpresas(empresaIds: string[]): Promise<Produto[]> {
+    if (empresaIds.length === 0) return [];
+    const { data, error } = await this.sb()
+      .from("produtos")
+      .select("*")
+      .in("empresa_id", empresaIds)
       .eq("ativo", true)
       .order("ordem");
     if (error) throw new Error(error.message);

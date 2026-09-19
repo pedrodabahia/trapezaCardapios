@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
-import { ChevronLeft, MapPin, Clock, MessageCircle } from "lucide-react";
+import { ChevronLeft, MapPin, Clock, MessageCircle, SquarePen } from "lucide-react";
 import { listEmpresasPublicas, getConfigsEmpresas } from "@/lib/admin-server";
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
 import { labelsCategoriasNegocio, CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
@@ -68,6 +68,12 @@ function PaginaEmpresa() {
   const linkWhats = numeroWhats
     ? `https://wa.me/${numeroWhats}?text=${encodeURIComponent(
         `Olá! Vi a ${empresa.nome} no Trapeza e queria falar com vocês.`,
+      )}`
+    : null;
+
+     const linkWhatsTrapeza = numeroWhats
+    ? `https://wa.me/5573999916255?text=${encodeURIComponent(
+        `Olá! Sou a ${empresa.nome} e gostaria de Reinvidicar a minha empresa.`,
       )}`
     : null;
 
@@ -168,7 +174,7 @@ function PaginaEmpresa() {
               Chamar no WhatsApp
             </a>
           )}
-          {temCatalogo && (
+          {temCatalogo == true ? (
             <Link
               to="/s/$slug"
               params={{ slug: empresa.slug }}
@@ -177,7 +183,16 @@ function PaginaEmpresa() {
             >
               Ver cardápio
             </Link>
-          )}
+          ) : (
+            <a
+              href={linkWhatsTrapeza ?? undefined}
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--tp-orange)] px-4 py-3 text-sm font-bold text-white"
+            > <SquarePen />
+              É o dono? Reivindique este perfil
+            </a>
+            )}
           {!linkWhats && !temCatalogo && empresa.url_externa && (
             <a
               href={empresa.url_externa}
@@ -188,6 +203,7 @@ function PaginaEmpresa() {
               Visitar site
             </a>
           )}
+          
         </div>
 
         {/* horário */}
@@ -209,7 +225,7 @@ function PaginaEmpresa() {
         )}
 
         {/* endereço + mapa */}
-        {enderecoCompleto && (
+        {enderecoCompleto.length > 20 ? (
           <div className="mt-4 rounded-2xl border border-border/60 p-4">
             <div className="mb-2 flex items-center gap-2 font-display text-sm font-bold">
               <MapPin className="h-4 w-4" />
@@ -236,6 +252,10 @@ function PaginaEmpresa() {
                 Abrir no Google Maps
               </a>
             )}
+          </div>
+        ): (
+          <div>
+             
           </div>
         )}
       </main>

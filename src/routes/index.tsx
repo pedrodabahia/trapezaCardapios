@@ -101,6 +101,10 @@ function Landing() {
     () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["lanchonete", "restaurante", "pizzaria"].includes(c))),
     [empresasDaCidade],
   );
+
+const mecanico = useMemo(() => porCategoria("mecanico"), [empresasDaCidade]);
+const farmacia = useMemo(() => porCategoria("farmacia"), [empresasDaCidade]);
+
   const pizzarias = useMemo(() => porCategoria("pizzaria"), [empresasDaCidade]);
   const distribuidoras = useMemo(() => porCategoria("distribuidora"), [empresasDaCidade]);
   const doces = useMemo(
@@ -226,6 +230,12 @@ const resultadosBusca = useMemo(() => {
       <PopularProducts produtos={maisProcurados} posicao={"1"} />
 
       <IntentCarousel
+        titulo="🧑‍🔧 Precisando de um mecânico?"
+        subtitulo="Os melhores proficionais da cidade estão aqui!"
+        empresas={mecanico}
+      />
+
+      <IntentCarousel
         titulo="🍕 Hoje merece uma pizza"
         subtitulo="Sextou ou não, pizza nunca precisa de motivo."
         empresas={pizzarias}
@@ -237,7 +247,14 @@ const resultadosBusca = useMemo(() => {
         empresas={distribuidoras}
       />
 
-            <BusinessSignupCTA />
+      <BusinessSignupCTA />
+
+       <IntentCarousel
+        titulo="💊 Cuide da sua saúde sem complicação"
+        subtitulo="Encontre uma farmácia perto de você e resolva tudo em poucos toques"
+        empresas={farmacia}
+      />
+
 
       <IntentCarousel
         titulo="🍰 Deu vontade de um doce"

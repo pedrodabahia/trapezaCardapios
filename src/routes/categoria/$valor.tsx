@@ -59,12 +59,8 @@ function PaginaCategoria() {
     () => empresas.filter((e) => e.categorias?.some((c) => categoriasParaBusca.includes(c))),
     [empresas, categoriasParaBusca],
   );
-  const slugsComProduto = useMemo(() => new Set(produtos.map((p) => p.empresaSlug)), [produtos]);
-  const empresasSemProduto = useMemo(
-    () => empresasRelacionadas.filter((e) => !slugsComProduto.has(e.slug)),
-    [empresasRelacionadas, slugsComProduto],
-  );
-  const totalItens = produtos.length + empresasSemProduto.length;
+
+  const totalItens = empresasRelacionadas.length;
 
   const titulo = categoriaPai?.label ?? valor;
 
@@ -96,8 +92,7 @@ function PaginaCategoria() {
           <>
             <p className="pb-3 text-xs text-muted-foreground">{totalItens} {totalItens === 1 ? "resultado encontrado" : "resultados encontrados"}</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {produtos.map((produto) => <ProdutoCard key={produto.produtoId} produto={produto} />)}
-              {empresasSemProduto.map((empresa) => <BusinessCard key={empresa.id} empresa={empresa} variant="grid" />)}
+              {empresasRelacionadas.map((empresa) => <BusinessCard key={empresa.id} empresa={empresa} variant="grid" />)}
             </div>
           </>
         )}

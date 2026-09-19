@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import logo from "../../../public/logo.svg";
 import {
   Dialog,
   DialogContent,
@@ -73,28 +74,28 @@ export function BusinessSignupCTA() {
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 py-7 sm:px-6">
-        <div className="group relative overflow-hidden rounded-3xl border border-brand-brown/10 bg-gradient-to-r from-brand-cream via-[#fff8ea] to-brand-yellow/35 px-5 py-5 shadow-sm transition sm:px-7 sm:py-6">
+        <div className="group relative overflow-hidden rounded-md border border-brand-brown/10 bg-gradient-to-r from-red-900 via-red-800 to-red-800 px-5 py-5 shadow-sm transition sm:px-7 sm:py-6">
           <div className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-brand-red/10 blur-2xl transition group-hover:scale-125" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-brown text-brand-yellow shadow-sm">
-                <Store className="h-5 w-5" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-brand-yellow shadow-sm">
+                <img src={logo} className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-red">Para quem empreende</p>
-                <h2 className="font-display text-lg font-extrabold text-brand-brown sm:text-xl">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-yellow-500">Para quem é empreendedor</p>
+                <h2 className="font-display text-lg font-extrabold text-white sm:text-xl">
                   Sua empresa já apareceu no Trapeza?
                 </h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">Tem uma ideia boa para colocar ela no mapa.</p>
+                <p className="mt-0.5 text-sm text-white">Cadastre-se grátis em menos de 2 minutos!</p>
               </div>
             </div>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setAberto(true)}
-              className="w-full rounded-full border-brand-brown/30 bg-background/70 font-bold text-brand-brown hover:border-brand-brown hover:bg-brand-brown hover:text-white sm:w-auto"
+              className="w-full rounded-full border-brand-brown/30 bg-white font-bold text-red-900 hover:border-brand-brown hover:bg-brand-brown hover:text-white sm:w-auto"
             >
-              Descobrir como <ArrowUpRight className="ml-1 h-4 w-4" />
+              CADASTRAR AGORA
             </Button>
           </div>
         </div>

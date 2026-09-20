@@ -7,6 +7,7 @@ import { container } from "@/core/container";
 import { authPlatform } from "@/core/auth/session";
 import "../container";
 import type { NovaCategoriaNegocioInput } from "../types/categoria-negocio.types";
+import { Filter } from "lucide-react";
 
 // Público (sem login) — categorias ativas, na ordem definida. É o que
 // tanto a home quanto os formulários de categoria (painel/plataforma)
@@ -18,6 +19,17 @@ export const getCategoriasNegocio = createServerFn({ method: "POST" })
     const categoriaNegocioService = container.resolve("categoriaNegocioService");
     return categoriaNegocioService.listarAtivas();
   });
+
+export const getCategoriasNegocioFiltradas = createServerFn({ method: "POST" })
+  .validator((d: Record<string, never> | undefined) => d ?? {})
+  .handler(async () => {
+    const categoriaNegocioService = container.resolve("categoriaNegocioService");
+    const categorias = await categoriaNegocioService.listarAtivas();
+    return categorias.filter(
+      (categoria) => categoria.categoria_pai_id !== null
+    )
+  });
+
 
 // Super-admin — todas (ativa ou não), pra tela de gerenciamento.
 export const listCategoriasNegocioAdmin = createServerFn({ method: "POST" })

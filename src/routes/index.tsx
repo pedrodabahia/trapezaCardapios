@@ -53,7 +53,7 @@ function Landing() {
 
   const { data: maisProcurados = [] } = useQuery({
     queryKey: ["top-produtos-plataforma"],
-    queryFn: () => getTopProdutosPlataforma({ data: { limitePorEmpresa: 3 } }),
+    queryFn: () => getTopProdutosPlataforma({ data: { limitePorEmpresa: 4 } }),
     staleTime: 60_000,
   });
 

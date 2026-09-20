@@ -133,12 +133,12 @@ function NovaEmpresa() {
                 <p className="mt-1 text-sm">
                   Email: <code className="rounded bg-white px-2 py-0.5">{adminEmail}</code>
                 </p>
-                <p className="mt-1 flex items-center gap-2 text-sm">
+                <div className="mt-1 flex items-center gap-2 text-sm">
                   Senha temporária:{" "}
                   <Badge variant="default" className="font-mono">
                     {tempPassword}
                   </Badge>
-                </p>
+                </div>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Copie e envie para o dono da empresa. Ele poderá trocá-la pelo
                   Supabase Auth (esqueci minha senha) na primeira entrada.

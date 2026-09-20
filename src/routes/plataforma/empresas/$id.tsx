@@ -8,10 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import {
   listEmpresasAdmin,
+  listPlanos,
   updateEmpresaStatus,
   updateEmpresaPlataforma,
   saveEmpresaConfigPlataforma,
@@ -160,6 +168,12 @@ function EmpresaDetail() {
           token={session.accessToken}
           empresa={empresa}
           ehExterna={ehExterna}
+          onSaved={refetch}
+        />
+
+        <PlanoCard
+          token={session.accessToken}
+          empresa={empresa}
           onSaved={refetch}
         />
 
@@ -554,6 +568,84 @@ function HorarioCard({ token, empresaId }: { token: string; empresaId: string })
             </Button>
           </>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Troca o plano da empresa (ex: Gratuito <-> com cardápio Trapeza). Isso
+// é o que decide, no painel do próprio tenant, se ele vê só o formulário
+// básico (PainelGratuito) ou o painel completo com produtos/pedidos/etc
+// — ver a checagem `plano?.gratuito` em routes/painel/$empresaSlug.tsx.
+function PlanoCard({
+  token,
+  empresa,
+  onSaved,
+}: {
+  token: string;
+  empresa: Empresa;
+  onSaved: () => void;
+}) {
+  const { data: planos = [] } = useQuery({
+    queryKey: ["planos"],
+    queryFn: () => listPlanos({ data: {} as Record<string, never> }),
+  });
+  const [planoId, setPlanoId] = useState(empresa.plano_id);
+  const [busy, setBusy] = useState(false);
+
+  const planoAtual = planos.find((p) => p.id === empresa.plano_id);
+
+  async function onSave() {
+    setBusy(true);
+    try {
+      await updateEmpresaPlataforma({
+        data: { token, empresaId: empresa.id, patch: { plano_id: planoId } },
+      });
+      toast.success("Plano atualizado");
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao trocar plano");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Plano</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          No plano gratuito, o painel dessa empresa só mostra o formulário
+          básico (nome, logo, capa, endereço, horário) — sem cardápio,
+          produtos ou pedidos.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {planoAtual && (
+          <p className="text-sm">
+            Plano atual: <strong>{planoAtual.nome}</strong>
+            {planoAtual.gratuito && " (gratuito)"}
+          </p>
+        )}
+        <div className="max-w-xs">
+          <Label>Trocar para</Label>
+          <Select value={planoId} onValueChange={setPlanoId}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {planos.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.nome} — R$ {Number(p.preco_mensal).toFixed(2)}/mês
+                  {p.gratuito ? " (gratuito)" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={onSave} disabled={busy || planoId === empresa.plano_id}>
+          {busy ? "Salvando..." : "Salvar plano"}
+        </Button>
       </CardContent>
     </Card>
   );

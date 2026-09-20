@@ -117,6 +117,9 @@ export type NovaEmpresaExternaInput = {
 // só pelo super-admin. Não inclui campos sensíveis de faturamento (esses
 // continuam em updateEmpresaStatus/renovarAssinatura) nem o "tipo" (não dá
 // pra converter uma empresa de um tipo pro outro depois de criada).
+// `plano_id` é uma exceção: não é sensível (não mexe em cobrança/data de
+// vencimento, só em qual conjunto de recursos a empresa acessa no
+// próprio painel dela).
 export type EmpresaPlataformaPatch = Partial<
   Pick<
     Empresa,
@@ -132,5 +135,6 @@ export type EmpresaPlataformaPatch = Partial<
     | "url_externa"
     | "destaque"
     | "palavras_chave"
+    | "plano_id"
   >
 >;

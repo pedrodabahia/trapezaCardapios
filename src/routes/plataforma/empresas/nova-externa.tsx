@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { createEmpresaExterna } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
-import { CATEGORIAS_NEGOCIO, useCategoriasNegocio } from "@/lib/categorias-negocio";
+import { CATEGORIAS_NEGOCIO, useCategoriasNegocio, useCategoriasNegocioFiltrada } from "@/lib/categorias-negocio";
 
 
 function slugify(s: string): string {
@@ -51,7 +51,7 @@ function NovaEmpresaExterna() {
   // Pasta temporária no Storage pra logo/capa — a empresa ainda não existe
   // nesse formulário, então não tem um empresaId real pra usar ainda.
   const [pastaUploadTemp] = useState(() => crypto.randomUUID());
-  const { data: categoriasNegocio = CATEGORIAS_NEGOCIO } = useCategoriasNegocio();
+  const { data: categoriasNegocio = CATEGORIAS_NEGOCIO } = useCategoriasNegocioFiltrada();
 
   // Dados enviados no formulário público, transferidos pelo dashboard ao
   // escolher transformar o lead em empresa externa.

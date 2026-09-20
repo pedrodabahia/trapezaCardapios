@@ -13,6 +13,7 @@
 // essa lista esperando que ela apareça em algum lugar; edite pelo painel.
 import { useQuery } from "@tanstack/react-query";
 import { getCategoriasNegocio, type CategoriaNegocioDb } from "@/lib/admin-server";
+import { getCategoriasNegocioFiltradas } from "@/modules/categorias-negocio/controllers/categoria-negocio.controller";
 
 // Mesmo formato que vem do banco (tabela categorias_negocio) — unificado
 // de propósito com CategoriaNegocioDb, senão o fallback abaixo (usado
@@ -28,6 +29,15 @@ export function useCategoriasNegocio() {
     queryFn: () => getCategoriasNegocio({ data: {} as Record<string, never> }),
     staleTime: 60_000,
   });
+}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+export function useCategoriasNegocioFiltrada() {
+  return useQuery({
+    queryKey: ["categorias-negocio"],
+    queryFn: () => getCategoriasNegocioFiltradas ({ data: {} as Record<string, never> }),
+    staleTime: 60_000,
+  });
+
 }
 
 export const CATEGORIAS_NEGOCIO: CategoriaNegocio[] = [

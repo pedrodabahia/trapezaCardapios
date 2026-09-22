@@ -32,6 +32,8 @@ export const listEmpresasPublicas = createServerFn({ method: "POST" })
   .validator((d: Record<string, never> | undefined) => d ?? {})
   .handler(async () => {
     const empresaService = container.resolve("empresaService");
+    const impressor = empresaService.listarPublicasAtivas();
+    console.log(impressor);
     return empresaService.listarPublicasAtivas();
   });
 

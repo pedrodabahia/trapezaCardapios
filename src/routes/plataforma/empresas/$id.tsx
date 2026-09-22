@@ -151,12 +151,6 @@ function EmpresaDetail() {
                 </code>
               </div>
             )}
-            {!ehExterna && (
-              <div>
-                <span className="text-muted-foreground">Plano: </span>
-                {empresa.plano_id}
-              </div>
-            )}
             <div>
               <span className="text-muted-foreground">Criada em: </span>
               {new Date(empresa.criado_em!).toLocaleString("pt-BR")}

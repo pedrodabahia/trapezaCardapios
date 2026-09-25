@@ -34,6 +34,10 @@ export class EmpresaService {
     return this.repository.buscarPorId(empresaId);
   }
 
+  async buscarPublica(slug: string) {
+  return this.repository.buscarPlanoId(slug);
+}
+
   listarPublicasAtivas() {
     return this.repository.listarPublicasAtivas();
   }

@@ -20,6 +20,27 @@ export type EmpresaCard = Pick<
   | "destaque"
 >;
 
+const fundosFallback = [
+  "from-orange-500 to-amber-400",
+  "from-emerald-600 to-teal-400",
+  "from-blue-600 to-cyan-400",
+  "from-violet-600 to-purple-400",
+  "from-rose-500 to-pink-400",
+  "from-indigo-600 to-blue-400",
+];
+
+function getFundoFallback(nome: string) {
+  let hash = 0;
+
+  for (let i = 0; i < nome.length; i++) {
+    hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const indice = Math.abs(hash) % fundosFallback.length;
+
+  return fundosFallback[indice];
+}
+
 export function BusinessCard({
   empresa,
   destaque = false,
@@ -47,15 +68,28 @@ export function BusinessCard({
       className="h-full w-full object-cover transition group-hover:scale-105"
     />
   ) : (
-    <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
-       <h1>{empresa.nome.trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map(palavra => palavra[0])
-    .join("")
-    .toUpperCase()}</h1>
-    <p className="text-[8px]">{empresa.nome}</p>
-    </div>
+<div
+  className={`flex h-full w-full flex-col items-center justify-center bg-gradient-to-br ${getFundoFallback(empresa.nome)} text-3xl text-white`}
+>
+
+  {/* iniciais */}
+  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 shadow-lg backdrop-blur-sm">
+    <span className="text-2xl font-bold tracking-tight">
+      {empresa.nome
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((palavra) => palavra[0])
+        .join("")
+        .toUpperCase()}
+    </span>
+  </div>
+
+  {/* nome */}
+  <p className="relative mt-3 max-w-[85%] truncate text-center text-xs font-semibold">
+    {empresa.nome}
+  </p>
+</div>
   );
 
   const conteudo =

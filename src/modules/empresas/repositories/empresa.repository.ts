@@ -6,10 +6,13 @@ import type {
   NovaEmpresaExternaInput,
   EmpresaPlataformaPatch,
 } from "../types/empresa.types";
+import { createServerFn } from "@tanstack/react-start";
 
 export type EmpresaPatch = Partial<
   Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "capa_url" | "categorias" | "cidade">
 >;
+
+
 
 export type EmpresaPublica = Pick<
   Empresa,
@@ -20,16 +23,15 @@ export type EmpresaPublica = Pick<
   | "endereco"
   | "logo_url"
   | "status_pagamento"
+  |  "bairro"
+  |  "capa_url"
+  |  "url_externa"
+  |  "descricao"
   | "categorias"
   | "cidade"
-  | "tipo"
-  | "url_externa"
-  | "descricao"
-  | "bairro"
-  | "capa_url"
-  | "destaque"
   | "palavras_chave"
->;
+  | "destaque"
+  | "tipo">
 
 export interface EmpresaRepository {
   // Lança erro se não encontrar (mesmo comportamento do `.single()` que
@@ -113,6 +115,21 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
       .maybeSingle();
     return data?.plano_id ?? null;
   }
+
+  async buscarPublica(slug: string) {
+  return this.sb()
+    .from("empresas")
+    .select(`
+      *,
+      plano:planos (
+        id,
+        nome,
+        gratuito
+      )
+    `)
+    .eq("slug", slug)
+    .single();
+} 
 
   async listarPublicasAtivas(): Promise<EmpresaPublica[]> {
     const { data, error } = await this.sb()

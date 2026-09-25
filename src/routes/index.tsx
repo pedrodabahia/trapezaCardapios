@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   listEmpresasPublicas,
   getTopProdutosPlataforma,
@@ -21,6 +21,9 @@ import { BusinessCTASmall } from "@/components/home/BusinessCTASmall";
 import { BusinessSignupCTA } from "@/components/home/BusinessSignupCTA";
 import { MobileBottomNav } from "@/components/home/MobileBottomNav";
 import { LogoLoader } from "@/components/LogoLoader";
+import { useCategoriasNegocio, CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+import { EmpresaCard } from "@/components/home/BusinessCard";
+import { CategoriaService } from "@/modules/categorias/services/categoria.service";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -32,7 +35,10 @@ export const Route = createFileRoute("/")({
         content:
           "Encontre empresas, lojas e produtos no Trapeza. Explore catálogos digitais e entre em contato diretamente com os negócios.",
       },
-      { property: "og:title", content: "Trapeza — Encontre empresas, produtos e lojas perto de você" },
+      {
+        property: "og:title",
+        content: "Trapeza — Encontre empresas, produtos e lojas perto de você",
+      },
       {
         property: "og:description",
         content:
@@ -66,7 +72,8 @@ function Landing() {
   // Cada posição de carrossel só mostra os anúncios ativos marcados pra
   // ela no painel (/plataforma/anuncios) — nenhuma consulta nova, só
   // filtra em memória a mesma lista já buscada acima.
-  const anunciosPorPosicao = (valor: string) => anunciosHome.filter((a) => a.posicao === valor);
+  const anunciosPorPosicao = (valor: string) =>
+    anunciosHome.filter((a) => a.posicao === valor);
 
   const [busca, setBusca] = useState("");
   const [cidadeFiltro, setCidadeFiltro] = useState<string>(TODAS_CIDADES);
@@ -74,7 +81,11 @@ function Landing() {
 
   const cidades = useMemo(() => {
     const set = new Set<string>();
-    for (const e of empresas) if (e.cidade) set.add(e.cidade);
+
+    for (const e of empresas) {
+      if (e.cidade) set.add(e.cidade);
+    }
+
     return Array.from(set).sort();
   }, [empresas]);
 
@@ -82,6 +93,7 @@ function Landing() {
   // geolocalização real) — base pra todos os carrosséis de intenção.
   const empresasDaCidade = useMemo(() => {
     if (cidadeFiltro === TODAS_CIDADES) return empresas;
+
     return empresas.filter((e) => e.cidade === cidadeFiltro);
   }, [empresas, cidadeFiltro]);
 
@@ -98,104 +110,169 @@ function Landing() {
   // Carrosséis por intenção, derivados em memória da MESMA lista de
   // empresas já carregada (nenhuma query nova por bloco).
   const praMatarAFome = useMemo(
-    () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["lanchonete", "restaurante", "pizzaria"].includes(c))),
+    () =>
+      empresasDaCidade.filter((e) =>
+        e.categorias?.some((c) =>
+          ["lanchonete", "restaurante", "pizzaria"].includes(c),
+        ),
+      ),
     [empresasDaCidade],
   );
-
-const mecanico = useMemo(() => porCategoria("mecanico"), [empresasDaCidade]);
-const farmacia = useMemo(() => porCategoria("farmacia"), [empresasDaCidade]);
-
-  const pizzarias = useMemo(() => porCategoria("pizzaria"), [empresasDaCidade]);
-  const distribuidoras = useMemo(() => porCategoria("distribuidora"), [empresasDaCidade]);
-  const doces = useMemo(
-    () => empresasDaCidade.filter((e) => e.categorias?.some((c) => ["confeitaria", "sorvete"].includes(c))),
-    [empresasDaCidade],
-  );
-  const visual = useMemo(() => porCategoria("barbearia"), [empresasDaCidade]);
-  const cuidar = useMemo(() => porCategoria("estetica"), [empresasDaCidade]);
 
   // Config (horários) das empresas do "Peça rápido", pra calcular o selo
   // Aberto/Fechado. Só busca pros ids que estão na tela.
-  const idsParaHorario = useMemo(() => pecaRapido.slice(0, 12).map((e) => e.id), [pecaRapido]);
+  const idsParaHorario = useMemo(
+    () => pecaRapido.slice(0, 12).map((e) => e.id),
+    [pecaRapido],
+  );
+
   const { data: configsPorEmpresa = {} } = useQuery({
     queryKey: ["configs-empresas", idsParaHorario],
-    queryFn: () => getConfigsEmpresas({ data: { empresaIds: idsParaHorario } }),
+    queryFn: () =>
+      getConfigsEmpresas({
+        data: { empresaIds: idsParaHorario },
+      }),
     enabled: idsParaHorario.length > 0,
     staleTime: 30_000,
   });
+
   const abertoPorEmpresa = useMemo(() => {
     const mapa: Record<string, boolean | undefined> = {};
+
     for (const id of idsParaHorario) {
       const cfg = configsPorEmpresa[id];
-      mapa[id] = cfg ? isStoreOpenNow(getHorarios(cfg)) : undefined;
+
+      mapa[id] = cfg
+        ? isStoreOpenNow(getHorarios(cfg))
+        : undefined;
     }
+
     return mapa;
   }, [configsPorEmpresa, idsParaHorario]);
 
-  // Resultados da busca, tipo Google: aparecem numa lista suspensa embaixo
-  // do campo de busca (dentro do HomeHero), sem mexer em mais nada da
-  // página. Casa por nome, categoria e tipo (trapeza/externa) — basta
-  // digitar "h" pra começar a achar tudo que tem "h" em algum desses
-  // campos, e vai afunilando conforme mais letras entram.
+  // Resultados da busca, tipo Google: aparecem numa lista suspensa
+  // embaixo do campo de busca (dentro do HomeHero).
+  const resultadosBusca = useMemo<EmpresaCard[]>(() => {
+    const termo = busca.trim().toLowerCase();
 
+    if (!termo) return [];
 
+    return empresas
+      .filter((e) => {
+        const categoriasTexto = labelsCategoriasNegocio(e.categorias)
+          .join(" ")
+          .toLowerCase();
 
-const resultadosBusca = useMemo(() => {
-  const termo = busca.trim().toLowerCase();
+        const tipoTexto =
+          e.tipo === "externa" ? "externa" : "trapeza";
 
-  if (!termo) return [];
+        return (
+          e.nome.toLowerCase().includes(termo) ||
+          categoriasTexto.includes(termo) ||
+          tipoTexto.includes(termo) ||
+          (e.cidade ?? "").toLowerCase().includes(termo) ||
+          (e.palavras_chave ?? "").toLowerCase().includes(termo)
+        );
+      })
+      .slice(0, 8);
+  }, [empresas, busca]);
 
-  return empresas
-    .filter((e) => {
-      const categoriasTexto = labelsCategoriasNegocio(e.categorias)
-        .join(" ")
-        .toLowerCase();
-
-      const tipoTexto = e.tipo === "externa" ? "externa" : "trapeza";
-
-      return (
-        e.nome.toLowerCase().includes(termo) ||
-        categoriasTexto.includes(termo) ||
-        tipoTexto.includes(termo) ||
-        (e.cidade ?? "").toLowerCase().includes(termo) ||
-        (e.palavras_chave ?? "").toLowerCase().includes(termo)
-      );
-    })
-    .slice(0, 8);
-}, [empresas, busca]);  // Busca de PRODUTO ("digitei 'skol', onde vende?") cruza catálogo de
-  // várias empresas ao mesmo tempo — isso é uma consulta no banco, então
-  // usa um debounce de 300ms (espera parar de digitar) em vez de
-  // disparar uma chamada a cada letra.
+  // Busca de PRODUTO.
   const [buscaDebounced, setBuscaDebounced] = useState("");
+
   useEffect(() => {
-    const id = setTimeout(() => setBuscaDebounced(busca.trim()), 300);
+    const id = setTimeout(
+      () => setBuscaDebounced(busca.trim()),
+      300,
+    );
+
     return () => clearTimeout(id);
   }, [busca]);
 
   const { data: resultadosProdutos = [] } = useQuery({
     queryKey: ["busca-produtos-plataforma", buscaDebounced],
-    queryFn: () => buscarProdutosPlataforma({ data: { termo: buscaDebounced, limite: 8 } }),
+    queryFn: () =>
+      buscarProdutosPlataforma({
+        data: {
+          termo: buscaDebounced,
+          limite: 8,
+        },
+      }),
     enabled: buscaDebounced.length > 0,
     staleTime: 15_000,
   });
 
-  // "Descubra negócios da sua cidade" — só filtra por cidade. A busca NÃO
-  // filtra mais essa seção (ela só alimenta a lista suspensa do HomeHero
-  // agora) — por isso reaproveita direto o `empresasDaCidade` já calculado
-  // acima pros carrosséis de intenção.
-
+  // "Descubra negócios da sua cidade".
   function scrollToExplore() {
-    document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .getElementById("explore")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
   }
 
+  const { data: categorias = CATEGORIAS_NEGOCIO } =
+    useCategoriasNegocio();
+
+  // Quantas categorias serão renderizadas inicialmente.
+  const [categoriasVisiveis, setCategoriasVisiveis] =
+    useState(8);
+
+  // Referência para detectar quando o usuário chegar perto
+  // do final das categorias atualmente renderizadas.
+  const sentinelaCategoriasRef =
+    useRef<HTMLDivElement>(null);
+
+  // Renderiza somente as categorias que estão liberadas.
+  const categoriasRenderizadas = categorias.slice(
+    0,
+    categoriasVisiveis,
+  );
+
+  // Quando a sentinela entra na área visível, libera mais 8 categorias.
+  useEffect(() => {
+    const sentinela = sentinelaCategoriasRef.current;
+
+    if (!sentinela) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (
+          entry.isIntersecting &&
+          categoriasVisiveis < categorias.length
+        ) {
+          setCategoriasVisiveis((prev) =>
+            Math.min(prev + 8, categorias.length),
+          );
+        }
+      },
+      {
+        rootMargin: "400px",
+      },
+    );
+
+    observer.observe(sentinela);
+
+    return () => observer.disconnect();
+  }, [categoriasVisiveis, categorias.length]);
+
   return (
-    <div id="topo" className="trapeza-home min-h-screen bg-background pb-16 md:pb-0">
+    <div
+      id="topo"
+      className="trapeza-home min-h-screen bg-background pb-16 md:pb-0"
+    >
       {isLoading && (
-  <div className="flex min-h-screen items-center justify-center">
-    <LogoLoader size={120} />
-  </div>
-)}
-      <link rel="manifest" href="/manifest.webmanifest?v=2"></link>
+        <div className="flex min-h-screen items-center justify-center">
+          <LogoLoader size={120} />
+        </div>
+      )}
+
+      <link
+        rel="manifest"
+        href="/manifest.webmanifest?v=2"
+      />
+
       <HomeHero
         cidades={cidades}
         cidadeFiltro={cidadeFiltro}
@@ -210,8 +287,9 @@ const resultadosBusca = useMemo(() => {
 
       <CategoryScroller categoriaFiltro={TODAS_CATEGORIAS} />
 
-      <PromoCarousel anuncios={anunciosPorPosicao("1")} />
-
+      <PromoCarousel
+        anuncios={anunciosPorPosicao("1")}
+      />
 
       {/*!isLoading && (
         <NearbyBusinesses
@@ -227,56 +305,32 @@ const resultadosBusca = useMemo(() => {
         empresas={praMatarAFome}
       />
 
-      <PopularProducts produtos={maisProcurados} posicao={"1"} />
-
-      <IntentCarousel
-        titulo="🧑‍🔧 Precisando de um mecânico?"
-        subtitulo="Os melhores proficionais da cidade estão aqui!"
-        empresas={mecanico}
-      />
-
-      <IntentCarousel
-        titulo="🍕 Hoje merece uma pizza"
-        subtitulo="Sextou ou não, pizza nunca precisa de motivo."
-        empresas={pizzarias}
-      />
-
-      <IntentCarousel
-        titulo="🥤 Pra reabastecer o estoque"
-        subtitulo="Bebida acabou? O churrasco tá chegando? Reabastece aqui."
-        empresas={distribuidoras}
+      <PopularProducts
+        produtos={maisProcurados}
+        posicao={"1"}
       />
 
       <BusinessSignupCTA />
 
-       <IntentCarousel
-        titulo="💊 Cuide da sua saúde sem complicação"
-        subtitulo="Encontre uma farmácia perto de você e resolva tudo em poucos toques"
-        empresas={farmacia}
-      />
+      {categoriasRenderizadas.map((cat, index) => (
+        <div key={cat.id}>
+          <IntentCarousel
+            titulo={`${cat.label.toUpperCase()}`}
+            subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+            empresas={porCategoria(cat.valor)}
+          />
 
+          {(index + 1) % 6 === 0 && (
+            <PromoCarousel
+              anuncios={anunciosPorPosicao("1")}
+            />
+          )}
+        </div>
+      ))}
 
-      <IntentCarousel
-        titulo="🍰 Deu vontade de um doce"
-        subtitulo="Porque às vezes o que falta é só um bolo. 😋"
-        empresas={doces}
-      />
-      
-      <PromoCarousel anuncios={anunciosPorPosicao("2")} />
-
-      <IntentCarousel
-        titulo="💇 Dar um trato no visual"
-        subtitulo="Cabelo, barba e autoestima em dia."
-        empresas={visual}
-      />
-
-      <IntentCarousel
-        titulo="✨ Hora de se cuidar"
-        subtitulo="Um tempinho pra você também entra na lista."
-        empresas={cuidar}
-      />
-
-      <PromoCarousel anuncios={anunciosPorPosicao("3")} />
+      {/* Sentinela usada para carregar mais categorias
+          quando o usuário chega perto do final. */}
+      <div ref={sentinelaCategoriasRef} />
 
       {/*
         "Mais procurados": os 3 produtos mais vendidos de CADA empresa
@@ -287,32 +341,38 @@ const resultadosBusca = useMemo(() => {
         uma. Some sozinha se não tiver produto vendido suficiente.
       */}
 
-       
-
       <ExploreBusinesses
         empresas={empresasDaCidade}
         totalSemFiltro={empresas.length}
         visibleCount={visibleCount}
-        onVerMais={() => setVisibleCount((v) => v + PAGE_SIZE)}
+        onVerMais={() =>
+          setVisibleCount((v) => v + PAGE_SIZE)
+        }
         isLoading={isLoading}
         categoriaSelecionada={null}
       />
 
-      <PromoCarousel anuncios={anunciosPorPosicao("4")} />
-
-      <BusinessCTASmall />
-
       <footer className="hidden border-t border-border bg-card md:block">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>
-            <strong className="text-foreground">TRAPEZA</strong> · encontre
-            empresas e produtos perto de você
+            <strong className="text-foreground">
+              TRAPEZA
+            </strong>{" "}
+            · encontre empresas e produtos perto de você
           </p>
+
           <div className="flex gap-4">
-            <Link to="/painel/login" className="hover:underline">
+            <Link
+              to="/painel/login"
+              className="hover:underline"
+            >
               Painel admin
             </Link>
-            <Link to="/plataforma/login" className="hover:underline">
+
+            <Link
+              to="/plataforma/login"
+              className="hover:underline"
+            >
               Plataforma
             </Link>
           </div>

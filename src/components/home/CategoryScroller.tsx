@@ -110,7 +110,7 @@ function CategoriaIcone({ categoria: c, ativa }: { categoria: CategoriaNegocio; 
         )}
         style={{ backgroundColor: ativa ? "var(--tp-orange)" : "var(--tp-cream, #fdf6ec)" }}
       >
-        <img className="w-[50%]" src={c.imagem_url} />
+        <img className="w-[70%]" src={c.imagem_url ?? undefined} />
       </span>
       <span className="text-center text-[11px] font-bold leading-tight text-[#763200]">
         {c.label}

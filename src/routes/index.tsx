@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   listEmpresasPublicas,
   getTopProdutosPlataforma,
@@ -8,28 +9,43 @@ import {
   getAnunciosHome,
   buscarProdutosPlataforma,
 } from "@/lib/admin-server";
+
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
-import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
-import { HomeHero, TODAS_CIDADES } from "@/components/home/HomeHero";
-import { CategoryScroller, TODAS_CATEGORIAS } from "@/components/home/CategoryScroller";
-import { NearbyBusinesses } from "@/components/home/NearbyBusinesses";
+
+import {
+  labelsCategoriasNegocio,
+  useCategoriasNegocio,
+  CATEGORIAS_NEGOCIO,
+} from "@/lib/categorias-negocio";
+
+import {
+  HomeHero,
+  TODAS_CIDADES,
+} from "@/components/home/HomeHero";
+
+import {
+  CategoryScroller,
+  TODAS_CATEGORIAS,
+} from "@/components/home/CategoryScroller";
+
 import { PromoCarousel } from "@/components/home/PromoCarousel";
 import { IntentCarousel } from "@/components/home/IntentCarousel";
 import { PopularProducts } from "@/components/home/PopularProducts";
 import { ExploreBusinesses } from "@/components/home/ExploreBusinesses";
-import { BusinessCTASmall } from "@/components/home/BusinessCTASmall";
 import { BusinessSignupCTA } from "@/components/home/BusinessSignupCTA";
 import { MobileBottomNav } from "@/components/home/MobileBottomNav";
 import { LogoLoader } from "@/components/LogoLoader";
-import { useCategoriasNegocio, CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
 import { EmpresaCard } from "@/components/home/BusinessCard";
-import { CategoriaService } from "@/modules/categorias/services/categoria.service";
 
 export const Route = createFileRoute("/")({
   component: Landing,
+
   head: () => ({
     meta: [
-      { title: "Trapeza — Encontre empresas, produtos e lojas perto de você" },
+      {
+        title:
+          "Trapeza — Encontre empresas, produtos e lojas perto de você",
+      },
       {
         name: "description",
         content:
@@ -37,7 +53,8 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "Trapeza — Encontre empresas, produtos e lojas perto de você",
+        content:
+          "Trapeza — Encontre empresas, produtos e lojas perto de você",
       },
       {
         property: "og:description",
@@ -50,147 +67,281 @@ export const Route = createFileRoute("/")({
 
 const PAGE_SIZE = 8;
 
+// Quantas categorias aparecem inicialmente.
+const CATEGORIAS_INICIAIS = 8;
+
+// Quantas categorias entram a cada carregamento.
+const CATEGORIAS_POR_CARGA = 8;
+
 function Landing() {
-  const { data: empresas = [], isLoading } = useQuery({
+  /*
+   * EMPRESAS
+   */
+  const {
+    data: empresas = [],
+    isLoading,
+  } = useQuery({
     queryKey: ["empresas-publicas"],
-    queryFn: () => listEmpresasPublicas({ data: {} as Record<string, never> }),
+    queryFn: () =>
+      listEmpresasPublicas({
+        data: {} as Record<string, never>,
+      }),
     staleTime: 30_000,
   });
 
-  const { data: maisProcurados = [] } = useQuery({
+  /*
+   * PRODUTOS MAIS PROCURADOS
+   */
+  const {
+    data: maisProcurados = [],
+  } = useQuery({
     queryKey: ["top-produtos-plataforma"],
-    queryFn: () => getTopProdutosPlataforma({ data: { limitePorEmpresa: 4 } }),
+    queryFn: () =>
+      getTopProdutosPlataforma({
+        data: {
+          limitePorEmpresa: 4,
+        },
+      }),
     staleTime: 60_000,
   });
 
-  const { data: anunciosHome = [] } = useQuery({
+  /*
+   * ANÚNCIOS
+   */
+  const {
+    data: anunciosHome = [],
+  } = useQuery({
     queryKey: ["anuncios-home"],
-    queryFn: () => getAnunciosHome({ data: {} as Record<string, never> }),
+    queryFn: () =>
+      getAnunciosHome({
+        data: {},
+      }),
     staleTime: 60_000,
   });
 
-  // Cada posição de carrossel só mostra os anúncios ativos marcados pra
-  // ela no painel (/plataforma/anuncios) — nenhuma consulta nova, só
-  // filtra em memória a mesma lista já buscada acima.
+  /*
+   * Filtra em memória os anúncios de cada posição.
+   * Não cria novas consultas.
+   */
   const anunciosPorPosicao = (valor: string) =>
-    anunciosHome.filter((a) => a.posicao === valor);
+    anunciosHome.filter(
+      (a) => a.posicao === valor,
+    );
 
+  /*
+   * BUSCA
+   */
   const [busca, setBusca] = useState("");
-  const [cidadeFiltro, setCidadeFiltro] = useState<string>(TODAS_CIDADES);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  /*
+   * CIDADE
+   */
+  const [cidadeFiltro, setCidadeFiltro] =
+    useState<string>(TODAS_CIDADES);
+
+  /*
+   * PAGINAÇÃO DO EXPLORE
+   */
+  const [visibleCount, setVisibleCount] =
+    useState(PAGE_SIZE);
+
+  /*
+   * CIDADES DISPONÍVEIS
+   */
   const cidades = useMemo(() => {
     const set = new Set<string>();
 
-    for (const e of empresas) {
-      if (e.cidade) set.add(e.cidade);
+    for (const empresa of empresas) {
+      if (empresa.cidade) {
+        set.add(empresa.cidade);
+      }
     }
 
     return Array.from(set).sort();
   }, [empresas]);
 
-  // Empresas na cidade escolhida (aproximação de localização sem
-  // geolocalização real) — base pra todos os carrosséis de intenção.
+  /*
+   * EMPRESAS DA CIDADE SELECIONADA
+   */
   const empresasDaCidade = useMemo(() => {
-    if (cidadeFiltro === TODAS_CIDADES) return empresas;
+    if (cidadeFiltro === TODAS_CIDADES) {
+      return empresas;
+    }
 
-    return empresas.filter((e) => e.cidade === cidadeFiltro);
+    return empresas.filter(
+      (empresa) =>
+        empresa.cidade === cidadeFiltro,
+    );
   }, [empresas, cidadeFiltro]);
 
+  /*
+   * EMPRESAS POR CATEGORIA
+   */
   const porCategoria = (valor: string) =>
-    empresasDaCidade.filter((e) => e.categorias?.includes(valor));
+    empresasDaCidade.filter((empresa) =>
+      empresa.categorias?.includes(valor),
+    );
 
-  // "⚡ Peça rápido" — só empresas do PRÓPRIO sistema Trapeza (têm
-  // catálogo/pedido de verdade; é a vitrine/isca pro sistema).
+  /*
+   * EMPRESAS DO PRÓPRIO TRAPEZA
+   *
+   * Usado pelo antigo "Peça rápido".
+   */
   const pecaRapido = useMemo(
-    () => empresasDaCidade.filter((e) => e.tipo === "trapeza"),
+    () =>
+      empresasDaCidade.filter(
+        (empresa) =>
+          empresa.tipo === "trapeza",
+      ),
     [empresasDaCidade],
   );
 
-  // Carrosséis por intenção, derivados em memória da MESMA lista de
-  // empresas já carregada (nenhuma query nova por bloco).
+  /*
+   * PRA MATAR A FOME
+   */
   const praMatarAFome = useMemo(
     () =>
-      empresasDaCidade.filter((e) =>
-        e.categorias?.some((c) =>
-          ["lanchonete", "restaurante", "pizzaria"].includes(c),
+      empresasDaCidade.filter((empresa) =>
+        empresa.categorias?.some((categoria) =>
+          [
+            "lanchonete",
+            "restaurante",
+            "pizzaria",
+          ].includes(categoria),
         ),
       ),
     [empresasDaCidade],
   );
 
-  // Config (horários) das empresas do "Peça rápido", pra calcular o selo
-  // Aberto/Fechado. Só busca pros ids que estão na tela.
+  /*
+   * HORÁRIOS DO PEÇA RÁPIDO
+   */
   const idsParaHorario = useMemo(
-    () => pecaRapido.slice(0, 12).map((e) => e.id),
+    () =>
+      pecaRapido
+        .slice(0, 12)
+        .map((empresa) => empresa.id),
     [pecaRapido],
   );
 
-  const { data: configsPorEmpresa = {} } = useQuery({
-    queryKey: ["configs-empresas", idsParaHorario],
+  const {
+    data: configsPorEmpresa = {},
+  } = useQuery({
+    queryKey: [
+      "configs-empresas",
+      idsParaHorario,
+    ],
+
     queryFn: () =>
       getConfigsEmpresas({
-        data: { empresaIds: idsParaHorario },
+        data: {
+          empresaIds: idsParaHorario,
+        },
       }),
-    enabled: idsParaHorario.length > 0,
+
+    enabled:
+      idsParaHorario.length > 0,
+
     staleTime: 30_000,
   });
 
   const abertoPorEmpresa = useMemo(() => {
-    const mapa: Record<string, boolean | undefined> = {};
+    const mapa: Record<
+      string,
+      boolean | undefined
+    > = {};
 
     for (const id of idsParaHorario) {
-      const cfg = configsPorEmpresa[id];
+      const cfg =
+        configsPorEmpresa[id];
 
       mapa[id] = cfg
-        ? isStoreOpenNow(getHorarios(cfg))
+        ? isStoreOpenNow(
+            getHorarios(cfg),
+          )
         : undefined;
     }
 
     return mapa;
-  }, [configsPorEmpresa, idsParaHorario]);
+  }, [
+    configsPorEmpresa,
+    idsParaHorario,
+  ]);
 
-  // Resultados da busca, tipo Google: aparecem numa lista suspensa
-  // embaixo do campo de busca (dentro do HomeHero).
-  const resultadosBusca = useMemo<EmpresaCard[]>(() => {
-    const termo = busca.trim().toLowerCase();
+  /*
+   * RESULTADOS DA BUSCA DE EMPRESAS
+   */
+  const resultadosBusca =
+    useMemo<EmpresaCard[]>(() => {
+      const termo =
+        busca.trim().toLowerCase();
 
-    if (!termo) return [];
+      if (!termo) {
+        return [];
+      }
 
-    return empresas
-      .filter((e) => {
-        const categoriasTexto = labelsCategoriasNegocio(e.categorias)
-          .join(" ")
-          .toLowerCase();
+      return empresas
+        .filter((empresa) => {
+          const categoriasTexto =
+            labelsCategoriasNegocio(
+              empresa.categorias,
+            )
+              .join(" ")
+              .toLowerCase();
 
-        const tipoTexto =
-          e.tipo === "externa" ? "externa" : "trapeza";
+          const tipoTexto =
+            empresa.tipo === "externa"
+              ? "externa"
+              : "trapeza";
 
-        return (
-          e.nome.toLowerCase().includes(termo) ||
-          categoriasTexto.includes(termo) ||
-          tipoTexto.includes(termo) ||
-          (e.cidade ?? "").toLowerCase().includes(termo) ||
-          (e.palavras_chave ?? "").toLowerCase().includes(termo)
-        );
-      })
-      .slice(0, 8);
-  }, [empresas, busca]);
+          return (
+            empresa.nome
+              .toLowerCase()
+              .includes(termo) ||
+            categoriasTexto.includes(
+              termo,
+            ) ||
+            tipoTexto.includes(termo) ||
+            (empresa.cidade ?? "")
+              .toLowerCase()
+              .includes(termo) ||
+            (empresa.palavras_chave ?? "")
+              .toLowerCase()
+              .includes(termo)
+          );
+        })
+        .slice(0, 8);
+    }, [empresas, busca]);
 
-  // Busca de PRODUTO.
-  const [buscaDebounced, setBuscaDebounced] = useState("");
+  /*
+   * DEBOUNCE DA BUSCA DE PRODUTOS
+   */
+  const [
+    buscaDebounced,
+    setBuscaDebounced,
+  ] = useState("");
 
   useEffect(() => {
-    const id = setTimeout(
-      () => setBuscaDebounced(busca.trim()),
-      300,
-    );
+    const id = setTimeout(() => {
+      setBuscaDebounced(
+        busca.trim(),
+      );
+    }, 300);
 
     return () => clearTimeout(id);
   }, [busca]);
 
-  const { data: resultadosProdutos = [] } = useQuery({
-    queryKey: ["busca-produtos-plataforma", buscaDebounced],
+  /*
+   * RESULTADOS DE PRODUTOS
+   */
+  const {
+    data: resultadosProdutos = [],
+  } = useQuery({
+    queryKey: [
+      "busca-produtos-plataforma",
+      buscaDebounced,
+    ],
+
     queryFn: () =>
       buscarProdutosPlataforma({
         data: {
@@ -198,11 +349,16 @@ function Landing() {
           limite: 8,
         },
       }),
-    enabled: buscaDebounced.length > 0,
+
+    enabled:
+      buscaDebounced.length > 0,
+
     staleTime: 15_000,
   });
 
-  // "Descubra negócios da sua cidade".
+  /*
+   * SCROLL PARA EXPLORAR
+   */
   function scrollToExplore() {
     document
       .getElementById("explore")
@@ -212,56 +368,141 @@ function Landing() {
       });
   }
 
-  const { data: categorias = CATEGORIAS_NEGOCIO } =
-    useCategoriasNegocio();
+  /*
+   * CATEGORIAS
+   */
+  const {
+    data: categorias = CATEGORIAS_NEGOCIO,
+  } = useCategoriasNegocio();
 
-  // Quantas categorias serão renderizadas inicialmente.
-  const [categoriasVisiveis, setCategoriasVisiveis] =
-    useState(8);
+  /*
+   * LAZY RENDER DAS CATEGORIAS
+   *
+   * Não montamos todas as categorias
+   * de uma vez.
+   */
+  const [
+    categoriasVisiveis,
+    setCategoriasVisiveis,
+  ] = useState(
+    CATEGORIAS_INICIAIS,
+  );
 
-  // Referência para detectar quando o usuário chegar perto
-  // do final das categorias atualmente renderizadas.
+  /*
+   * Sentinela no final da lista.
+   */
   const sentinelaCategoriasRef =
     useRef<HTMLDivElement>(null);
 
-  // Renderiza somente as categorias que estão liberadas.
-  const categoriasRenderizadas = categorias.slice(
-    0,
-    categoriasVisiveis,
-  );
-
-  // Quando a sentinela entra na área visível, libera mais 8 categorias.
-  useEffect(() => {
-    const sentinela = sentinelaCategoriasRef.current;
-
-    if (!sentinela) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          categoriasVisiveis < categorias.length
-        ) {
-          setCategoriasVisiveis((prev) =>
-            Math.min(prev + 8, categorias.length),
-          );
-        }
-      },
-      {
-        rootMargin: "400px",
-      },
+  /*
+   * Categorias atualmente montadas.
+   */
+  const categoriasRenderizadas =
+    useMemo(
+      () =>
+        categorias.slice(
+          0,
+          categoriasVisiveis,
+        ),
+      [
+        categorias,
+        categoriasVisiveis,
+      ],
     );
+
+  /*
+   * CARREGAMENTO PROGRESSIVO
+   *
+   * Quando o usuário se aproxima
+   * do final das categorias atuais,
+   * libera mais 8.
+   */
+  useEffect(() => {
+    const sentinela =
+      sentinelaCategoriasRef.current;
+
+    if (!sentinela) {
+      return;
+    }
+
+    if (
+      categoriasVisiveis >=
+      categorias.length
+    ) {
+      return;
+    }
+
+    const observer =
+      new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          setCategoriasVisiveis(
+            (prev) => {
+              if (
+                prev >=
+                categorias.length
+              ) {
+                return prev;
+              }
+
+              return Math.min(
+                prev +
+                  CATEGORIAS_POR_CARGA,
+                categorias.length,
+              );
+            },
+          );
+        },
+        {
+          /*
+           * Começa a carregar antes
+           * do usuário chegar literalmente
+           * no final.
+           */
+          rootMargin: "200px",
+        },
+      );
 
     observer.observe(sentinela);
 
-    return () => observer.disconnect();
-  }, [categoriasVisiveis, categorias.length]);
+    return () =>
+      observer.disconnect();
+  }, [
+    categoriasVisiveis,
+    categorias.length,
+  ]);
+
+  /*
+   * Se a quantidade de categorias
+   * mudar dinamicamente, garante que
+   * nunca fique com 0 categorias.
+   */
+  useEffect(() => {
+    if (
+      categorias.length > 0 &&
+      categoriasVisiveis === 0
+    ) {
+      setCategoriasVisiveis(
+        Math.min(
+          CATEGORIAS_INICIAIS,
+          categorias.length,
+        ),
+      );
+    }
+  }, [
+    categorias.length,
+    categoriasVisiveis,
+  ]);
 
   return (
     <div
       id="topo"
       className="trapeza-home min-h-screen bg-background pb-16 md:pb-0"
     >
+      {/* LOADING */}
       {isLoading && (
         <div className="flex min-h-screen items-center justify-center">
           <LogoLoader size={120} />
@@ -273,92 +514,176 @@ function Landing() {
         href="/manifest.webmanifest?v=2"
       />
 
+      {/* HERO */}
       <HomeHero
         cidades={cidades}
         cidadeFiltro={cidadeFiltro}
-        onChangeCidade={setCidadeFiltro}
+        onChangeCidade={
+          setCidadeFiltro
+        }
         busca={busca}
         onBuscaChange={setBusca}
-        resultadosBusca={resultadosBusca}
-        resultadosProdutos={resultadosProdutos}
-        totalLojas={empresas.length}
-        onExplorar={scrollToExplore}
+        resultadosBusca={
+          resultadosBusca
+        }
+        resultadosProdutos={
+          resultadosProdutos
+        }
+        totalLojas={
+          empresas.length
+        }
+        onExplorar={
+          scrollToExplore
+        }
       />
 
-      <CategoryScroller categoriaFiltro={TODAS_CATEGORIAS} />
+      {/* CATEGORIAS PRINCIPAIS */}
+      <CategoryScroller
+        categoriaFiltro={
+          TODAS_CATEGORIAS
+        }
+      />
 
+      {/* ANÚNCIO 1 */}
       <PromoCarousel
         anuncios={anunciosPorPosicao("1")}
       />
 
-      {/*!isLoading && (
-        <NearbyBusinesses
-          empresas={pecaRapido}
-          abertoPorEmpresa={abertoPorEmpresa}
-          onVerMais={scrollToExplore}
-        />
-      )*/}
+      {/* 
+        PEÇA RÁPIDO
+        Mantido desativado como estava
+        no seu código.
+      */}
 
+      {/* 
+      <NearbyBusinesses
+        empresas={pecaRapido}
+        abertoPorEmpresa={abertoPorEmpresa}
+        onVerMais={scrollToExplore}
+      />
+      */}
+
+      {/* PRA MATAR A FOME */}
       <IntentCarousel
         titulo="🍔 Pra matar a fome"
         subtitulo="Do lanche caprichado àquela pizza que salva a noite."
         empresas={praMatarAFome}
       />
 
+      {/* PRODUTOS MAIS PROCURADOS */}
       <PopularProducts
         produtos={maisProcurados}
         posicao={"1"}
       />
 
+      {/* CTA PARA EMPRESAS */}
       <BusinessSignupCTA />
 
-      {categoriasRenderizadas.map((cat, index) => (
-        <div key={cat.id}>
-          <IntentCarousel
-            titulo={`${cat.label.toUpperCase()}`}
-            subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
-            empresas={porCategoria(cat.valor)}
-          />
+      {/* 
+        CATEGORIAS DINÂMICAS
 
-          {(index + 1) % 6 === 0 && (
-            <PromoCarousel
-              anuncios={anunciosPorPosicao("1")}
-            />
-          )}
-        </div>
-      ))}
-
-      {/* Sentinela usada para carregar mais categorias
-          quando o usuário chega perto do final. */}
-      <div ref={sentinelaCategoriasRef} />
-
-      {/*
-        "Mais procurados": os 3 produtos mais vendidos de CADA empresa
-        Trapeza ativa, misturados num ranking só (não inclui empresa
-        externa, que não tem catálogo aqui). Vem de um endpoint novo
-        (getTopProdutosPlataforma) que reaproveita a mesma lógica de
-        "mais vendidos por empresa" já usada dentro do cardápio de cada
-        uma. Some sozinha se não tiver produto vendido suficiente.
+        Só as categorias liberadas
+        são montadas.
       */}
+      <section className="space-y-2">
+        {categoriasRenderizadas.map(
+          (cat, index) => {
+            const empresasCategoria =
+              porCategoria(
+                cat.valor,
+              );
 
-      <ExploreBusinesses
-        empresas={empresasDaCidade}
-        totalSemFiltro={empresas.length}
-        visibleCount={visibleCount}
-        onVerMais={() =>
-          setVisibleCount((v) => v + PAGE_SIZE)
-        }
-        isLoading={isLoading}
-        categoriaSelecionada={null}
+            /*
+             * Se não existe nenhuma empresa
+             * naquela categoria, não monta
+             * o carrossel.
+             *
+             * Isso evita blocos vazios.
+             */
+            if (
+              empresasCategoria.length ===
+              0
+            ) {
+              return null;
+            }
+
+            return (
+              <div
+                key={cat.id}
+                className="overflow-hidden"
+              >
+                <IntentCarousel
+                  titulo={cat.label.toUpperCase()}
+                  subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+                  empresas={
+                    empresasCategoria
+                  }
+                />
+
+                {/* 
+                  A cada 6 categorias
+                  tenta inserir anúncio da
+                  posição 1.
+                */}
+                {(index + 1) % 6 ===
+                  0 && (
+                  <PromoCarousel
+                    anuncios={anunciosPorPosicao(
+                      "1",
+                    )}
+                  />
+                )}
+              </div>
+            );
+          },
+        )}
+      </section>
+
+      {/* 
+        SENTINELA
+
+        Quando chegar perto daqui,
+        o observer libera mais categorias.
+      */}
+      <div
+        ref={sentinelaCategoriasRef}
+        className="h-8 w-full"
+        aria-hidden="true"
       />
 
+      {/* 
+        EXPLORAR TODOS OS NEGÓCIOS
+      */}
+      <ExploreBusinesses
+        empresas={
+          empresasDaCidade
+        }
+        totalSemFiltro={
+          empresas.length
+        }
+        visibleCount={
+          visibleCount
+        }
+        onVerMais={() =>
+          setVisibleCount(
+            (v) => v + PAGE_SIZE,
+          )
+        }
+        isLoading={isLoading}
+        categoriaSelecionada={
+          null
+        }
+      />
+
+      {/* FOOTER */}
       <footer className="hidden border-t border-border bg-card md:block">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>
             <strong className="text-foreground">
               TRAPEZA
             </strong>{" "}
-            · encontre empresas e produtos perto de você
+            · encontre empresas e produtos
+            perto de você
           </p>
 
           <div className="flex gap-4">
@@ -379,6 +704,7 @@ function Landing() {
         </div>
       </footer>
 
+      {/* NAVEGAÇÃO MOBILE */}
       <MobileBottomNav />
     </div>
   );

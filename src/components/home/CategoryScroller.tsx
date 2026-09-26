@@ -67,7 +67,7 @@ export function CategoryScroller({
           >
             <span
               className="flex h-14 w-14 items-center justify-center rounded-full"
-              style={{ backgroundColor: "var(--tp-cream, #fdf6ec)" }}
+              style={{ backgroundColor: " #ffb958" }}
             >
               <MoreHorizontal className="h-6 w-6" style={{ color: "#763200" }} />
             </span>

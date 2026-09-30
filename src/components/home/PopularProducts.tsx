@@ -1,14 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { brl } from "@/lib/format";
-import { getAnunciosPromocao, type TopProdutoPlataforma } from "@/lib/admin-server";
+import { type TopProdutoPlataforma } from "@/lib/admin-server";
 
 // Grade compacta com os produtos mais vendidos, cruzando várias empresas
 // Trapeza ativas (o back-end já devolve isso ordenado por quantidade
 // vendida — ver getTopProdutosPlataforma). Cada card leva direto pra
 // página do produto, dentro do cardápio da empresa dele.
 export function PopularProducts({ produtos, posicao }: { produtos: TopProdutoPlataforma[], posicao: String }) {
-  const valor = getAnunciosPromocao();
   if (produtos.length === 0) return null;
 
   return (

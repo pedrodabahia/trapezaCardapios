@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { brl } from "@/lib/format";
 import { listarProdutosPorCategoriasNegocio, listEmpresasPublicas, type ProdutoCategoriaPlataforma } from "@/lib/admin-server";
+import { listEmpresasPublicasPorCategorias } from "@/modules/empresas/controllers/empresa.controller";
 import { CATEGORIAS_NEGOCIO, useCategoriasNegocio } from "@/lib/categorias-negocio";
 import { BusinessCard } from "@/components/home/BusinessCard";
 import { cn } from "@/lib/utils";
@@ -38,29 +39,25 @@ function PaginaCategoria() {
   useEffect(() => setFiltro(TODAS), [valor]);
 
   const categoriasParaBusca = filtro === TODAS ? valoresRelacionados : [filtro];
-  const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ["produtos-categoria-negocio", categoriaPai?.valor ?? valor, filtro, categoriasParaBusca],
-    queryFn: () => listarProdutosPorCategoriasNegocio({ data: { categorias: categoriasParaBusca } }),
-    enabled: categoriasParaBusca.length > 0,
-    staleTime: 30_000,
-  });
+
 
   // Produto só existe pra empresa Trapeza (com catálogo). Empresa externa
   // não tem produto nenhum aqui, então pra ela não "sumir" da categoria,
   // mostra o card da empresa direto (leva pra /empresa/$slug). Empresa
   // Trapeza que ainda não tem produto NESSA categoria específica também
   // cai nesse caso, em vez de ficar de fora.
-  const { data: empresas = [] } = useQuery({
-    queryKey: ["empresas-publicas"],
-    queryFn: () => listEmpresasPublicas({ data: {} as Record<string, never> }),
-    staleTime: 30_000,
-  });
-  const empresasRelacionadas = useMemo(
-    () => empresas.filter((e) => e.categorias?.some((c) => categoriasParaBusca.includes(c))),
-    [empresas, categoriasParaBusca],
-  );
+  const { data: empresas = [], isLoading } = useQuery({
+  queryKey: ["empresas-publicas-categoria", categoriasParaBusca],
+  queryFn: () =>
+    listEmpresasPublicasPorCategorias({
+      data: { categorias: categoriasParaBusca },
+    }),
+  staleTime: 30_000,
+  enabled: categoriasParaBusca.length > 0,
+});  
 
-  const totalItens = empresasRelacionadas.length;
+
+  const totalItens = empresas.length;
 
   const titulo = categoriaPai?.label ?? valor;
 
@@ -92,7 +89,7 @@ function PaginaCategoria() {
           <>
             <p className="pb-3 text-xs text-muted-foreground">{totalItens} {totalItens === 1 ? "resultado encontrado" : "resultados encontrados"}</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {empresasRelacionadas.map((empresa) => <BusinessCard key={empresa.id} empresa={empresa} variant="grid" />)}
+              {empresas.map((empresa) => <BusinessCard key={empresa.id} empresa={empresa} variant="grid" />)}
             </div>
           </>
         )}

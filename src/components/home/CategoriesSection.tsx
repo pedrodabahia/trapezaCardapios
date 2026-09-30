@@ -38,7 +38,7 @@ export function CategoriesSection({
                 : "border-border bg-card hover:border-brand-red/50",
             )}
           >
-            <span className="mr-1.5">{c.emoji}</span>
+            <span className="mr-1.5">{}</span>
             {c.label}
           </button>
         ))}

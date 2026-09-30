@@ -7,6 +7,7 @@ import type {
   EmpresaPlataformaPatch,
 } from "../types/empresa.types";
 import { createServerFn } from "@tanstack/react-start";
+import { promises } from "dns";
 
 export type EmpresaPatch = Partial<
   Pick<Empresa, "nome" | "whatsapp" | "endereco" | "pix_chave" | "logo_url" | "capa_url" | "categorias" | "cidade">
@@ -46,6 +47,7 @@ export interface EmpresaRepository {
   buscarPlanoId(empresaId: string): Promise<string | null>;
 
   listarPublicasAtivas(): Promise<EmpresaPublica[]>;
+  listarPublicasAtivasPorCategorias( categorias: string[]): Promise<EmpresaPublica[]>;
   listarTodas(): Promise<Empresa[]>;
   listarParaDashboard(): Promise<EmpresaDashboardRow[]>;
 
@@ -142,6 +144,26 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
     if (error) throw new Error(error.message);
     return (data ?? []) as EmpresaPublica[];
   }
+
+async listarPublicasAtivasPorCategorias(
+  categorias: string[],
+): Promise<EmpresaPublica[]> {
+  console.time("DB - listarPublicasAtivasPorCategorias");
+
+  const { data, error } = await this.sb()
+    .from("empresas")
+    .select(
+      "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque, palavras_chave",
+    )
+    .eq("status_pagamento", "ativo")
+    .overlaps("categorias", categorias)
+    .order("criado_em", { ascending: false });
+
+  console.timeEnd("DB - listarPublicasAtivasPorCategorias");
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as EmpresaPublica[];
+}
 
   async listarTodas(): Promise<Empresa[]> {
     const { data, error } = await this.sb()

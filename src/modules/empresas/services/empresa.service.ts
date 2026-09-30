@@ -46,6 +46,10 @@ export class EmpresaService {
     return this.repository.listarTodas();
   }
 
+  listarPublicasAtivasPorCategorias(categorias: string[]) {
+  return this.repository.listarPublicasAtivasPorCategorias(categorias);
+}
+
   async atualizar(empresaId: string, patch: EmpresaPatch) {
     await this.repository.atualizar(empresaId, patch);
   }

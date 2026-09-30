@@ -32,10 +32,25 @@ export const listEmpresasPublicas = createServerFn({ method: "POST" })
   .validator((d: Record<string, never> | undefined) => d ?? {})
   .handler(async () => {
     const empresaService = container.resolve("empresaService");
-    const impressor = empresaService.listarPublicasAtivas();
-    console.log(impressor);
     return empresaService.listarPublicasAtivas();
   });
+
+  export const listEmpresasPublicasPorCategorias = createServerFn({ method: "POST" })
+  .validator((d: { categorias: string[] }) => d)
+.handler(async ({ data }) => {
+  console.time("SERVER - listEmpresasPublicasPorCategorias");
+
+  const empresaService = container.resolve("empresaService");
+
+  const resultado =
+    await empresaService.listarPublicasAtivasPorCategorias(data.categorias);
+
+  console.timeEnd("SERVER - listEmpresasPublicasPorCategorias");
+
+  return resultado;
+  });
+
+  
 
 // Público (sem login) — config (só usamos horários hoje) de várias
 // empresas de uma vez, pra home da plataforma calcular o selo

@@ -35,19 +35,29 @@ export const listEmpresasPublicas = createServerFn({ method: "POST" })
     return empresaService.listarPublicasAtivas();
   });
 
-  export const listEmpresasPublicasPorCategorias = createServerFn({ method: "POST" })
-  .validator((d: { categorias: string[] }) => d)
-.handler(async ({ data }) => {
-  console.time("SERVER - listEmpresasPublicasPorCategorias");
+export const listEmpresasPublicasPorCategorias = createServerFn({ method: "POST" })
+  .validator(
+    (d: {
+      categorias: string[];
+      limit: number;
+      offset: number;
+    }) => d,
+  )
+  .handler(async ({ data }) => {
+    console.time("SERVER - listEmpresasPublicasPorCategorias");
 
-  const empresaService = container.resolve("empresaService");
+    const empresaService = container.resolve("empresaService");
 
-  const resultado =
-    await empresaService.listarPublicasAtivasPorCategorias(data.categorias);
+    const resultado =
+      await empresaService.listarPublicasAtivasPorCategorias(
+        data.categorias,
+        data.limit,
+        data.offset,
+      );
 
-  console.timeEnd("SERVER - listEmpresasPublicasPorCategorias");
+    console.timeEnd("SERVER - listEmpresasPublicasPorCategorias");
 
-  return resultado;
+    return resultado;
   });
 
   

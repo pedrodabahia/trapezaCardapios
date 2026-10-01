@@ -32,7 +32,11 @@ export type EmpresaPublica = Pick<
   | "cidade"
   | "palavras_chave"
   | "destaque"
-  | "tipo">
+  | "tipo"
+  | "limit"
+  | "offset"
+  
+  >
 
 export interface EmpresaRepository {
   // Lança erro se não encontrar (mesmo comportamento do `.single()` que
@@ -47,7 +51,11 @@ export interface EmpresaRepository {
   buscarPlanoId(empresaId: string): Promise<string | null>;
 
   listarPublicasAtivas(): Promise<EmpresaPublica[]>;
-  listarPublicasAtivasPorCategorias( categorias: string[]): Promise<EmpresaPublica[]>;
+listarPublicasAtivasPorCategorias(
+  categorias: string[],
+  limit: number,
+  offset: number,
+): Promise<EmpresaPublica[]>;
   listarTodas(): Promise<Empresa[]>;
   listarParaDashboard(): Promise<EmpresaDashboardRow[]>;
 
@@ -147,6 +155,8 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
 
 async listarPublicasAtivasPorCategorias(
   categorias: string[],
+  limit: number,
+  offset: number,
 ): Promise<EmpresaPublica[]> {
   console.time("DB - listarPublicasAtivasPorCategorias");
 
@@ -157,7 +167,8 @@ async listarPublicasAtivasPorCategorias(
     )
     .eq("status_pagamento", "ativo")
     .overlaps("categorias", categorias)
-    .order("criado_em", { ascending: false });
+    .order("criado_em", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   console.timeEnd("DB - listarPublicasAtivasPorCategorias");
 

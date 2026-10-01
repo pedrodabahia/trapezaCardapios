@@ -40,6 +40,8 @@ export type Empresa = {
   // Soma-se ao que a busca já compara (nome/categoria/tipo/cidade) — não
   // substitui nada da lógica existente. Só editada pelo super-admin.
   palavras_chave: string | null;
+  limit: number;
+  offset: number;
 };
 
 export type EmpresaConfigJson = {

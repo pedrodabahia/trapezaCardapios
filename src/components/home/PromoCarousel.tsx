@@ -1,25 +1,146 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PointerEvent } from "react";
 import { ArrowRight } from "lucide-react";
 import type { AnuncioHome } from "@/lib/admin-server";
 
 const INTERVALO_MS = 5000;
+// Quanto precisa arrastar (fração da largura) pra trocar de slide.
+const LIMITE_ARRASTO = 0.2;
+// Ou um "flick" rápido: distância mínima (px) + velocidade mínima (px/ms).
+const LIMITE_FLICK_PX = 30;
+const LIMITE_FLICK_VEL = 0.4;
+// Movimento mínimo antes de considerar que é um arrasto (e não um toque).
+const LIMITE_INICIO_PX = 8;
 
 // Carrossel de propaganda — 100% controlado pelo super-admin em
-// /plataforma/anuncios. Layout maior (estilo banner de app de e-commerce:
-// texto grande à esquerda, foto redonda grande à direita, CTA embaixo do
-// texto) em vez do banner fino de antes. Troca sozinho a cada 5s.
+// /plataforma/anuncios. Troca sozinho a cada 5s e também dá pra arrastar
+// com o dedo (ou mouse) pro lado. Enquanto o usuário arrasta, o timer
+// pausa; depois de qualquer troca a contagem dos 5s recomeça.
 export function PromoCarousel({ anuncios }: { anuncios: AnuncioHome[] }) {
+  const total = anuncios.length;
   const [indice, setIndice] = useState(0);
+  const [arrastando, setArrastando] = useState(false);
+  const [dragX, setDragX] = useState(0);
 
+  const janelaRef = useRef<HTMLDivElement>(null);
+  const inicio = useRef<{ x: number; y: number; t: number } | null>(null);
+  const arrastou = useRef(false);
+
+  const atual = Math.min(indice, Math.max(total - 1, 0));
+
+  // Autoplay: um timeout por slide. Reinicia a cada troca (manual ou
+  // automática) e fica parado enquanto o dedo está na tela.
   useEffect(() => {
-    if (anuncios.length <= 1) return;
-    const id = setInterval(() => setIndice((i) => (i + 1) % anuncios.length), INTERVALO_MS);
-    return () => clearInterval(id);
-  }, [anuncios.length]);
+    if (total <= 1 || arrastando) return;
+    const id = setTimeout(() => setIndice((i) => (i + 1) % total), INTERVALO_MS);
+    return () => clearTimeout(id);
+  }, [total, atual, arrastando]);
 
-  if (anuncios.length === 0) return null;
-  const anuncio = anuncios[indice % anuncios.length];
+  if (total === 0) return null;
 
+  function aoPressionar(e: PointerEvent<HTMLDivElement>) {
+    if (total <= 1) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    inicio.current = { x: e.clientX, y: e.clientY, t: performance.now() };
+    arrastou.current = false;
+  }
+
+  function aoMover(e: PointerEvent<HTMLDivElement>) {
+    if (!inicio.current) return;
+    const dx = e.clientX - inicio.current.x;
+    const dy = e.clientY - inicio.current.y;
+
+    if (!arrastando) {
+      // Só vira arrasto se for mais horizontal que vertical.
+      if (Math.abs(dx) < LIMITE_INICIO_PX || Math.abs(dx) < Math.abs(dy)) return;
+      setArrastando(true);
+      arrastou.current = true;
+      // Captura só agora, pra um simples toque ainda clicar no link.
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    setDragX(dx);
+  }
+
+  function encerrar(e: PointerEvent<HTMLDivElement>, cancelado: boolean) {
+    const ini = inicio.current;
+    inicio.current = null;
+    if (!ini || !arrastando) return;
+
+    const dx = e.clientX - ini.x;
+    const largura = janelaRef.current?.offsetWidth ?? 1;
+    const velocidade = Math.abs(dx) / Math.max(performance.now() - ini.t, 1);
+    const passou =
+      !cancelado &&
+      (Math.abs(dx) > largura * LIMITE_ARRASTO ||
+        (Math.abs(dx) > LIMITE_FLICK_PX && velocidade > LIMITE_FLICK_VEL));
+
+    if (passou) {
+      // Arrastou pra esquerda -> próximo; pra direita -> anterior.
+      if (dx < 0 && atual < total - 1) setIndice(atual + 1);
+      else if (dx > 0 && atual > 0) setIndice(atual - 1);
+    }
+    setArrastando(false);
+    setDragX(0);
+  }
+
+  // Resistência nas pontas (sem slide pra puxar): o arrasto "amortece".
+  const noInicio = atual === 0 && dragX > 0;
+  const noFim = atual === total - 1 && dragX < 0;
+  const deslocamento = noInicio || noFim ? dragX * 0.3 : dragX;
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 pt-5">
+      <div
+        ref={janelaRef}
+        // pan-y: rolagem vertical continua funcionando; o horizontal é nosso.
+        className="-mb-2 select-none overflow-hidden pb-2"
+        style={{ touchAction: "pan-y" }}
+        onPointerDown={aoPressionar}
+        onPointerMove={aoMover}
+        onPointerUp={(e) => encerrar(e, false)}
+        onPointerCancel={(e) => encerrar(e, true)}
+        // Se foi arrasto, não deixa o "soltar" virar clique no link.
+        onClickCapture={(e) => {
+          if (arrastou.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            arrastou.current = false;
+          }
+        }}
+      >
+        <div
+          className={"flex " + (arrastando ? "" : "transition-transform duration-300 ease-out")}
+          style={{
+            transform: `translate3d(calc(${-atual * 100}% + ${deslocamento}px), 0, 0)`,
+          }}
+        >
+          {anuncios.map((anuncio, i) => (
+            <Slide key={i} anuncio={anuncio} ativo={i === atual} />
+          ))}
+        </div>
+      </div>
+
+      {total > 1 && (
+        <div className="mt-2 flex justify-center gap-1.5">
+          {anuncios.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndice(i)}
+              aria-label={`Anúncio ${i + 1}`}
+              className="h-1.5 rounded-full transition-all"
+              style={{
+                width: i === atual ? "16px" : "6px",
+                backgroundColor: i === atual ? "var(--tp-orange)" : "var(--border)",
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Slide({ anuncio, ativo }: { anuncio: AnuncioHome; ativo: boolean }) {
   // Link interno (começa com /) usa navegação da própria SPA; link
   // externo (http...) abre em aba nova; sem link, o slide não é clicável.
   const ehExterno = anuncio.link_url?.startsWith("http");
@@ -57,6 +178,7 @@ export function PromoCarousel({ anuncios }: { anuncios: AnuncioHome[] }) {
           <img
             src={anuncio.imagem_url}
             alt={anuncio.titulo}
+            draggable={false}
             className="h-full w-full object-cover"
           />
         ) : (
@@ -69,12 +191,14 @@ export function PromoCarousel({ anuncios }: { anuncios: AnuncioHome[] }) {
   );
 
   return (
-    <section className="mx-auto max-w-6xl px-4 pt-5">
+    <div className="w-full shrink-0 grow-0 basis-full" aria-hidden={!ativo}>
       {anuncio.link_url ? (
         <a
           href={anuncio.link_url}
           target={ehExterno ? "_blank" : undefined}
           rel={ehExterno ? "noreferrer" : undefined}
+          draggable={false}
+          tabIndex={ativo ? 0 : -1}
           className="block"
         >
           {conteudo}
@@ -82,23 +206,6 @@ export function PromoCarousel({ anuncios }: { anuncios: AnuncioHome[] }) {
       ) : (
         conteudo
       )}
-
-      {anuncios.length > 1 && (
-        <div className="mt-2 flex justify-center gap-1.5">
-          {anuncios.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIndice(i)}
-              aria-label={`Anúncio ${i + 1}`}
-              className="h-1.5 rounded-full transition-all"
-              style={{
-                width: i === indice ? "16px" : "6px",
-                backgroundColor: i === indice ? "var(--tp-orange)" : "var(--border)",
-              }}
-            />
-          ))}
-        </div>
-      )}
-    </section>
+    </div>
   );
 }

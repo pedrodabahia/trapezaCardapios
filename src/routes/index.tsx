@@ -707,5 +707,5 @@ function Landing() {
       {/* NAVEGAÇÃO MOBILE */}
       <MobileBottomNav />
     </div>
-  );
+    );
 }

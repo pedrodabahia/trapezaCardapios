@@ -16,6 +16,7 @@ import {
 } from "@/lib/categorias-negocio";
 import { BusinessCard } from "@/components/home/BusinessCard";
 import { cn } from "@/lib/utils";
+import { LogoLoader } from "@/components/LogoLoader";
 
 export const Route = createFileRoute("/categoria/$valor")({
   component: PaginaCategoria,
@@ -180,9 +181,9 @@ function PaginaCategoria() {
           </div>
         </div>
 
-        {isLoading ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            Carregando...
+        {!isLoading ? (
+          <p className="py-10 text-center w-full flex justify-center text-sm text-muted-foreground">
+            <LogoLoader />
           </p>
         ) : totalItens === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">

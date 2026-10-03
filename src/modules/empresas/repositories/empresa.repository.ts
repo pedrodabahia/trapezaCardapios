@@ -24,10 +24,11 @@ export type EmpresaPublica = Pick<
   | "endereco"
   | "logo_url"
   | "status_pagamento"
-  |  "bairro"
-  |  "capa_url"
-  |  "url_externa"
-  |  "descricao"
+  | "plano_id"
+  | "bairro"
+  | "capa_url"
+  | "url_externa"
+  | "descricao"
   | "categorias"
   | "cidade"
   | "palavras_chave"
@@ -35,8 +36,7 @@ export type EmpresaPublica = Pick<
   | "tipo"
   | "limit"
   | "offset"
-  
-  >
+>;
 
 export interface EmpresaRepository {
   // Lança erro se não encontrar (mesmo comportamento do `.single()` que
@@ -145,7 +145,7 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
     const { data, error } = await this.sb()
       .from("empresas")
       .select(
-        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque, palavras_chave",
+        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque, palavras_chave,plano_id",
       )
       .eq("status_pagamento", "ativo")
       .order("criado_em", { ascending: false });

@@ -18,6 +18,7 @@ export type EmpresaCard = Pick<
   | "tipo"
   | "url_externa"
   | "destaque"
+  | "plano_id"
 >;
 
 const fundosFallback = [

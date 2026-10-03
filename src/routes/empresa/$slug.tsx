@@ -173,7 +173,13 @@ function PaginaEmpresa() {
       ? isStoreOpenNow(horarios)
       : undefined;
 
-  const temCatalogo = empresa.tipo === "trapeza";
+  const planoEmpresa = planos.find(
+  (plano) => plano.id === empresa.plano_id
+);
+
+const temCatalogo =
+  empresa.tipo === "trapeza" &&
+  planoEmpresa?.gratuito !== true;
 
   const categoriasLabel =
     labelsCategoriasNegocio(empresa.categorias).join(" / ");

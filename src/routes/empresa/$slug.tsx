@@ -177,6 +177,8 @@ function PaginaEmpresa() {
   (plano) => plano.id === empresa.plano_id
 );
 
+const empresaAtiva = empresa.tipo === "trapeza";
+
 const temCatalogo =
   empresa.tipo === "trapeza" &&
   planoEmpresa?.gratuito !== true;
@@ -501,7 +503,7 @@ const temCatalogo =
         )}
 
         {/* REIVINDICAÇÃO */}
-        {!temCatalogo && (
+        {!empresaAtiva && (
           <section className="mt-8 px-2">
             <div className="rounded-2xl bg-muted/60 p-5 text-center">
               <p className="text-sm font-bold">

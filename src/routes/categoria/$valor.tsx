@@ -181,7 +181,7 @@ function PaginaCategoria() {
           </div>
         </div>
 
-        {!isLoading ? (
+        {isLoading ? (
           <p className="py-10 text-center w-full flex justify-center text-sm text-muted-foreground">
             <LogoLoader />
           </p>

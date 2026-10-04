@@ -14,7 +14,6 @@ export function SearchBar({
   return (
     <div id="busca" className="mx-auto max-w-6xl px-4 pt-3">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={busca}
           onChange={(e) => onBuscaChange(e.target.value)}

@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -6,6 +7,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -19,10 +21,15 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <div className="text-7xl">🍽️</div>
-        <h1 className="mt-4 font-display text-3xl font-bold">Página não encontrada</h1>
+
+        <h1 className="mt-4 font-display text-3xl font-bold">
+          Página não encontrada
+        </h1>
+
         <p className="mt-2 text-muted-foreground">
           Essa página fugiu do cardápio.
         </p>
+
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-full bg-brand-red px-6 py-3 font-semibold text-white"
@@ -34,20 +41,30 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
+
   const router = useRouter();
+
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportLovableError(error, {
+      boundary: "tanstack_root_error_component",
+    });
   }, [error]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="font-display text-xl font-semibold">Algo deu errado</h1>
+        <h1 className="font-display text-xl font-semibold">
+          Algo deu errado
+        </h1>
+
         <p className="mt-2 text-sm text-muted-foreground">
           Tenta de novo em instantes.
         </p>
+
         <button
+          type="button"
           onClick={() => {
             router.invalidate();
             reset();
@@ -61,7 +78,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -85,13 +104,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/logo.svg", type: "image/svg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "",
+      },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap",
       },
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -104,6 +128,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
+
       <body>
         {children}
         <Scripts />
@@ -114,9 +139,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
   // Mantém a sessão do admin/super-admin renovada sozinha em background,
-  // sem afetar quem não está logado (o hook não faz nada se não há sessão).
+  // sem afetar quem não está logado.
   useAutoRefreshSession();
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />

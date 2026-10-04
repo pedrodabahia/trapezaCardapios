@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, notFound, Link } from "@tanstack/react-router";
 import { useEmpresaPublica } from "@/lib/admin-store";
 import { AppShell } from "@/components/layout/AppShell";
+import { LogoLoader } from "@/components/LogoLoader";
 
 export const Route = createFileRoute("/s/$slug")({
   component: TenantLayout,
@@ -13,7 +14,7 @@ function TenantLayout() {
   if (isLoading) {
     return (
       <div className="grid min-h-screen place-items-center bg-brand-cream">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-yellow border-t-brand-red" />
+        <LogoLoader size={120} />
       </div>
     );
   }

@@ -95,16 +95,73 @@ export class SupabaseProdutoRepository implements ProdutoRepository {
     return count ?? 0;
   }
 
-  async buscarPorNomeGlobal(termo: string, limite: number): Promise<Produto[]> {
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .select("*")
-      .ilike("nome", `%${termo}%`)
-      .eq("ativo", true)
-      .limit(limite);
-    if (error) throw new Error(error.message);
-    return (data ?? []) as Produto[];
+ async buscarPorNomeGlobal(
+  termo: string,
+  limite: number,
+): Promise<Produto[]> {
+  const busca = termo.trim();
+
+  if (!busca) return [];
+
+  const supabase = this.sb();
+
+  // 1. Busca categorias que correspondem ao termo
+  const { data: categorias, error: erroCategorias } = await supabase
+    .from("categorias")
+    .select("id")
+    .ilike("nome", `%${busca}%`)
+    .eq("ativo", true);
+
+  if (erroCategorias) {
+    throw new Error(erroCategorias.message);
   }
+
+  const categoriaIds = (categorias ?? []).map((categoria) => categoria.id);
+
+  // 2. Busca produtos pelo nome
+  const consultaNome = supabase
+    .from("produtos")
+    .select("*")
+    .ilike("nome", `%${busca}%`)
+    .eq("ativo", true)
+    .limit(limite);
+
+  // 3. Busca produtos pelas categorias encontradas
+  const consultaCategoria =
+    categoriaIds.length > 0
+      ? supabase
+          .from("produtos")
+          .select("*")
+          .in("categoria_id", categoriaIds)
+          .eq("ativo", true)
+          .limit(limite)
+      : Promise.resolve({ data: [], error: null });
+
+  const [resultadoNome, resultadoCategoria] = await Promise.all([
+    consultaNome,
+    consultaCategoria,
+  ]);
+
+  if (resultadoNome.error) {
+    throw new Error(resultadoNome.error.message);
+  }
+
+  if (resultadoCategoria.error) {
+    throw new Error(resultadoCategoria.error.message);
+  }
+
+  // 4. Junta os resultados sem duplicar produtos
+  const produtos = new Map<string, Produto>();
+
+  for (const produto of [
+    ...(resultadoNome.data ?? []),
+    ...(resultadoCategoria.data ?? []),
+  ]) {
+    produtos.set(produto.id, produto as Produto);
+  }
+
+  return Array.from(produtos.values()).slice(0, limite);
+}
 
   async salvar(empresaId: string, produto: NovoProdutoInput): Promise<{ id: string }> {
     if (produto.id) {

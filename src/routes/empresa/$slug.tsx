@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import {
@@ -19,6 +19,7 @@ import {
   labelsCategoriasNegocio,
   CATEGORIAS_NEGOCIO,
 } from "@/lib/categorias-negocio";
+import { LogoLoader } from "@/components/LogoLoader";
 
 // Página própria de cada empresa — destino dos cards do diretório.
 export const Route = createFileRoute("/empresa/$slug")({
@@ -97,6 +98,9 @@ function EmpresaFallback({
 }
 
 function PaginaEmpresa() {
+  const router = useRouter();
+
+
   const { data: planos = [] } = useQuery({
     queryKey: ["planos"],
     queryFn: () => listPlanos({ data: undefined }),
@@ -129,6 +133,8 @@ function PaginaEmpresa() {
     staleTime: 30_000,
   });
 
+  
+
   useEffect(() => {
     if (empresa) {
       document.title = `${empresa.nome} · Trapeza`;
@@ -139,7 +145,7 @@ function PaginaEmpresa() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-muted-foreground">
-          Carregando...
+          <LogoLoader size={120} />
         </p>
       </div>
     );
@@ -228,13 +234,14 @@ const temCatalogo =
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
-          <Link
-            to="/"
-            aria-label="Voltar"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background transition hover:bg-muted"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
+        <button
+          type="button"
+          onClick={() => router.history.back()}
+          aria-label="Voltar"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background transition hover:bg-muted"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
 
           <h1 className="truncate font-display text-base font-bold">
             {empresa.nome}

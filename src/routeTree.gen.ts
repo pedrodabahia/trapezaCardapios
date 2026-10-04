@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BBuscarRouteImport } from './routes/b/buscar'
 import { Route as CategoriaValorRouteImport } from './routes/categoria/$valor'
 import { Route as EmpresaSlugRouteImport } from './routes/empresa/$slug'
 import { Route as PainelEmpresaSlugRouteImport } from './routes/painel/$empresaSlug'
@@ -35,6 +36,11 @@ import { Route as SSlugProductIdRouteImport } from './routes/s/$slug/product/$id
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BBuscarRoute = BBuscarRouteImport.update({
+  id: '/b/buscar',
+  path: '/b/buscar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriaValorRoute = CategoriaValorRouteImport.update({
@@ -147,6 +153,7 @@ const SSlugProductIdRoute = SSlugProductIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/b/buscar': typeof BBuscarRoute
   '/categoria/$valor': typeof CategoriaValorRoute
   '/empresa/$slug': typeof EmpresaSlugRoute
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/b/buscar': typeof BBuscarRoute
   '/categoria/$valor': typeof CategoriaValorRoute
   '/empresa/$slug': typeof EmpresaSlugRoute
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
@@ -195,6 +203,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/b/buscar': typeof BBuscarRoute
   '/categoria/$valor': typeof CategoriaValorRoute
   '/empresa/$slug': typeof EmpresaSlugRoute
   '/painel/$empresaSlug': typeof PainelEmpresaSlugRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/b/buscar'
     | '/categoria/$valor'
     | '/empresa/$slug'
     | '/painel/$empresaSlug'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/b/buscar'
     | '/categoria/$valor'
     | '/empresa/$slug'
     | '/painel/$empresaSlug'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/b/buscar'
     | '/categoria/$valor'
     | '/empresa/$slug'
     | '/painel/$empresaSlug'
@@ -293,6 +305,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BBuscarRoute: typeof BBuscarRoute
   CategoriaValorRoute: typeof CategoriaValorRoute
   EmpresaSlugRoute: typeof EmpresaSlugRoute
   PainelEmpresaSlugRoute: typeof PainelEmpresaSlugRoute
@@ -314,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/b/buscar': {
+      id: '/b/buscar'
+      path: '/b/buscar'
+      fullPath: '/b/buscar'
+      preLoaderRoute: typeof BBuscarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/categoria/$valor': {
@@ -494,6 +514,7 @@ const SSlugRouteWithChildren = SSlugRoute._addFileChildren(SSlugRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BBuscarRoute: BBuscarRoute,
   CategoriaValorRoute: CategoriaValorRoute,
   EmpresaSlugRoute: EmpresaSlugRoute,
   PainelEmpresaSlugRoute: PainelEmpresaSlugRoute,

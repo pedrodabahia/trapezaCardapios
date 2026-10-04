@@ -1,5 +1,5 @@
 
-import { Link } from "@tanstack/react-router";
+import { Link , useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import trapezaimg from "../../../public/icons/logo.svg";
@@ -38,6 +38,19 @@ export function HomeHero({
       ? cidadeFiltro
       : "Todas as cidades";
 
+      const navigate = useNavigate();
+
+      const realizarBusca = () => {
+  const termo = busca.trim();
+
+  if (!termo) return;
+
+  navigate({
+    to: "/b/buscar",
+    search: { q: termo },
+  });
+};
+
   return (
     <section className="trapeza-hero-gradient relative overflow-visible text-white">
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-8 pt-3">
@@ -66,13 +79,28 @@ export function HomeHero({
         {/* busca */}
         <div id="busca" className="relative mt-3">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+<form
+  onSubmit={(e) => {
+    e.preventDefault();
+    realizarBusca();
+  }}
+  className="flex gap-2"
+>
+  <Input
+    value={busca}
+    onChange={(e) => onBuscaChange(e.target.value)}
+    placeholder="Buscar empresas ou produtos..."
+    className="flex-1"
+  />
 
-          <Input
-            value={busca}
-            onChange={(e) => onBuscaChange(e.target.value)}
-            placeholder="O que você está procurando?"
-            className="h-11 rounded-2xl border-0 bg-white pl-10 text-sm text-foreground shadow-md"
-          />
+  <button
+    type="submit"
+    aria-label="Pesquisar"
+    className="rounded-lg bg-primary px-4 text-primary-foreground"
+  >
+    <Search size={20} />
+  </button>
+</form>
 
           {/* Resultados da busca */}
           {busca.trim() && (

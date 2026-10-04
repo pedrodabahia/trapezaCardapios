@@ -1,27 +1,47 @@
+
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from "@tanstack/react-router";
 
-export function SearchSection({
+export function SearchBar({
   busca,
   onBuscaChange,
 }: {
   busca: string;
   onBuscaChange: (v: string) => void;
 }) {
+  const navigate = useNavigate();
+
+  function handleSearch() {
+    const termo = busca.trim();
+
+    if (!termo) return;
+
+    navigate({
+      to: "/b/buscar",
+      search: { q: termo },
+    });
+  }
+
   return (
-    <section id="explorar" className="mx-auto max-w-3xl px-6 py-12 text-center">
-      <h2 className="font-display text-2xl font-bold md:text-3xl">
-        O que você está procurando?
-      </h2>
-      <div className="relative mx-auto mt-6 max-w-xl">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+    <div id="busca" className="mx-auto max-w-6xl px-4 pt-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSearch();
+        }}
+        className="relative"
+      >
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
         <Input
           value={busca}
           onChange={(e) => onBuscaChange(e.target.value)}
-          placeholder="Busque por empresa, produto ou categoria..."
-          className="h-14 rounded-full pl-12 text-base shadow-sm"
+          placeholder="O que você está procurando?"
+          className="h-11 rounded-2xl border-border/60 bg-card pl-10 text-sm shadow-sm"
         />
-      </div>
-    </section>
+      </form>
+    </div>
   );
 }
+

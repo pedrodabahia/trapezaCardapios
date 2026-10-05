@@ -1,3 +1,4 @@
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -44,22 +45,94 @@ export const Route = createFileRoute("/")({
     meta: [
       {
         title:
-          "Trapeza — Encontre empresas, produtos e lojas perto de você",
+          "Trapeza — Guia Comercial de Posto da Mata | Empresas, Lojas e Serviços",
       },
       {
         name: "description",
         content:
-          "Encontre empresas, lojas e produtos no Trapeza. Explore catálogos digitais e entre em contato diretamente com os negócios.",
+          "Guia comercial de Posto da Mata e região. Encontre empresas, lojas, restaurantes, serviços, produtos e comércios perto de você no Trapeza.",
+      },
+      {
+        name: "robots",
+        content: "index, follow",
+      },
+
+      {
+        property: "og:type",
+        content: "website",
       },
       {
         property: "og:title",
         content:
-          "Trapeza — Encontre empresas, produtos e lojas perto de você",
+          "Trapeza — Guia Comercial de Posto da Mata",
       },
       {
         property: "og:description",
         content:
-          "Encontre empresas, lojas e produtos no Trapeza. Explore catálogos digitais e entre em contato diretamente com os negócios.",
+          "Encontre empresas, lojas, restaurantes, serviços e produtos em Posto da Mata e região.",
+      },
+      {
+        property: "og:url",
+        content: "https://trapeza.me/",
+      },
+
+      {
+        name: "twitter:card",
+        content: "summary",
+      },
+      {
+        name: "twitter:title",
+        content:
+          "Trapeza — Guia Comercial de Posto da Mata",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Encontre empresas, lojas, restaurantes, serviços e produtos em Posto da Mata e região.",
+      },
+    ],
+
+    links: [
+      {
+        rel: "canonical",
+        href: "https://trapeza.me/",
+      },
+    ],
+
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Trapeza",
+          alternateName:
+            "Trapeza — Guia Comercial de Posto da Mata",
+          url: "https://trapeza.me/",
+          description:
+            "Guia comercial de Posto da Mata e região para encontrar empresas, lojas, serviços, restaurantes e produtos.",
+          inLanguage: "pt-BR",
+          areaServed: {
+            "@type": "City",
+            name: "Posto da Mata",
+            containedInPlace: {
+              "@type": "State",
+              name: "Bahia",
+            },
+          },
+        }),
+      },
+
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Trapeza",
+          url: "https://trapeza.me/",
+          description:
+            "Guia comercial local de Posto da Mata e região.",
+        }),
       },
     ],
   }),
@@ -397,17 +470,20 @@ function Landing() {
   /*
    * Categorias atualmente montadas.
    */
-const categoriasRenderizadas = useMemo(
-  () =>
-    categorias
-      .slice(0, categoriasVisiveis)
-      .filter((cat) => porCategoria(cat.valor).length > 0),
-  [
-    categorias,
-    categoriasVisiveis,
-    porCategoria,
-  ],
-);
+  const categoriasRenderizadas = useMemo(
+    () =>
+      categorias
+        .slice(0, categoriasVisiveis)
+        .filter(
+          (cat) =>
+            porCategoria(cat.valor).length > 0,
+        ),
+    [
+      categorias,
+      categoriasVisiveis,
+      porCategoria,
+    ],
+  );
 
   /*
    * CARREGAMENTO PROGRESSIVO
@@ -456,11 +532,6 @@ const categoriasRenderizadas = useMemo(
           );
         },
         {
-          /*
-           * Começa a carregar antes
-           * do usuário chegar literalmente
-           * no final.
-           */
           rootMargin: "200px",
         },
       );
@@ -578,48 +649,47 @@ const categoriasRenderizadas = useMemo(
       {/* CTA PARA EMPRESAS */}
       <BusinessSignupCTA />
 
-      {/* 
-        CATEGORIAS DINÂMICAS
-
-        Só as categorias liberadas
-        são montadas.
-      */}
+      {/* CATEGORIAS DINÂMICAS */}
       <section className="space-y-2">
-    {categoriasRenderizadas.map((cat, index) => {
-  const empresasCategoria = porCategoria(cat.valor);
+        {categoriasRenderizadas.map(
+          (cat, index) => {
+            const empresasCategoria =
+              porCategoria(cat.valor);
 
-  return (
-    <div key={cat.id} className="overflow-hidden">
-      <IntentCarousel
-        titulo={cat.label.toUpperCase()}
-        subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
-        empresas={empresasCategoria}
-      />
+            return (
+              <div
+                key={cat.id}
+                className="overflow-hidden"
+              >
+                <IntentCarousel
+                  titulo={cat.label.toUpperCase()}
+                  subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+                  empresas={
+                    empresasCategoria
+                  }
+                />
 
-      {(index + 1) % 4 === 0 && (
-        <PromoCarousel
-          anuncios={anunciosPorPosicao("1")}
-        />
-      )}
-    </div>
-  );
-})}  </section>
+                {(index + 1) % 4 === 0 && (
+                  <PromoCarousel
+                    anuncios={anunciosPorPosicao(
+                      "1",
+                    )}
+                  />
+                )}
+              </div>
+            );
+          },
+        )}
+      </section>
 
-      {/* 
-        SENTINELA
-
-        Quando chegar perto daqui,
-        o observer libera mais categorias.
-      */}
+      {/* SENTINELA */}
       <div
         ref={sentinelaCategoriasRef}
         className="h-8 w-full"
         aria-hidden="true"
       />
 
-      {/* 
-        EXPLORAR TODOS OS NEGÓCIOS
-      */}
+      {/* EXPLORAR TODOS OS NEGÓCIOS */}
       <ExploreBusinesses
         empresas={
           empresasDaCidade
@@ -673,5 +743,5 @@ const categoriasRenderizadas = useMemo(
       {/* NAVEGAÇÃO MOBILE */}
       <MobileBottomNav />
     </div>
-    );
+  );
 }

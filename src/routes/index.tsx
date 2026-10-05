@@ -397,18 +397,17 @@ function Landing() {
   /*
    * Categorias atualmente montadas.
    */
-  const categoriasRenderizadas =
-    useMemo(
-      () =>
-        categorias.slice(
-          0,
-          categoriasVisiveis,
-        ),
-      [
-        categorias,
-        categoriasVisiveis,
-      ],
-    );
+const categoriasRenderizadas = useMemo(
+  () =>
+    categorias
+      .slice(0, categoriasVisiveis)
+      .filter((cat) => porCategoria(cat.valor).length > 0),
+  [
+    categorias,
+    categoriasVisiveis,
+    porCategoria,
+  ],
+);
 
   /*
    * CARREGAMENTO PROGRESSIVO
@@ -586,58 +585,25 @@ function Landing() {
         são montadas.
       */}
       <section className="space-y-2">
-        {categoriasRenderizadas.map(
-          (cat, index) => {
-            const empresasCategoria =
-              porCategoria(
-                cat.valor,
-              );
+    {categoriasRenderizadas.map((cat, index) => {
+  const empresasCategoria = porCategoria(cat.valor);
 
-            /*
-             * Se não existe nenhuma empresa
-             * naquela categoria, não monta
-             * o carrossel.
-             *
-             * Isso evita blocos vazios.
-             */
-            if (
-              empresasCategoria.length ===
-              0
-            ) {
-              return null;
-            }
+  return (
+    <div key={cat.id} className="overflow-hidden">
+      <IntentCarousel
+        titulo={cat.label.toUpperCase()}
+        subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+        empresas={empresasCategoria}
+      />
 
-            return (
-              <div
-                key={cat.id}
-                className="overflow-hidden"
-              >
-                <IntentCarousel
-                  titulo={cat.label.toUpperCase()}
-                  subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
-                  empresas={
-                    empresasCategoria
-                  }
-                />
-
-                {/* 
-                  A cada 6 categorias
-                  tenta inserir anúncio da
-                  posição 1.
-                */}
-                {(index + 1) % 6 ===
-                  0 && (
-                  <PromoCarousel
-                    anuncios={anunciosPorPosicao(
-                      "1",
-                    )}
-                  />
-                )}
-              </div>
-            );
-          },
-        )}
-      </section>
+      {(index + 1) % 4 === 0 && (
+        <PromoCarousel
+          anuncios={anunciosPorPosicao("1")}
+        />
+      )}
+    </div>
+  );
+})}  </section>
 
       {/* 
         SENTINELA

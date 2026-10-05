@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { trackEvent } from "@/lib/analytics";
 import {
   ChevronLeft,
   MapPin,
@@ -100,14 +101,15 @@ function EmpresaFallback({
 function PaginaEmpresa() {
   const router = useRouter();
 
+  const { slug } = Route.useParams();
+
+  const companyViewTrackedRef = useRef<string | null>(null);
 
   const { data: planos = [] } = useQuery({
     queryKey: ["planos"],
     queryFn: () => listPlanos({ data: undefined }),
     staleTime: 5 * 60_000,
   });
-
-  const { slug } = Route.useParams();
 
   const { data: empresas = [], isLoading } = useQuery({
     queryKey: ["empresas-publicas"],
@@ -133,12 +135,20 @@ function PaginaEmpresa() {
     staleTime: 30_000,
   });
 
-  
-
   useEffect(() => {
-    if (empresa) {
-      document.title = `${empresa.nome} · Trapeza`;
+    if (!empresa) return;
+
+    document.title = `${empresa.nome} · Trapeza`;
+
+    if (companyViewTrackedRef.current === empresa.id) {
+      return;
     }
+
+    companyViewTrackedRef.current = empresa.id;
+
+    void trackEvent("company_view", {
+      empresaId: empresa.id,
+    });
   }, [empresa]);
 
   if (isLoading) {
@@ -180,14 +190,14 @@ function PaginaEmpresa() {
       : undefined;
 
   const planoEmpresa = planos.find(
-  (plano) => plano.id === empresa.plano_id
-);
+    (plano) => plano.id === empresa.plano_id,
+  );
 
-const empresaAtiva = empresa.tipo === "trapeza";
+  const empresaAtiva = empresa.tipo === "trapeza";
 
-const temCatalogo =
-  empresa.tipo === "trapeza" &&
-  planoEmpresa?.gratuito !== true;
+  const temCatalogo =
+    empresa.tipo === "trapeza" &&
+    planoEmpresa?.gratuito !== true;
 
   const categoriasLabel =
     labelsCategoriasNegocio(empresa.categorias).join(" / ");
@@ -234,14 +244,14 @@ const temCatalogo =
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
-        <button
-          type="button"
-          onClick={() => router.history.back()}
-          aria-label="Voltar"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background transition hover:bg-muted"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+          <button
+            type="button"
+            onClick={() => router.history.back()}
+            aria-label="Voltar"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background transition hover:bg-muted"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
 
           <h1 className="truncate font-display text-base font-bold">
             {empresa.nome}
@@ -271,7 +281,7 @@ const temCatalogo =
 
           {/* LOGO */}
           <div className="-mt-9 px-3">
-            <div className="flex relative items-end gap-3">
+            <div className="relative flex items-end gap-3">
               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-background bg-background shadow-lg">
                 {empresa.logo_url ? (
                   <img
@@ -344,7 +354,12 @@ const temCatalogo =
             <a
               href={linkWhats}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
+              onClick={() => {
+                void trackEvent("whatsapp_click", {
+                  empresaId: empresa.id,
+                });
+              }}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
             >
               <MessageCircle className="h-4 w-4" />
@@ -356,7 +371,7 @@ const temCatalogo =
             <a
               href={linkWhatsTrapeza}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--tp-orange)] px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
             >
               <SquarePen className="h-4 w-4" />
@@ -370,7 +385,7 @@ const temCatalogo =
               <a
                 href={empresa.url_externa}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground px-4 py-3.5 text-sm font-bold text-background transition hover:opacity-90"
               >
                 <Globe className="h-4 w-4" />
@@ -378,12 +393,17 @@ const temCatalogo =
               </a>
             )}
 
-          {temCatalogo && (
+          {temCatalogo && linkWhats && (
             <div className="pt-1 text-center">
               <a
-                href={linkWhats ?? undefined}
+                href={linkWhats}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  void trackEvent("whatsapp_click", {
+                    empresaId: empresa.id,
+                  });
+                }}
                 className="text-xs font-semibold text-muted-foreground underline underline-offset-4"
               >
                 Falar diretamente pelo WhatsApp
@@ -474,7 +494,7 @@ const temCatalogo =
               <a
                 href={mapaLink}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="mt-3 inline-flex text-xs font-bold underline underline-offset-4"
               >
                 Abrir no Google Maps
@@ -489,7 +509,7 @@ const temCatalogo =
             <a
               href={empresa.url_externa}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-2xl border border-border/60 p-4 transition hover:bg-muted"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
@@ -525,7 +545,7 @@ const temCatalogo =
               <a
                 href={linkWhatsTrapeza}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-700 px-5 py-2.5 text-xs font-bold text-white"
               >
                 <SquarePen className="h-3.5 w-3.5" />

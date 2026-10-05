@@ -15,6 +15,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { useAutoRefreshSession } from "../hooks/use-auto-refresh-session";
+import { trackEvent } from "../lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -84,26 +85,50 @@ export const Route = createRootRouteWithContext<{
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TRAPEZA — Seu negócio à mesa" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
+      },
+      {
+        title: "TRAPEZA — Seu negócio à mesa",
+      },
       {
         name: "description",
         content:
           "TRAPEZA: plataforma de cardápios digitais multi-tenant. Sua empresa, seu link, seu cardápio.",
       },
-      { property: "og:title", content: "TRAPEZA — Seu negócio à mesa" },
+      {
+        property: "og:title",
+        content: "TRAPEZA — Seu negócio à mesa",
+      },
       {
         property: "og:description",
         content:
           "Plataforma de cardápios digitais para vários restaurantes. Encontre sua lanchonete favorita.",
       },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      {
+        property: "og:type",
+        content: "website",
+      },
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
     ],
     links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/logo.svg", type: "image/svg" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
+      {
+        rel: "icon",
+        href: "/logo.svg",
+        type: "image/svg",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
       {
         rel: "preconnect",
         href: "https://fonts.gstatic.com",
@@ -111,7 +136,8 @@ export const Route = createRootRouteWithContext<{
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap",
+        href:
+          "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap",
       },
     ],
   }),
@@ -137,12 +163,16 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
 
-  // Mantém a sessão do admin/super-admin renovada sozinha em background,
-  // sem afetar quem não está logado.
   useAutoRefreshSession();
+
+  useEffect(() => {
+    void trackEvent("page_view");
+  }, [router.state.location.pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -151,3 +181,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+

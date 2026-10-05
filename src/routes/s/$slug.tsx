@@ -2,6 +2,9 @@ import { createFileRoute, Outlet, notFound, Link } from "@tanstack/react-router"
 import { useEmpresaPublica } from "@/lib/admin-store";
 import { AppShell } from "@/components/layout/AppShell";
 import { LogoLoader } from "@/components/LogoLoader";
+import { useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
+
 
 export const Route = createFileRoute("/s/$slug")({
   component: TenantLayout,
@@ -10,6 +13,17 @@ export const Route = createFileRoute("/s/$slug")({
 function TenantLayout() {
   const { slug } = Route.useParams();
   const { data, isLoading, error } = useEmpresaPublica(slug);
+
+  
+
+  useEffect(() => {
+  if (!data?.empresa.id) return;
+
+  void trackEvent("company_view", {
+    empresaId: data.empresa.id ,
+    path: window.location.pathname,
+  });
+}, [data?.empresa.id]);
 
   if (isLoading) {
     return (

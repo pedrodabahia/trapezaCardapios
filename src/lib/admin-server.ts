@@ -84,7 +84,9 @@ export {
 // ============================================================================
 // Super-admin
 // ============================================================================
-
+export {
+  listarAnalytics,
+} from "@/modules/analytics/controllers/analytics.controller";
 export {
   listEmpresasAdmin,
   createEmpresa,

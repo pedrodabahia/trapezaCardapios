@@ -1,6 +1,6 @@
 
 import { Link , useNavigate } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import trapezaimg from "../../../public/icons/logo.svg";
 import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
@@ -54,7 +54,6 @@ export function HomeHero({
   return (
     <section className="trapeza-hero-gradient relative overflow-visible text-white">
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-8 pt-3">
-
         {/* topo: logo */}
         <div className="flex items-center justify-between">
           <Link
@@ -74,6 +73,11 @@ export function HomeHero({
               </p>
             </div>
           </Link>
+          <div className="flex">
+            <MapPin  size="15"/>
+            <h1 className="uppercase text-[10px]">Posto da Mata</h1>
+          </div>
+          
         </div>
 
         {/* busca */}

@@ -2,6 +2,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, ShoppingBag, Search, MapPin, Heart, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { AnalyticsTracker } from
+  "@/components/analytics/AnalyticsTracker";
 
 import { cartCount, getCartStore } from "@/lib/store";
 import {
@@ -57,7 +59,10 @@ export function AppShell({ children, empresaCompleta, slug }: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
+      
       <style dangerouslySetInnerHTML={{ __html: cssVars }} />
+
+      <AnalyticsTracker />
 
       {/* Loader de navegação */}
       {isNavigating && (

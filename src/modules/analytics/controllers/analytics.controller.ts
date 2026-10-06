@@ -3,6 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { container } from "@/core/container";
 import { authPlatform } from "@/core/auth/session";
+
 import "../container";
 
 export const listarAnalytics = createServerFn({
@@ -15,5 +16,5 @@ export const listarAnalytics = createServerFn({
     const analyticsService =
       container.resolve("analyticsService");
 
-    return analyticsService.listarUltimos30Dias();
+    return analyticsService.obterResumoUltimos30Dias();
   });

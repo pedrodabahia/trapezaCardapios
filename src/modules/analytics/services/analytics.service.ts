@@ -1,7 +1,6 @@
 // src/modules/analytics/services/analytics.service.ts
 
 import type {
-  AnalyticsEventRow,
   AnalyticsRepository,
 } from "../repositories/analytics.repository";
 
@@ -10,7 +9,7 @@ export class AnalyticsService {
     private repository: AnalyticsRepository,
   ) {}
 
-  async listarUltimos30Dias(): Promise<AnalyticsEventRow[]> {
-    return this.repository.listarUltimos30Dias();
+  async obterResumoUltimos30Dias() {
+    return this.repository.obterResumoUltimos30Dias();
   }
 }

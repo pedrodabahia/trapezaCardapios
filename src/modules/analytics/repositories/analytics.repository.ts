@@ -1,12 +1,19 @@
 // src/modules/analytics/repositories/analytics.repository.ts
 
-export interface AnalyticsEventRow {
-  event_name: string;
-  empresa_id: string | null;
-  session_id: string;
-  created_at: string;
+export interface AnalyticsEmpresaRanking {
+  empresaId: string;
+  total: number;
+}
+
+export interface AnalyticsResumo {
+  pageViews: number;
+  companyViews: number;
+  whatsappClicks: number;
+  visitantes: number;
+  empresasMaisVistas: AnalyticsEmpresaRanking[];
+  empresasMaisWhatsApp: AnalyticsEmpresaRanking[];
 }
 
 export interface AnalyticsRepository {
-  listarUltimos30Dias(): Promise<AnalyticsEventRow[]>;
+  obterResumoUltimos30Dias(): Promise<AnalyticsResumo>;
 }

@@ -1,3 +1,4 @@
+
 import {
   createFileRoute,
   Link,
@@ -137,7 +138,7 @@ function PlatformDashboard() {
   // =========================================================
 
   const {
-    data: analyticsEvents = [],
+    data: analyticsData,
     isLoading: analyticsLoading,
     error: analyticsError,
     refetch: refetchAnalytics,
@@ -229,155 +230,42 @@ function PlatformDashboard() {
   ]);
 
   // =========================================================
-  // CALCULO DO ANALYTICS
+  // ANALYTICS PROCESSADO
   // =========================================================
 
-  const analytics = useMemo(() => {
-    // Todas as visualizações de página.
-    // Uma mesma sessão pode gerar várias.
-    const pageViews = analyticsEvents.filter(
-      (event) =>
-        event.event_name === "page_view",
-    );
+  const analytics = {
+    pageViews:
+      analyticsData?.pageViews ?? 0,
 
-    // Todas as visualizações de empresas.
-    // Não deduplicamos aqui:
-    // se a pessoa voltar para a mesma empresa,
-    // isso representa uma nova visualização.
-    const companyViews = analyticsEvents.filter(
-      (event) =>
-        event.event_name === "company_view",
-    );
+    companyViews:
+      analyticsData?.companyViews ?? 0,
 
-    // Cliques no WhatsApp.
-    const whatsappClicks =
-      analyticsEvents.filter(
-        (event) =>
-          event.event_name === "whatsapp_click",
-      );
+    whatsappClicks:
+      analyticsData?.whatsappClicks ?? 0,
 
-    // =====================================================
-    // VISITANTES ÚNICOS
-    //
-    // Cada session_id representa uma sessão.
-    // Assim, voltar várias vezes para a home
-    // não cria um novo visitante.
-    // =====================================================
+    visitantes:
+      analyticsData?.visitantes ?? 0,
 
-    const visitantes = new Set(
-      analyticsEvents
-        .map(
-          (event) =>
-            event.session_id,
-        )
-        .filter(Boolean),
-    );
+    empresasMaisVistas:
+      analyticsData?.empresasMaisVistas
+        ?.map((item) => ({
+          ...item,
+          empresa: empresas.find(
+            (e) => e.id === item.empresaId,
+          ),
+        }))
+        .filter((item) => item.empresa) ?? [],
 
-    // =====================================================
-    // EMPRESAS MAIS VISTAS
-    // =====================================================
-
-    const empresaViewsMap =
-      new Map<string, number>();
-
-    for (const event of companyViews) {
-      if (!event.empresa_id) {
-        continue;
-      }
-
-      empresaViewsMap.set(
-        event.empresa_id,
-        (empresaViewsMap.get(
-          event.empresa_id,
-        ) ?? 0) + 1,
-      );
-    }
-
-    const empresasMaisVistas =
-      [...empresaViewsMap.entries()]
-        .map(
-          ([empresaId, total]) => ({
-            empresaId,
-            total,
-            empresa: empresas.find(
-              (e) => e.id === empresaId,
-            ),
-          }),
-        )
-        .filter(
-          (item) => item.empresa,
-        )
-        .sort(
-          (a, b) =>
-            b.total - a.total,
-        )
-        .slice(0, 5);
-
-    // =====================================================
-    // EMPRESAS COM MAIS WHATSAPP
-    // =====================================================
-
-    const empresaWhatsappMap =
-      new Map<string, number>();
-
-    for (const event of whatsappClicks) {
-      if (!event.empresa_id) {
-        continue;
-      }
-
-      empresaWhatsappMap.set(
-        event.empresa_id,
-        (empresaWhatsappMap.get(
-          event.empresa_id,
-        ) ?? 0) + 1,
-      );
-    }
-
-    const empresasMaisWhatsApp =
-      [...empresaWhatsappMap.entries()]
-        .map(
-          ([empresaId, total]) => ({
-            empresaId,
-            total,
-            empresa: empresas.find(
-              (e) => e.id === empresaId,
-            ),
-          }),
-        )
-        .filter(
-          (item) => item.empresa,
-        )
-        .sort(
-          (a, b) =>
-            b.total - a.total,
-        )
-        .slice(0, 5);
-
-    return {
-      // Quantidade total de páginas abertas.
-      pageViews:
-        pageViews.length,
-
-      // Quantidade total de perfis de empresas abertos.
-      companyViews:
-        companyViews.length,
-
-      // Quantidade total de cliques no WhatsApp.
-      whatsappClicks:
-        whatsappClicks.length,
-
-      // Quantidade de sessões únicas.
-      visitantes:
-        visitantes.size,
-
-      empresasMaisVistas,
-
-      empresasMaisWhatsApp,
-    };
-  }, [
-    analyticsEvents,
-    empresas,
-  ]);
+    empresasMaisWhatsApp:
+      analyticsData?.empresasMaisWhatsApp
+        ?.map((item) => ({
+          ...item,
+          empresa: empresas.find(
+            (e) => e.id === item.empresaId,
+          ),
+        }))
+        .filter((item) => item.empresa) ?? [],
+  };
 
   // =========================================================
   // SEM SESSÃO
@@ -481,9 +369,7 @@ function PlatformDashboard() {
               onClick={() =>
                 void refetchAnalytics()
               }
-              disabled={
-                analyticsFetching
-              }
+              disabled={analyticsFetching}
               className="gap-2"
             >
               <RefreshCw
@@ -527,19 +413,23 @@ function PlatformDashboard() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <AnalyticsCard
                   title="Visualizações"
-                  value={
-                    analytics.pageViews
-                  }
+                  value={analytics.pageViews}
                   icon={
                     <Eye className="h-5 w-5" />
                   }
                 />
 
                 <AnalyticsCard
-                  title="Visualizações de empresas"
-                  value={
-                    analytics.companyViews
+                  title="Visitantes"
+                  value={analytics.visitantes}
+                  icon={
+                    <Users className="h-5 w-5" />
                   }
+                />
+
+                <AnalyticsCard
+                  title="Visualizações de empresas"
+                  value={analytics.companyViews}
                   icon={
                     <Building2 className="h-5 w-5" />
                   }
@@ -547,21 +437,9 @@ function PlatformDashboard() {
 
                 <AnalyticsCard
                   title="Cliques no WhatsApp"
-                  value={
-                    analytics.whatsappClicks
-                  }
+                  value={analytics.whatsappClicks}
                   icon={
                     <MessageCircle className="h-5 w-5" />
-                  }
-                />
-
-                <AnalyticsCard
-                  title="Visitantes"
-                  value={
-                    analytics.visitantes
-                  }
-                  icon={
-                    <Users className="h-5 w-5" />
                   }
                 />
               </div>
@@ -630,14 +508,11 @@ function PlatformDashboard() {
         <CadastrosRecentes
           cadastros={cadastrosRecentes}
           categorias={categoriasNegocio}
-          carregando={
-            carregandoCadastros
-          }
+          carregando={carregandoCadastros}
           onRemover={async (id) => {
             await removerCadastroInteresse({
               data: {
-                token:
-                  session.accessToken,
+                token: session.accessToken,
                 id,
               },
             });
@@ -666,9 +541,7 @@ function PlatformDashboard() {
 
           <Select
             value={tipoFiltro}
-            onValueChange={
-              setTipoFiltro
-            }
+            onValueChange={setTipoFiltro}
           >
             <SelectTrigger className="sm:w-44">
               <SelectValue placeholder="Tipo" />
@@ -691,9 +564,7 @@ function PlatformDashboard() {
 
           <Select
             value={statusFiltro}
-            onValueChange={
-              setStatusFiltro
-            }
+            onValueChange={setStatusFiltro}
           >
             <SelectTrigger className="sm:w-44">
               <SelectValue placeholder="Status" />
@@ -720,9 +591,7 @@ function PlatformDashboard() {
 
           <Select
             value={categoriaFiltro}
-            onValueChange={
-              setCategoriaFiltro
-            }
+            onValueChange={setCategoriaFiltro}
           >
             <SelectTrigger className="sm:w-44">
               <SelectValue placeholder="Categoria" />
@@ -733,16 +602,14 @@ function PlatformDashboard() {
                 Todas as categorias
               </SelectItem>
 
-              {categoriasNegocio.map(
-                (c) => (
-                  <SelectItem
-                    key={c.valor}
-                    value={c.valor}
-                  >
-                    {c.label}
-                  </SelectItem>
-                ),
-              )}
+              {categoriasNegocio.map((c) => (
+                <SelectItem
+                  key={c.valor}
+                  value={c.valor}
+                >
+                  {c.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -801,14 +668,12 @@ function PlatformDashboard() {
                         <div className="mt-1 flex items-center gap-1.5">
                           <Badge
                             variant={
-                              e.tipo ===
-                              "externa"
+                              e.tipo === "externa"
                                 ? "outline"
                                 : "secondary"
                             }
                           >
-                            {e.tipo ===
-                            "externa"
+                            {e.tipo === "externa"
                               ? "Externa"
                               : "Trapeza"}
                           </Badge>
@@ -823,8 +688,7 @@ function PlatformDashboard() {
 
                       <Badge
                         variant={
-                          e.status_pagamento ===
-                          "ativo"
+                          e.status_pagamento === "ativo"
                             ? "default"
                             : e.status_pagamento ===
                                 "atrasado"
@@ -832,16 +696,13 @@ function PlatformDashboard() {
                               : "destructive"
                         }
                       >
-                        {
-                          e.status_pagamento
-                        }
+                        {e.status_pagamento}
                       </Badge>
                     </div>
                   </CardHeader>
 
                   <CardContent className="space-y-2 text-sm">
-                    {e.tipo ===
-                    "externa" ? (
+                    {e.tipo === "externa" ? (
                       <p>
                         <span className="text-muted-foreground">
                           Site:
@@ -865,8 +726,7 @@ function PlatformDashboard() {
                       <span className="text-muted-foreground">
                         Plano:
                       </span>{" "}
-                      {e.tipo ===
-                      "externa"
+                      {e.tipo === "externa"
                         ? "— (n/a)"
                         : e.plano_id}
                     </p>
@@ -875,8 +735,7 @@ function PlatformDashboard() {
                       <span className="text-muted-foreground">
                         WhatsApp:
                       </span>{" "}
-                      {e.whatsapp ??
-                        "—"}
+                      {e.whatsapp ?? "—"}
                     </p>
                   </CardContent>
                 </Card>
@@ -912,9 +771,7 @@ function AnalyticsCard({
             </p>
 
             <p className="mt-1 font-display text-3xl font-bold">
-              {value.toLocaleString(
-                "pt-BR",
-              )}
+              {value.toLocaleString("pt-BR")}
             </p>
           </div>
 
@@ -958,37 +815,30 @@ function AnalyticsRanking({
       <CardContent>
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Ainda não há dados
-            suficientes.
+            Ainda não há dados suficientes.
           </p>
         ) : (
           <div className="space-y-3">
-            {items.map(
-              (item, index) => (
-                <div
-                  key={item.empresaId}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                      {index + 1}
-                    </span>
+            {items.map((item, index) => (
+              <div
+                key={item.empresaId}
+                className="flex items-center justify-between gap-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                    {index + 1}
+                  </span>
 
-                    <span className="truncate text-sm font-medium">
-                      {item.empresa
-                        ?.nome ??
-                        "Empresa"}
-                    </span>
-                  </div>
-
-                  <Badge variant="secondary">
-                    {item.total.toLocaleString(
-                      "pt-BR",
-                    )}
-                  </Badge>
+                  <span className="truncate text-sm font-medium">
+                    {item.empresa?.nome ?? "Empresa"}
+                  </span>
                 </div>
-              ),
-            )}
+
+                <Badge variant="secondary">
+                  {item.total.toLocaleString("pt-BR")}
+                </Badge>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
@@ -1020,8 +870,7 @@ function CadastrosRecentes({
     id: string,
   ) => Promise<void>;
 }) {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const categoriaPorId =
     new Map(
@@ -1038,47 +887,40 @@ function CadastrosRecentes({
       ),
     );
 
-  function iniciarCadastro(
-    cadastro: CadastroInteresse,
-    tipo:
-      | "interna"
-      | "externa",
-  ) {
-    const categoria =
-      categoriaPorId.get(
-        cadastro.categoria_negocio_id ?? "",
-      );
+function iniciarCadastro(
+  cadastro: CadastroInteresse,
+  tipo: "interna" | "externa",
+) {
+  const categoria = categoriaPorId.get(
+    cadastro.categoria_negocio_id ?? "",
+  );
 
-    window.localStorage.setItem(
-      "trapeza:cadastro-pendente",
-      JSON.stringify({
-        nome:
-          cadastro.nome_empresa,
+  window.localStorage.setItem(
+    "trapeza:cadastro-pendente",
+    JSON.stringify({
+      nome: cadastro.nome_empresa,
+      responsavel: cadastro.nome_responsavel,
+      whatsapp: cadastro.whatsapp,
+      email: cadastro.email ?? "",
+      cidade: cadastro.cidade,
 
-        responsavel:
-          cadastro.nome_responsavel,
+      // ID da categoria — usado pela empresa interna
+      categorias: cadastro.categoria_negocio_id
+        ? [cadastro.categoria_negocio_id]
+        : [],
 
-        whatsapp:
-          cadastro.whatsapp,
+      // valor da categoria — usado pela empresa externa
+      categoriaValor: categoria?.valor ?? "",
+    }),
+  );
 
-        email:
-          cadastro.email ?? "",
-
-        cidade:
-          cadastro.cidade,
-
-        categoriaValor:
-          categoria?.valor ?? "",
-      }),
-    );
-
-    navigate({
-      to:
-        tipo === "interna"
-          ? "/plataforma/empresas/nova"
-          : "/plataforma/empresas/nova-externa",
-    });
-  }
+  navigate({
+    to:
+      tipo === "interna"
+        ? "/plataforma/empresas/nova"
+        : "/plataforma/empresas/nova-externa",
+  });
+}
 
   async function remover(
     cadastro: CadastroInteresse,
@@ -1092,9 +934,7 @@ function CadastrosRecentes({
     }
 
     try {
-      await onRemover(
-        cadastro.id,
-      );
+      await onRemover(cadastro.id);
     } catch {
       alert(
         "Não foi possível excluir esse contato agora.",
@@ -1110,16 +950,13 @@ function CadastrosRecentes({
             <UserRoundPlus className="h-5 w-5 text-brand-brown" />
 
             <h2 className="font-display text-xl font-bold">
-              Empresas cadastradas
-              recentemente
+              Empresas cadastradas recentemente
             </h2>
           </div>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Contatos enviados pelo
-            formulário público
-            “Cadastre sua empresa
-            grátis”.
+            Contatos enviados pelo formulário público
+            “Cadastre sua empresa grátis”.
           </p>
         </div>
 
@@ -1137,148 +974,129 @@ function CadastrosRecentes({
         </p>
       ) : cadastros.length === 0 ? (
         <p className="mt-4 rounded-xl bg-background/60 p-4 text-sm text-muted-foreground">
-          Ainda não chegou nenhum
-          cadastro pelo site. Assim que
-          alguém preencher o formulário,
-          o contato aparece aqui.
+          Ainda não chegou nenhum cadastro pelo site.
+          Assim que alguém preencher o formulário, o
+          contato aparece aqui.
         </p>
       ) : (
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {cadastros.map(
-            (cadastro) => {
-              const numeroWhats =
-                cadastro.whatsapp.replace(
-                  /\D/g,
-                  "",
-                );
+          {cadastros.map((cadastro) => {
+            const numeroWhats =
+              cadastro.whatsapp.replace(/\D/g, "");
 
-              const mensagem =
-                encodeURIComponent(
-                  `Olá, ${cadastro.nome_responsavel}! Vi o cadastro da ${cadastro.nome_empresa} no Trapeza e queria conversar sobre colocar sua empresa na plataforma.`,
-                );
+            const mensagem =
+              encodeURIComponent(
+                `Olá, ${cadastro.nome_responsavel}! Vi o cadastro da ${cadastro.nome_empresa} no Trapeza e queria conversar sobre colocar sua empresa na plataforma.`,
+              );
 
-              return (
-                <Card
-                  key={cadastro.id}
-                  className="bg-background/80"
-                >
-                  <CardContent className="space-y-2 p-4 text-sm">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold">
-                          {
-                            cadastro.nome_empresa
-                          }
-                        </p>
+            return (
+              <Card
+                key={cadastro.id}
+                className="bg-background/80"
+              >
+                <CardContent className="space-y-2 p-4 text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">
+                        {cadastro.nome_empresa}
+                      </p>
 
-                        <p className="text-muted-foreground">
-                          {
-                            cadastro.nome_responsavel
-                          }{" "}
-                          ·{" "}
-                          {
-                            cadastro.cidade
-                          }
-                        </p>
-                      </div>
-
-                      <Badge variant="outline">
-                        novo
-                      </Badge>
+                      <p className="text-muted-foreground">
+                        {cadastro.nome_responsavel} ·{" "}
+                        {cadastro.cidade}
+                      </p>
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
-                      {categoriaPorId.get(
-                        cadastro.categoria_negocio_id ?? "",
-                      )?.label ??
-                        "Atividade não encontrada"}{" "}
-                      · enviado em{" "}
-                      {new Date(
-                        cadastro.criado_em,
-                      ).toLocaleDateString(
-                        "pt-BR",
-                      )}
-                    </p>
+                    <Badge variant="outline">
+                      novo
+                    </Badge>
+                  </div>
 
-                    <div className="flex flex-wrap gap-2 pt-1">
+                  <p className="text-xs text-muted-foreground">
+                    {categoriaPorId.get(
+                      cadastro.categoria_negocio_id ?? "",
+                    )?.label ??
+                      "Atividade não encontrada"}{" "}
+                    · enviado em{" "}
+                    {new Date(
+                      cadastro.criado_em,
+                    ).toLocaleDateString("pt-BR")}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <a
+                      href={`https://wa.me/${numeroWhats}?text=${mensagem}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Button
+                        size="sm"
+                        className="gap-1.5"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Chamar no WhatsApp
+                      </Button>
+                    </a>
+
+                    {cadastro.email && (
                       <a
-                        href={`https://wa.me/${numeroWhats}?text=${mensagem}`}
-                        target="_blank"
-                        rel="noreferrer"
+                        className="inline-flex"
+                        href={`mailto:${cadastro.email}`}
                       >
                         <Button
                           size="sm"
+                          variant="outline"
                           className="gap-1.5"
                         >
-                          <MessageCircle className="h-3.5 w-3.5" />
-
-                          Chamar no WhatsApp
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          E-mail
                         </Button>
                       </a>
+                    )}
 
-                      {cadastro.email && (
-                        <a
-                          className="inline-flex"
-                          href={`mailto:${cadastro.email}`}
-                        >
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1.5"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        iniciarCadastro(
+                          cadastro,
+                          "interna",
+                        )
+                      }
+                    >
+                      Criar interna
+                    </Button>
 
-                            E-mail
-                          </Button>
-                        </a>
-                      )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        iniciarCadastro(
+                          cadastro,
+                          "externa",
+                        )
+                      }
+                    >
+                      Criar externa
+                    </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          iniciarCadastro(
-                            cadastro,
-                            "interna",
-                          )
-                        }
-                      >
-                        Criar interna
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          iniciarCadastro(
-                            cadastro,
-                            "externa",
-                          )
-                        }
-                      >
-                        Criar externa
-                      </Button>
-
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="ml-auto text-muted-foreground hover:text-destructive"
-                        title="Excluir contato"
-                        aria-label={`Excluir ${cadastro.nome_empresa}`}
-                        onClick={() =>
-                          remover(
-                            cadastro,
-                          )
-                        }
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            },
-          )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="ml-auto text-muted-foreground hover:text-destructive"
+                      title="Excluir contato"
+                      aria-label={`Excluir ${cadastro.nome_empresa}`}
+                      onClick={() =>
+                        remover(cadastro)
+                      }
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </section>

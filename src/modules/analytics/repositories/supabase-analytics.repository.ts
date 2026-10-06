@@ -1,36 +1,54 @@
+// src/modules/analytics/repositories/supabase-analytics.repository.ts
+
 import { adminClient } from "@/lib/supabase-server-auth";
+
 import type {
-  AnalyticsEventRow,
   AnalyticsRepository,
+  AnalyticsResumo,
 } from "./analytics.repository";
 
 export class SupabaseAnalyticsRepository
   implements AnalyticsRepository
 {
-  async listarUltimos30Dias(): Promise<AnalyticsEventRow[]> {
+  async obterResumoUltimos30Dias(): Promise<AnalyticsResumo> {
     const supabase = adminClient();
 
-    const { data, error } = await supabase
-      .from("analytics_events")
-      .select(
-        "event_name, empresa_id, session_id, created_at",
-      )
-      .gte(
-        "created_at",
-        new Date(
-          Date.now() - 30 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
-      )
-      .order("created_at", {
-        ascending: false,
-      });
+    const { data, error } = await supabase.rpc(
+      "get_analytics_30_days",
+    );
 
     if (error) {
       throw new Error(
-        `Erro ao listar analytics: ${error.message}`,
+        `Erro ao carregar analytics: ${error.message}`,
       );
     }
 
-    return data ?? [];
+    if (!data) {
+      return {
+        pageViews: 0,
+        companyViews: 0,
+        whatsappClicks: 0,
+        visitantes: 0,
+        empresasMaisVistas: [],
+        empresasMaisWhatsApp: [],
+      };
+    }
+
+    return {
+      pageViews: Number(data.pageViews ?? 0),
+      companyViews: Number(
+        data.companyViews ?? 0,
+      ),
+      whatsappClicks: Number(
+        data.whatsappClicks ?? 0,
+      ),
+      visitantes: Number(
+        data.visitantes ?? 0,
+      ),
+      empresasMaisVistas:
+        data.empresasMaisVistas ?? [],
+      empresasMaisWhatsApp:
+        data.empresasMaisWhatsApp ?? [],
+    };
   }
 }

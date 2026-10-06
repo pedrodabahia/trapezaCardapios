@@ -55,19 +55,58 @@ function NovaEmpresaExterna() {
 
   // Dados enviados no formulário público, transferidos pelo dashboard ao
   // escolher transformar o lead em empresa externa.
-  useEffect(() => {
-    const bruto = window.localStorage.getItem("trapeza:cadastro-pendente");
-    if (!bruto) return;
-    try {
-      const lead = JSON.parse(bruto) as { nome?: string; whatsapp?: string; cidade?: string; categoriaValor?: string };
-      setNome(lead.nome ?? "");
-      setWhatsapp((lead.whatsapp ?? "").replace(/\D/g, ""));
-      setCidade(lead.cidade ?? "");
-      setCategorias(lead.categoriaValor ? [lead.categoriaValor] : []);
-    } catch {
-      // Dado antigo/inválido não deve impedir o cadastro manual.
+useEffect(() => {
+  const bruto = window.localStorage.getItem(
+    "trapeza:cadastro-pendente",
+  );
+
+  if (!bruto) return;
+
+  try {
+    const lead = JSON.parse(bruto) as {
+      nome?: string;
+      whatsapp?: string;
+      cidade?: string;
+      categorias?: string[];
+      categoriaValor?: string;
+    };
+
+    setNome(lead.nome ?? "");
+
+    setWhatsapp(
+      (lead.whatsapp ?? "").replace(/\D/g, ""),
+    );
+
+    setCidade(lead.cidade ?? "");
+
+    // Primeiro tenta usar as categorias novas.
+    // Se não existir, mantém compatibilidade com
+    // o formato antigo que usava categoriaValor.
+    if (lead.categorias?.length) {
+      const categoriasEncontradas =
+        lead.categorias
+          .map((categoriaId) => {
+            const categoria =
+              categoriasNegocio.find(
+                (c) => c.id === categoriaId,
+              );
+
+            return categoria?.valor;
+          })
+          .filter(Boolean) as string[];
+
+      setCategorias(categoriasEncontradas);
+    } else if (lead.categoriaValor) {
+      setCategorias([
+        lead.categoriaValor,
+      ]);
+    } else {
+      setCategorias([]);
     }
-  }, []);
+  } catch {
+    // Dado antigo/inválido não deve impedir o cadastro manual.
+  }
+}, [categoriasNegocio]);
 
   if (!session) return null;
 

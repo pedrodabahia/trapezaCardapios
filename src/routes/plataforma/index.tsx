@@ -1046,7 +1046,7 @@ function CadastrosRecentes({
   ) {
     const categoria =
       categoriaPorId.get(
-        cadastro.categoria_negocio_id,
+        cadastro.categoria_negocio_id ?? "",
       );
 
     window.localStorage.setItem(
@@ -1189,7 +1189,7 @@ function CadastrosRecentes({
 
                     <p className="text-xs text-muted-foreground">
                       {categoriaPorId.get(
-                        cadastro.categoria_negocio_id,
+                        cadastro.categoria_negocio_id ?? "",
                       )?.label ??
                         "Atividade não encontrada"}{" "}
                       · enviado em{" "}

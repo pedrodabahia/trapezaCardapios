@@ -57,6 +57,8 @@ export function AppShell({ children, empresaCompleta, slug }: Props) {
     { to: "/s/$slug/favorites", label: "Favoritos", icon: Heart, params: { slug } },
   ];
 
+  
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       

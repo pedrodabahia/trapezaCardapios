@@ -348,33 +348,65 @@ function PerfilDiretorioCard({
             <Input value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
           <div>
-            <Label>Categorias</Label>
-            <p className="mb-2 text-xs text-muted-foreground">Pode marcar mais de uma.</p>
-            <div className="flex flex-wrap gap-2">
-              {categoriasNegocio.map((c) => {
-                const marcada = categorias.includes(c.valor);
+<div>
+  <Label>Categorias</Label>
+  <p className="mb-3 text-xs text-muted-foreground">
+    Selecione uma ou mais categorias. As categorias principais servem apenas
+    para organizar as opções.
+  </p>
+
+  <div className="space-y-5">
+    {categoriasNegocio
+      .filter((pai) => pai.categoria_pai_id === null)
+      .map((pai) => {
+        const filhas = categoriasNegocio.filter(
+          (filho) => filho.categoria_pai_id === pai.id
+        );
+
+        // Se não tiver subcategorias, não mostra a categoria pai
+        // como opção selecionável.
+        if (filhas.length === 0) return null;
+
+        return (
+          <div key={pai.id} className="space-y-2">
+            {/* Título da categoria principal */}
+            <h4 className="border-b pb-1 text-sm font-bold">
+              {pai.label}
+            </h4>
+
+            {/* Subcategorias selecionáveis */}
+            <div className="flex flex-wrap gap-2 pl-2">
+              {filhas.map((filho) => {
+                const marcada = categorias.includes(filho.valor);
+
                 return (
                   <button
-                    key={c.valor}
+                    key={filho.id}
                     type="button"
                     onClick={() =>
                       setCategorias((atual) =>
-                        marcada ? atual.filter((v) => v !== c.valor) : [...atual, c.valor],
+                        marcada
+                          ? atual.filter((v) => v !== filho.valor)
+                          : [...atual, filho.valor]
                       )
                     }
                     className={
                       "rounded-full border px-3 py-1.5 text-xs font-semibold transition " +
                       (marcada
                         ? "border-foreground bg-foreground text-background"
-                        : "border-input bg-background text-foreground")
+                        : "border-input bg-background text-foreground hover:bg-muted")
                     }
                   >
-                    {c.label}
+                    {filho.label}
                   </button>
                 );
               })}
             </div>
           </div>
+        );
+      })}
+  </div>
+</div>          </div>
           <div>
             <Label>Cidade</Label>
             <Input value={cidade} onChange={(e) => setCidade(e.target.value)} />

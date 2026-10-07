@@ -651,35 +651,35 @@ function Landing() {
 
       {/* CATEGORIAS DINÂMICAS */}
       <section className="space-y-2">
-        {categoriasRenderizadas.map(
-          (cat, index) => {
-            const empresasCategoria =
-              porCategoria(cat.valor);
+ {categoriasRenderizadas.map(
+  (cat, index) => {
+    const empresasCategoria =
+      porCategoria(cat.valor);
 
-            return (
-              <div
-                key={cat.id}
-                className="overflow-hidden"
-              >
-                <IntentCarousel
-                  titulo={cat.label.toUpperCase()}
-                  subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
-                  empresas={
-                    empresasCategoria
-                  }
-                />
+    const numeroCategoria = index + 1;
 
-                {(index + 1) % 4 === 0 && (
-                  <PromoCarousel
-                    anuncios={anunciosPorPosicao(
-                      "1",
-                    )}
-                  />
-                )}
-              </div>
-            );
-          },
+    return (
+      <div
+        key={cat.id}
+        className="overflow-hidden"
+      >
+        <IntentCarousel
+          titulo={cat.label.toUpperCase()}
+          subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+          empresas={empresasCategoria}
+        />
+
+        {numeroCategoria % 4 === 0 && (
+          <PromoCarousel
+            anuncios={anunciosPorPosicao(
+              String(numeroCategoria / 4 + 1),
+            )}
+          />
         )}
+      </div>
+    );
+  },
+)}
       </section>
 
       {/* SENTINELA */}

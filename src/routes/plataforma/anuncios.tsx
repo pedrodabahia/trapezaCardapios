@@ -46,7 +46,6 @@ function blankAnuncio(ordem: number): AnuncioHome {
     posicao: "1",
     ativo: true,
     ordem,
-    criado_em : "",
   };
 }
 
@@ -186,18 +185,25 @@ function FormAnuncio({
   const [pastaUploadTemp] = useState(() => crypto.randomUUID());
   const isNew = !anuncio.id;
 
-  async function onSave() {
-    setBusy(true);
-    try {
-      await saveAnuncioHome({ data: { token, anuncio: draft } });
-      toast.success(isNew ? "Anúncio criado" : "Anúncio atualizado");
-      onSaved();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao salvar");
-    } finally {
-      setBusy(false);
-    }
+async function onSave() {
+  setBusy(true);
+
+  try {
+    await saveAnuncioHome({
+      data: {
+        token,
+        anuncio: draft,
+      },
+    });
+
+    toast.success(isNew ? "Anúncio criado" : "Anúncio atualizado");
+    onSaved();
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "Erro ao salvar");
+  } finally {
+    setBusy(false);
   }
+}
 
   return (
     <Card>

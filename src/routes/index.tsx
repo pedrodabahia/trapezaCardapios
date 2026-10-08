@@ -663,11 +663,14 @@ function Landing() {
         key={cat.id}
         className="overflow-hidden"
       >
+
         <IntentCarousel
-          titulo={cat.label.toUpperCase()}
-          subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
-          empresas={empresasCategoria}
-        />
+  titulo={cat.label.toUpperCase()}
+  subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+  empresas={empresasCategoria}
+  categoriaUrl={`/categoria/${cat.valor}`}
+  limite={20}
+/>
 
         {numeroCategoria % 4 === 0 && (
           <PromoCarousel

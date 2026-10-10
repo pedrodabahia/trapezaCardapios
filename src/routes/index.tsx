@@ -1,6 +1,7 @@
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { PromocoesDestaque } from "@/components/home/PromocoesDestaque";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -614,10 +615,13 @@ function Landing() {
         }
       />
 
-      {/* ANÚNCIO 1 */}
-      <PromoCarousel
-        anuncios={anunciosPorPosicao("1")}
-      />
+{/* ANÚNCIO PRINCIPAL */}
+<PromoCarousel anuncios={anunciosPorPosicao("1")} />
+
+{/* OFERTAS E PROMOÇÕES */}
+<PromocoesDestaque limite={8} />
+
+{/* PEÇA RÁPIDO */}
 
       {/* 
         PEÇA RÁPIDO
@@ -651,47 +655,39 @@ function Landing() {
 
       {/* CATEGORIAS DINÂMICAS */}
       <section className="space-y-2">
- {categoriasRenderizadas.map(
-  (cat, index) => {
-    const empresasCategoria =
-      porCategoria(cat.valor);
+{categoriasRenderizadas.map((cat, index) => {
+  const empresasCategoria = porCategoria(cat.valor);
+  const numeroCategoria = index + 1;
 
-    const numeroCategoria = index + 1;
+  return (
+    <div key={cat.id} className="overflow-hidden">
+      <IntentCarousel
+        titulo={cat.label.toUpperCase()}
+        subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
+        empresas={empresasCategoria}
+        categoriaUrl={`/categoria/${cat.valor}`}
+        limite={20}
+      />
 
-    return (
-      <div
-        key={cat.id}
-        className="overflow-hidden"
-      >
-
-        <IntentCarousel
-  titulo={cat.label.toUpperCase()}
-  subtitulo={`Encontre empresas de ${cat.label.toLowerCase()} perto de você.`}
-  empresas={empresasCategoria}
-  categoriaUrl={`/categoria/${cat.valor}`}
-  limite={20}
-/>
-
-        {numeroCategoria % 4 === 0 && (
-          <PromoCarousel
-            anuncios={anunciosPorPosicao(
-              String(numeroCategoria / 4 + 1),
-            )}
-          />
-        )}
-      </div>
-    );
-  },
-)}
-      </section>
+      {/* ANÚNCIOS ENTRE OS BLOCOS DE CATEGORIAS */}
+      {numeroCategoria % 4 === 0 && (
+        <PromoCarousel
+          anuncios={anunciosPorPosicao(
+            String(numeroCategoria / 4 + 1),
+          )}
+        />
+      )}
+    </div>
+  );
+})}
+    </section>
 
       {/* SENTINELA */}
       <div
         ref={sentinelaCategoriasRef}
         className="h-8 w-full"
-        aria-hidden="true"
-      />
-
+        aria-hidden="true" />
+   
       {/* EXPLORAR TODOS OS NEGÓCIOS */}
       <ExploreBusinesses
         empresas={

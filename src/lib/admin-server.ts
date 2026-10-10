@@ -86,6 +86,7 @@ export {
 // ============================================================================
 export {
   listarAnalytics,
+    listarAnalyticsPromocoes,
 } from "@/modules/analytics/controllers/analytics.controller";
 export {
   listEmpresasAdmin,
@@ -147,3 +148,37 @@ export {
   listPedidosEmpresa,
   updatePedidoStatus,
 } from "@/modules/pedidos/controllers/pedido.controller";
+
+
+// Este arquivo não tem mais nenhuma lógica própria. Ele existe só pra
+// nenhuma tela precisar mudar o import de "@/lib/admin-server" — toda a
+// lógica real mora em src/modules/*, organizada em repository → service →
+// controller.
+
+// ============================================================================
+// Tipos
+// ============================================================================
+
+// ============================================================================
+// Promoções
+// ============================================================================
+export {
+  listarPromocoes,
+  getPromocaoPorSlug,
+  listarPromocoesPorEmpresa,
+  listarPromocoesAdmin,
+  listarCategoriasPromocao,
+  savePromocao,
+  deletePromocao,
+} from "@/modules/promocoes/controllers/promocao.controller";
+export type {
+  Promocao,
+  PromocaoCategoria,
+  PromocaoPublica,
+  NovaPromocaoInput,
+  PromocaoStatus,
+} from "@/modules/promocoes/types/promocao.types";
+
+// ============================================================================
+// Planos
+// ============================================================================

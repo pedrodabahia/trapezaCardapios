@@ -27,7 +27,24 @@ type DeviceType =
 // Identificador temporário mantido apenas em memória.
 // Não utiliza cookies ou localStorage.
 
-const sessionId = crypto.randomUUID();
+function getSessionId(): string {
+  const key = "trapeza_analytics_session";
+
+  try {
+    let id = sessionStorage.getItem(key);
+
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem(key, id);
+    }
+
+    return id;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
+
+const sessionId = getSessionId();
 
 // ==========================================
 // IDENTIFICAÇÃO DO DISPOSITIVO
@@ -143,4 +160,84 @@ export function trackSearch() {
 
 export function trackSearchResultClick() {
   return trackEvent("search_result_click");
+}
+
+export type PromotionAnalyticsEvent =
+  | "promotion_view"
+  | "promotion_card_click"
+  | "promotion_whatsapp_click";
+
+interface TrackPromotionOptions {
+  promocaoId: string;
+  empresaId?: string;
+  path?: string;
+}
+
+export async function trackPromotionEvent(
+  eventName: PromotionAnalyticsEvent,
+  options: TrackPromotionOptions
+): Promise<void> {
+  if (!supabase) return;
+
+  try {
+    const pagePath =
+      options.path ??
+      (typeof window !== "undefined"
+        ? window.location.pathname
+        : "/");
+
+    const referrer =
+      typeof document !== "undefined" && document.referrer
+        ? new URL(document.referrer).origin
+        : null;
+
+    const { error } = await supabase.rpc(
+      "registrar_analytics_promocao",
+      {
+        p_event_name: eventName,
+        p_page_path: pagePath,
+        p_session_id: sessionId,
+        p_promocao_id: options.promocaoId,
+        p_empresa_id: options.empresaId ?? null,
+        p_referrer: referrer,
+        p_device_type: getDeviceType(),
+      }
+    );
+
+    if (error) {
+      console.warn("[Analytics Promoções]", error.message);
+    }
+  } catch (error) {
+    console.warn("[Analytics Promoções] Falha:", error);
+  }
+}
+
+export function trackPromotionView(
+  promocaoId: string,
+  empresaId?: string
+) {
+  return trackPromotionEvent("promotion_view", {
+    promocaoId,
+    empresaId,
+  });
+}
+
+export function trackPromotionCardClick(
+  promocaoId: string,
+  empresaId?: string
+) {
+  return trackPromotionEvent("promotion_card_click", {
+    promocaoId,
+    empresaId,
+  });
+}
+
+export function trackPromotionWhatsAppClick(
+  promocaoId: string,
+  empresaId: string
+) {
+  return trackPromotionEvent("promotion_whatsapp_click", {
+    promocaoId,
+    empresaId,
+  });
 }

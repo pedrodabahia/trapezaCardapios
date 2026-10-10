@@ -1,4 +1,3 @@
-// src/modules/analytics/services/analytics.service.ts
 
 import type {
   AnalyticsRepository,
@@ -11,5 +10,9 @@ export class AnalyticsService {
 
   async obterResumoUltimos30Dias() {
     return this.repository.obterResumoUltimos30Dias();
+  }
+
+  async obterResumoPromocoesUltimos30Dias() {
+    return this.repository.obterResumoPromocoesUltimos30Dias();
   }
 }

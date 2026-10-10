@@ -1,4 +1,3 @@
-// src/modules/analytics/repositories/analytics.repository.ts
 
 export interface AnalyticsEmpresaRanking {
   empresaId: string;
@@ -14,6 +13,25 @@ export interface AnalyticsResumo {
   empresasMaisWhatsApp: AnalyticsEmpresaRanking[];
 }
 
+export interface AnalyticsPromocaoRanking {
+  promocaoId: string;
+  titulo: string;
+  empresaId: string;
+  empresaNome: string;
+  visualizacoes: number;
+  cliquesOferta: number;
+  cliquesWhatsApp: number;
+}
+
+export interface AnalyticsPromocoesResumo {
+  visualizacoes: number;
+  cliquesOfertas: number;
+  cliquesWhatsApp: number;
+  promocoes: AnalyticsPromocaoRanking[];
+}
+
 export interface AnalyticsRepository {
   obterResumoUltimos30Dias(): Promise<AnalyticsResumo>;
+
+  obterResumoPromocoesUltimos30Dias(): Promise<AnalyticsPromocoesResumo>;
 }

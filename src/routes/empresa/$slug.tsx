@@ -1,7 +1,11 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import { trackEvent } from "@/lib/analytics";
+import {
+  trackEvent,
+  trackPromotionView,
+  trackPromotionCardClick,
+} from "@/lib/analytics";
 import {
   ChevronLeft,
   MapPin,
@@ -9,20 +13,19 @@ import {
   MessageCircle,
   SquarePen,
   Globe,
+  Tag,
+  ArrowRight,
 } from "lucide-react";
 import {
   listEmpresasPublicas,
   getConfigsEmpresas,
   listPlanos,
 } from "@/lib/admin-server";
+import { listarPromocoesPorEmpresa } from "@/modules/promocoes/controllers/promocao.controller";
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
-import {
-  labelsCategoriasNegocio,
-  CATEGORIAS_NEGOCIO,
-} from "@/lib/categorias-negocio";
+import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import { LogoLoader } from "@/components/LogoLoader";
 
-// Página própria de cada empresa — destino dos cards do diretório.
 export const Route = createFileRoute("/empresa/$slug")({
   component: PaginaEmpresa,
 });
@@ -98,12 +101,19 @@ function EmpresaFallback({
   );
 }
 
+function formatarPreco(valor: number) {
+  return Number(valor).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
 function PaginaEmpresa() {
   const router = useRouter();
-
   const { slug } = Route.useParams();
 
   const companyViewTrackedRef = useRef<string | null>(null);
+  const promotionViewsTrackedRef = useRef<Set<string>>(new Set());
 
   const { data: planos = [] } = useQuery({
     queryKey: ["planos"],
@@ -135,6 +145,22 @@ function PaginaEmpresa() {
     staleTime: 30_000,
   });
 
+  const {
+    data: promocoes = [],
+    isLoading: carregandoPromocoes,
+  } = useQuery({
+    queryKey: ["promocoes-empresa", empresa?.id],
+    queryFn: () =>
+      listarPromocoesPorEmpresa({
+        data: {
+          empresaId: empresa!.id,
+        },
+      }),
+    enabled: !!empresa,
+    staleTime: 30_000,
+  });
+
+  // Registra a visualização do perfil da empresa.
   useEffect(() => {
     if (!empresa) return;
 
@@ -150,6 +176,23 @@ function PaginaEmpresa() {
       empresaId: empresa.id,
     });
   }, [empresa]);
+
+  // Registra as visualizações das quatro primeiras ofertas.
+  useEffect(() => {
+    if (!empresa || carregandoPromocoes || promocoes.length === 0) {
+      return;
+    }
+
+    for (const promocao of promocoes.slice(0, 4)) {
+      if (promotionViewsTrackedRef.current.has(promocao.id)) {
+        continue;
+      }
+
+      promotionViewsTrackedRef.current.add(promocao.id);
+
+      void trackPromotionView(promocao.id, empresa.id);
+    }
+  }, [empresa, carregandoPromocoes, promocoes]);
 
   if (isLoading) {
     return (
@@ -179,15 +222,8 @@ function PaginaEmpresa() {
   }
 
   const cfg = configs?.[empresa.id];
-
-  const horarios = cfg
-    ? getHorarios(cfg)
-    : null;
-
-  const aberto =
-    horarios
-      ? isStoreOpenNow(horarios)
-      : undefined;
+  const horarios = cfg ? getHorarios(cfg) : null;
+  const aberto = horarios ? isStoreOpenNow(horarios) : undefined;
 
   const planoEmpresa = planos.find(
     (plano) => plano.id === empresa.plano_id,
@@ -202,8 +238,7 @@ function PaginaEmpresa() {
   const categoriasLabel =
     labelsCategoriasNegocio(empresa.categorias).join(" / ");
 
-  const numeroWhats =
-    (empresa.whatsapp ?? "").replace(/\D/g, "");
+  const numeroWhats = (empresa.whatsapp ?? "").replace(/\D/g, "");
 
   const linkWhats = numeroWhats
     ? `https://wa.me/${numeroWhats}?text=${encodeURIComponent(
@@ -224,8 +259,7 @@ function PaginaEmpresa() {
     .filter(Boolean)
     .join(", ");
 
-  const temEndereco =
-    enderecoCompleto.length > 0;
+  const temEndereco = enderecoCompleto.length > 0;
 
   const mapaSrc = temEndereco
     ? `https://www.google.com/maps?q=${encodeURIComponent(
@@ -238,6 +272,8 @@ function PaginaEmpresa() {
         enderecoCompleto,
       )}`
     : null;
+
+  const ofertasVisiveis = promocoes.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -271,10 +307,7 @@ function PaginaEmpresa() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <EmpresaFallback
-                  nome={empresa.nome}
-                  tipo="capa"
-                />
+                <EmpresaFallback nome={empresa.nome} tipo="capa" />
               )}
             </div>
           </div>
@@ -290,10 +323,7 @@ function PaginaEmpresa() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <EmpresaFallback
-                    nome={empresa.nome}
-                    tipo="logo"
-                  />
+                  <EmpresaFallback nome={empresa.nome} tipo="logo" />
                 )}
               </div>
 
@@ -301,14 +331,10 @@ function PaginaEmpresa() {
                 <span
                   className={
                     `mb-1 rounded-full px-3 py-1.5 text-[11px] font-bold text-white shadow-sm ` +
-                    (aberto
-                      ? "bg-emerald-500"
-                      : "bg-neutral-700")
+                    (aberto ? "bg-emerald-500" : "bg-neutral-700")
                   }
                 >
-                  {aberto
-                    ? "Aberto agora"
-                    : "Fechado"}
+                  {aberto ? "Aberto agora" : "Fechado"}
                 </span>
               )}
             </div>
@@ -342,11 +368,10 @@ function PaginaEmpresa() {
               params={{ slug: empresa.slug }}
               className="flex w-full items-center justify-center rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
               style={{
-                backgroundColor:
-                  "var(--tp-orange, #c65d3a)",
+                backgroundColor: "var(--tp-orange, #c65d3a)",
               }}
             >
-              Ver cardápio
+              Ver catálogo
             </Link>
           )}
 
@@ -379,19 +404,17 @@ function PaginaEmpresa() {
             </a>
           )}
 
-          {!linkWhats &&
-            !temCatalogo &&
-            empresa.url_externa && (
-              <a
-                href={empresa.url_externa}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground px-4 py-3.5 text-sm font-bold text-background transition hover:opacity-90"
-              >
-                <Globe className="h-4 w-4" />
-                Visitar site
-              </a>
-            )}
+          {!linkWhats && !temCatalogo && empresa.url_externa && (
+            <a
+              href={empresa.url_externa}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground px-4 py-3.5 text-sm font-bold text-background transition hover:opacity-90"
+            >
+              <Globe className="h-4 w-4" />
+              Visitar site
+            </a>
+          )}
 
           {temCatalogo && linkWhats && (
             <div className="pt-1 text-center">
@@ -412,6 +435,106 @@ function PaginaEmpresa() {
           )}
         </section>
 
+        {/* OFERTAS DA EMPRESA */}
+        {!carregandoPromocoes && promocoes.length > 0 && (
+          <section className="mt-8 border-t border-border/60 px-2 pt-6">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10">
+                    <Tag className="h-4 w-4 text-orange-600" />
+                  </div>
+
+                  <span className="text-xs font-bold uppercase tracking-wide text-orange-600">
+                    Trapeza Promoções
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {promocoes.length === 1
+                    ? "1 oferta disponível"
+                    : `${promocoes.length} ofertas disponíveis`}
+                </p>
+              </div>
+
+              <Link
+                to="/promocoes/empresa/$slug"
+                params={{ slug: empresa.slug }}
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-bold underline underline-offset-4"
+              >
+                Ver todas
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {ofertasVisiveis.map((promocao) => (
+                <Link
+                  key={promocao.id}
+                  to="/promocoes/empresa/$slug"
+                  params={{ slug: empresa.slug }}
+                  onClick={() => {
+                    void trackPromotionCardClick(
+                      promocao.id,
+                      empresa.id,
+                    );
+                  }}
+                  className="overflow-hidden rounded-xl border border-border/60 bg-background transition hover:shadow-md"
+                >
+                  <div className="aspect-square overflow-hidden bg-muted">
+                    {promocao.imagem_url ? (
+                      <img
+                        src={promocao.imagem_url}
+                        alt={promocao.titulo}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Tag className="h-7 w-7 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3">
+                    <p className="line-clamp-2 min-h-10 text-sm font-semibold">
+                      {promocao.titulo}
+                    </p>
+
+                    {promocao.preco_promocional != null && (
+                      <p className="mt-2 text-base font-bold text-orange-600">
+                        {formatarPreco(promocao.preco_promocional)}
+                      </p>
+                    )}
+
+                    {promocao.preco_anterior != null && (
+                      <p className="text-xs text-muted-foreground line-through">
+                        {formatarPreco(promocao.preco_anterior)}
+                      </p>
+                    )}
+
+                    <p className="mt-3 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                      Ver oferta
+                      <ArrowRight className="h-3 w-3" />
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {promocoes.length > 4 && (
+              <Link
+                to="/promocoes/empresa/$slug"
+                params={{ slug: empresa.slug }}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-muted px-4 py-3 text-xs font-bold transition hover:bg-muted/70"
+              >
+                Ver todas as {promocoes.length} ofertas
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
+          </section>
+        )}
+
         {/* HORÁRIO */}
         {horarios && horarios.length > 0 && (
           <section className="mt-8 border-t border-border/60 px-2 pt-6">
@@ -427,9 +550,7 @@ function PaginaEmpresa() {
 
                 {aberto !== undefined && (
                   <p className="text-xs text-muted-foreground">
-                    {aberto
-                      ? "Aberto agora"
-                      : "Fechado no momento"}
+                    {aberto ? "Aberto agora" : "Fechado no momento"}
                   </p>
                 )}
               </div>
@@ -446,9 +567,7 @@ function PaginaEmpresa() {
                   </span>
 
                   <span className="font-medium">
-                    {h.closed
-                      ? "Fechado"
-                      : `${h.open} às ${h.close}`}
+                    {h.closed ? "Fechado" : `${h.open} às ${h.close}`}
                   </span>
                 </div>
               ))}

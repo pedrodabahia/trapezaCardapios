@@ -35,6 +35,15 @@
   display: none;
 }
 
+.carrossel-sem-barra {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carrossel-sem-barra::-webkit-scrollbar {
+  display: none;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

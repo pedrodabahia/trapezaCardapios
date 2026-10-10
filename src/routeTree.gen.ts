@@ -19,10 +19,14 @@ import { Route as PlataformaIndexRouteImport } from './routes/plataforma/index'
 import { Route as PlataformaAnunciosRouteImport } from './routes/plataforma/anuncios'
 import { Route as PlataformaCategoriasNegocioRouteImport } from './routes/plataforma/categorias-negocio'
 import { Route as PlataformaLoginRouteImport } from './routes/plataforma/login'
+import { Route as PlataformaPromocoesRouteImport } from './routes/plataforma/promocoes'
+import { Route as PromocoesIndexRouteImport } from './routes/promocoes/index'
+import { Route as PromocoesSlugRouteImport } from './routes/promocoes/$slug'
 import { Route as SSlugRouteImport } from './routes/s/$slug'
 import { Route as PlataformaEmpresasIdRouteImport } from './routes/plataforma/empresas/$id'
 import { Route as PlataformaEmpresasNovaRouteImport } from './routes/plataforma/empresas/nova'
 import { Route as PlataformaEmpresasNovaExternaRouteImport } from './routes/plataforma/empresas/nova-externa'
+import { Route as PromocoesEmpresaSlugRouteImport } from './routes/promocoes/empresa/$slug'
 import { Route as SSlugIndexRouteImport } from './routes/s/$slug/index'
 import { Route as SSlugCheckoutRouteImport } from './routes/s/$slug/checkout'
 import { Route as SSlugFavoritesRouteImport } from './routes/s/$slug/favorites'
@@ -84,6 +88,21 @@ const PlataformaLoginRoute = PlataformaLoginRouteImport.update({
   path: '/plataforma/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlataformaPromocoesRoute = PlataformaPromocoesRouteImport.update({
+  id: '/plataforma/promocoes',
+  path: '/plataforma/promocoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PromocoesIndexRoute = PromocoesIndexRouteImport.update({
+  id: '/promocoes/',
+  path: '/promocoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PromocoesSlugRoute = PromocoesSlugRouteImport.update({
+  id: '/promocoes/$slug',
+  path: '/promocoes/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SSlugRoute = SSlugRouteImport.update({
   id: '/s/$slug',
   path: '/s/$slug',
@@ -105,6 +124,11 @@ const PlataformaEmpresasNovaExternaRoute =
     path: '/plataforma/empresas/nova-externa',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PromocoesEmpresaSlugRoute = PromocoesEmpresaSlugRouteImport.update({
+  id: '/promocoes/empresa/$slug',
+  path: '/promocoes/empresa/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SSlugIndexRoute = SSlugIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -161,11 +185,15 @@ export interface FileRoutesByFullPath {
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
   '/plataforma/categorias-negocio': typeof PlataformaCategoriasNegocioRoute
   '/plataforma/login': typeof PlataformaLoginRoute
+  '/plataforma/promocoes': typeof PlataformaPromocoesRoute
+  '/promocoes/$slug': typeof PromocoesSlugRoute
   '/s/$slug': typeof SSlugRouteWithChildren
   '/plataforma/': typeof PlataformaIndexRoute
+  '/promocoes/': typeof PromocoesIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
   '/plataforma/empresas/nova': typeof PlataformaEmpresasNovaRoute
   '/plataforma/empresas/nova-externa': typeof PlataformaEmpresasNovaExternaRoute
+  '/promocoes/empresa/$slug': typeof PromocoesEmpresaSlugRoute
   '/s/$slug/checkout': typeof SSlugCheckoutRoute
   '/s/$slug/favorites': typeof SSlugFavoritesRoute
   '/s/$slug/location': typeof SSlugLocationRoute
@@ -186,10 +214,14 @@ export interface FileRoutesByTo {
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
   '/plataforma/categorias-negocio': typeof PlataformaCategoriasNegocioRoute
   '/plataforma/login': typeof PlataformaLoginRoute
+  '/plataforma/promocoes': typeof PlataformaPromocoesRoute
+  '/promocoes/$slug': typeof PromocoesSlugRoute
   '/plataforma': typeof PlataformaIndexRoute
+  '/promocoes': typeof PromocoesIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
   '/plataforma/empresas/nova': typeof PlataformaEmpresasNovaRoute
   '/plataforma/empresas/nova-externa': typeof PlataformaEmpresasNovaExternaRoute
+  '/promocoes/empresa/$slug': typeof PromocoesEmpresaSlugRoute
   '/s/$slug/checkout': typeof SSlugCheckoutRoute
   '/s/$slug/favorites': typeof SSlugFavoritesRoute
   '/s/$slug/location': typeof SSlugLocationRoute
@@ -211,11 +243,15 @@ export interface FileRoutesById {
   '/plataforma/anuncios': typeof PlataformaAnunciosRoute
   '/plataforma/categorias-negocio': typeof PlataformaCategoriasNegocioRoute
   '/plataforma/login': typeof PlataformaLoginRoute
+  '/plataforma/promocoes': typeof PlataformaPromocoesRoute
+  '/promocoes/$slug': typeof PromocoesSlugRoute
   '/s/$slug': typeof SSlugRouteWithChildren
   '/plataforma/': typeof PlataformaIndexRoute
+  '/promocoes/': typeof PromocoesIndexRoute
   '/plataforma/empresas/$id': typeof PlataformaEmpresasIdRoute
   '/plataforma/empresas/nova': typeof PlataformaEmpresasNovaRoute
   '/plataforma/empresas/nova-externa': typeof PlataformaEmpresasNovaExternaRoute
+  '/promocoes/empresa/$slug': typeof PromocoesEmpresaSlugRoute
   '/s/$slug/checkout': typeof SSlugCheckoutRoute
   '/s/$slug/favorites': typeof SSlugFavoritesRoute
   '/s/$slug/location': typeof SSlugLocationRoute
@@ -238,11 +274,15 @@ export interface FileRouteTypes {
     | '/plataforma/anuncios'
     | '/plataforma/categorias-negocio'
     | '/plataforma/login'
+    | '/plataforma/promocoes'
+    | '/promocoes/$slug'
     | '/s/$slug'
     | '/plataforma/'
+    | '/promocoes/'
     | '/plataforma/empresas/$id'
     | '/plataforma/empresas/nova'
     | '/plataforma/empresas/nova-externa'
+    | '/promocoes/empresa/$slug'
     | '/s/$slug/checkout'
     | '/s/$slug/favorites'
     | '/s/$slug/location'
@@ -263,10 +303,14 @@ export interface FileRouteTypes {
     | '/plataforma/anuncios'
     | '/plataforma/categorias-negocio'
     | '/plataforma/login'
+    | '/plataforma/promocoes'
+    | '/promocoes/$slug'
     | '/plataforma'
+    | '/promocoes'
     | '/plataforma/empresas/$id'
     | '/plataforma/empresas/nova'
     | '/plataforma/empresas/nova-externa'
+    | '/promocoes/empresa/$slug'
     | '/s/$slug/checkout'
     | '/s/$slug/favorites'
     | '/s/$slug/location'
@@ -287,11 +331,15 @@ export interface FileRouteTypes {
     | '/plataforma/anuncios'
     | '/plataforma/categorias-negocio'
     | '/plataforma/login'
+    | '/plataforma/promocoes'
+    | '/promocoes/$slug'
     | '/s/$slug'
     | '/plataforma/'
+    | '/promocoes/'
     | '/plataforma/empresas/$id'
     | '/plataforma/empresas/nova'
     | '/plataforma/empresas/nova-externa'
+    | '/promocoes/empresa/$slug'
     | '/s/$slug/checkout'
     | '/s/$slug/favorites'
     | '/s/$slug/location'
@@ -313,11 +361,15 @@ export interface RootRouteChildren {
   PlataformaAnunciosRoute: typeof PlataformaAnunciosRoute
   PlataformaCategoriasNegocioRoute: typeof PlataformaCategoriasNegocioRoute
   PlataformaLoginRoute: typeof PlataformaLoginRoute
+  PlataformaPromocoesRoute: typeof PlataformaPromocoesRoute
+  PromocoesSlugRoute: typeof PromocoesSlugRoute
   SSlugRoute: typeof SSlugRouteWithChildren
   PlataformaIndexRoute: typeof PlataformaIndexRoute
+  PromocoesIndexRoute: typeof PromocoesIndexRoute
   PlataformaEmpresasIdRoute: typeof PlataformaEmpresasIdRoute
   PlataformaEmpresasNovaRoute: typeof PlataformaEmpresasNovaRoute
   PlataformaEmpresasNovaExternaRoute: typeof PlataformaEmpresasNovaExternaRoute
+  PromocoesEmpresaSlugRoute: typeof PromocoesEmpresaSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -392,6 +444,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlataformaLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plataforma/promocoes': {
+      id: '/plataforma/promocoes'
+      path: '/plataforma/promocoes'
+      fullPath: '/plataforma/promocoes'
+      preLoaderRoute: typeof PlataformaPromocoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promocoes/': {
+      id: '/promocoes/'
+      path: '/promocoes'
+      fullPath: '/promocoes/'
+      preLoaderRoute: typeof PromocoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promocoes/$slug': {
+      id: '/promocoes/$slug'
+      path: '/promocoes/$slug'
+      fullPath: '/promocoes/$slug'
+      preLoaderRoute: typeof PromocoesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/s/$slug': {
       id: '/s/$slug'
       path: '/s/$slug'
@@ -418,6 +491,13 @@ declare module '@tanstack/react-router' {
       path: '/plataforma/empresas/nova-externa'
       fullPath: '/plataforma/empresas/nova-externa'
       preLoaderRoute: typeof PlataformaEmpresasNovaExternaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promocoes/empresa/$slug': {
+      id: '/promocoes/empresa/$slug'
+      path: '/promocoes/empresa/$slug'
+      fullPath: '/promocoes/empresa/$slug'
+      preLoaderRoute: typeof PromocoesEmpresaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$slug/': {
@@ -522,11 +602,15 @@ const rootRouteChildren: RootRouteChildren = {
   PlataformaAnunciosRoute: PlataformaAnunciosRoute,
   PlataformaCategoriasNegocioRoute: PlataformaCategoriasNegocioRoute,
   PlataformaLoginRoute: PlataformaLoginRoute,
+  PlataformaPromocoesRoute: PlataformaPromocoesRoute,
+  PromocoesSlugRoute: PromocoesSlugRoute,
   SSlugRoute: SSlugRouteWithChildren,
   PlataformaIndexRoute: PlataformaIndexRoute,
+  PromocoesIndexRoute: PromocoesIndexRoute,
   PlataformaEmpresasIdRoute: PlataformaEmpresasIdRoute,
   PlataformaEmpresasNovaRoute: PlataformaEmpresasNovaRoute,
   PlataformaEmpresasNovaExternaRoute: PlataformaEmpresasNovaExternaRoute,
+  PromocoesEmpresaSlugRoute: PromocoesEmpresaSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

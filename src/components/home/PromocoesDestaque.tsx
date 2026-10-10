@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Tag } from "lucide-react";
 import { listarPromocoes } from "@/modules/promocoes/controllers/promocao.controller";
+import { trackPromotionCardClick } from "@/lib/analytics";
 
 type PromocoesDestaqueProps = {
   limite?: number;
@@ -61,6 +62,12 @@ export function PromocoesDestaque({
               key={promocao.id}
               to="/promocoes/$slug"
               params={{ slug: promocao.slug }}
+              onClick={() => {
+                void trackPromotionCardClick(
+                  promocao.id,
+                  promocao.empresa_id,
+                );
+              }}
               className="group block min-w-0 overflow-hidden rounded-xl border bg-card transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="relative aspect-square overflow-hidden bg-muted">
@@ -72,7 +79,7 @@ export function PromocoesDestaque({
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center">
+                  <div className="flex items-center justify-center">
                     <Tag size={36} className="text-muted-foreground" />
                   </div>
                 )}

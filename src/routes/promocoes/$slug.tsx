@@ -2,7 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, MapPin, MessageCircle, Tag } from "lucide-react";
 import { getPromocaoPorSlug } from "@/modules/promocoes/controllers/promocao.controller";
-import { trackWhatsAppClick } from "@/lib/analytics";
+import { trackPromotionWhatsAppClick } from "@/lib/analytics";
+import { useEffect, useRef } from "react";
+
+import {
+  trackPromotionView,
+} from "@/lib/analytics";
 
 export const Route = createFileRoute("/promocoes/$slug")({
   component: PaginaDetalhePromocao,
@@ -46,6 +51,22 @@ function PaginaDetalhePromocao() {
     queryFn: () => getPromocaoPorSlug({ data: { slug } }),
     staleTime: 30_000,
   });
+  const visualizacaoRegistrada = useRef<string | null>(null);
+
+useEffect(() => {
+  if (!promocao?.id) return;
+
+  if (visualizacaoRegistrada.current === promocao.id) {
+    return;
+  }
+
+  visualizacaoRegistrada.current = promocao.id;
+
+  void trackPromotionView(
+    promocao.id,
+    promocao.empresa_id,
+  );
+}, [promocao?.id, promocao?.empresa_id]);
 
   if (isLoading) {
     return (
@@ -176,7 +197,12 @@ function PaginaDetalhePromocao() {
                   href={whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => void trackWhatsAppClick(promocao.empresa_id)}
+onClick={() =>
+  void trackPromotionWhatsAppClick(
+    promocao.id,
+    promocao.empresa_id,
+  )
+}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-4 font-bold text-white transition hover:bg-green-700"
                 >
                   <MessageCircle size={20} /> Consultar oferta no WhatsApp

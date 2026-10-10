@@ -191,7 +191,7 @@ export async function trackPromotionEvent(
         ? new URL(document.referrer).origin
         : null;
 
-    const { error } = await supabase.rpc(
+    const { data,error } = await supabase.rpc(
       "registrar_analytics_promocao",
       {
         p_event_name: eventName,
@@ -205,6 +205,17 @@ export async function trackPromotionEvent(
     );
 
     if (error) {
+      if (data === false) {
+  console.warn(
+    "[Analytics Promoções] O banco recusou o evento:",
+    {
+      eventName,
+      promocaoId: options.promocaoId,
+      empresaId: options.empresaId,
+      pagePath,
+    },
+  );
+}
       console.warn("[Analytics Promoções]", error.message);
     }
   } catch (error) {

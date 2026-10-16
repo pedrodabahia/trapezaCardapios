@@ -26,7 +26,111 @@ import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
 import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import { LogoLoader } from "@/components/LogoLoader";
 
+function limparTextoSEO(valor: unknown): string {
+  return typeof valor === "string" ? valor.replace(/\s+/g, " ").trim() : "";
+}
+
+function limitarTextoSEO(valor: string, limite = 160): string {
+  const texto = limparTextoSEO(valor);
+  if (texto.length <= limite) return texto;
+  const corte = texto.slice(0, limite - 1);
+  const ultimoEspaco = corte.lastIndexOf(" ");
+  return `${corte.slice(0, ultimoEspaco > 100 ? ultimoEspaco : limite - 1).trimEnd()}…`;
+}
+
 export const Route = createFileRoute("/empresa/$slug")({
+  loader: async () => {
+    const empresas = await listEmpresasPublicas({
+      data: {} as Record<string, never>,
+    });
+    return { empresas };
+  },
+  head: ({ loaderData, params }) => {
+    const empresa = loaderData?.empresas?.find((item) => item.slug === params.slug);
+
+    if (!empresa) {
+      return {
+        meta: [
+          { title: "Empresa não encontrada | Trapeza" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
+
+    const nome = limparTextoSEO(empresa.nome);
+    const cidade = limparTextoSEO(empresa.cidade);
+    const categorias = limparTextoSEO(
+      labelsCategoriasNegocio(empresa.categorias).join(", "),
+    );
+    const descricaoOriginal = limparTextoSEO(empresa.descricao);
+    const descricaoBase = descricaoOriginal
+      ? `${descricaoOriginal}${cidade ? ` — ${cidade}` : ""}`
+      : [
+          `Conheça ${nome}`,
+          categorias ? `(${categorias.toLowerCase()})` : "",
+          cidade ? `em ${cidade}` : "",
+          "e consulte as informações e formas de contato no Trapeza.",
+        ]
+          .filter(Boolean)
+          .join(" ");
+    const descricao = limitarTextoSEO(descricaoBase);
+    const titulo = limitarTextoSEO(
+      `${nome}${cidade ? ` em ${cidade}` : ""} | Trapeza`,
+      70,
+    );
+    const urlCanonica = `https://trapeza.me/empresa/${encodeURIComponent(empresa.slug)}`;
+    const imagem = limparTextoSEO(empresa.capa_url || empresa.logo_url);
+    const telefone = limparTextoSEO(empresa.whatsapp).replace(/\D/g, "");
+
+    const endereco = limparTextoSEO(
+      [empresa.endereco, empresa.bairro, cidade].filter(Boolean).join(", "),
+    );
+
+    const dadosEstruturados = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: nome,
+      url: urlCanonica,
+      ...(descricaoOriginal ? { description: descricaoOriginal } : {}),
+      ...(imagem ? { image: imagem } : {}),
+      ...(telefone ? { telephone: `+${telefone}` } : {}),
+      ...(endereco
+        ? {
+            address: {
+              "@type": "PostalAddress",
+              ...(limparTextoSEO(empresa.endereco)
+                ? { streetAddress: limparTextoSEO(empresa.endereco) }
+                : {}),
+              ...(limparTextoSEO(empresa.bairro)
+                ? { addressNeighborhood: limparTextoSEO(empresa.bairro) }
+                : {}),
+              ...(cidade ? { addressLocality: cidade } : {}),
+              addressCountry: "BR",
+            },
+          }
+        : {}),
+    };
+
+    return {
+      meta: [
+        { title: titulo },
+        { name: "description", content: descricao },
+        { name: "robots", content: "index, follow" },
+        { property: "og:type", content: "business.business" },
+        { property: "og:site_name", content: "Trapeza" },
+        { property: "og:title", content: titulo },
+        { property: "og:description", content: descricao },
+        { property: "og:url", content: urlCanonica },
+        ...(imagem ? [{ property: "og:image", content: imagem }] : []),
+        { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: titulo },
+        { name: "twitter:description", content: descricao },
+        ...(imagem ? [{ name: "twitter:image", content: imagem }] : []),
+        { "script:ld+json": dadosEstruturados },
+      ],
+      links: [{ rel: "canonical", href: urlCanonica }],
+    };
+  },
   component: PaginaEmpresa,
 });
 
@@ -111,6 +215,7 @@ function formatarPreco(valor: number) {
 function PaginaEmpresa() {
   const router = useRouter();
   const { slug } = Route.useParams();
+  const loaderData = Route.useLoaderData();
 
   const companyViewTrackedRef = useRef<string | null>(null);
   const promotionViewsTrackedRef = useRef<Set<string>>(new Set());
@@ -121,12 +226,13 @@ function PaginaEmpresa() {
     staleTime: 5 * 60_000,
   });
 
-  const { data: empresas = [], isLoading } = useQuery({
+  const { data: empresas = loaderData.empresas, isLoading } = useQuery({
     queryKey: ["empresas-publicas"],
     queryFn: () =>
       listEmpresasPublicas({
         data: {} as Record<string, never>,
       }),
+    initialData: loaderData.empresas,
     staleTime: 30_000,
   });
 
@@ -163,8 +269,6 @@ function PaginaEmpresa() {
   // Registra a visualização do perfil da empresa.
   useEffect(() => {
     if (!empresa) return;
-
-    document.title = `${empresa.nome} · Trapeza`;
 
     if (companyViewTrackedRef.current === empresa.id) {
       return;
@@ -289,9 +393,9 @@ function PaginaEmpresa() {
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <h1 className="truncate font-display text-base font-bold">
+          <span className="truncate font-display text-base font-bold">
             {empresa.nome}
-          </h1>
+          </span>
         </div>
       </header>
 
@@ -342,9 +446,9 @@ function PaginaEmpresa() {
 
           {/* IDENTIDADE */}
           <div className="mt-4 px-2">
-            <h2 className="font-display text-2xl font-bold tracking-tight">
+            <h1 className="font-display text-2xl font-bold tracking-tight">
               {empresa.nome}
-            </h2>
+            </h1>
 
             {categoriasLabel && (
               <p className="mt-1 text-sm font-medium text-muted-foreground">

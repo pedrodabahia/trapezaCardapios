@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as BBuscarRouteImport } from './routes/b/buscar'
 import { Route as CategoriaValorRouteImport } from './routes/categoria/$valor'
 import { Route as EmpresaSlugRouteImport } from './routes/empresa/$slug'
@@ -40,6 +41,11 @@ import { Route as SSlugProductIdRouteImport } from './routes/s/$slug/product/$id
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BBuscarRoute = BBuscarRouteImport.update({
@@ -177,6 +183,7 @@ const SSlugProductIdRoute = SSlugProductIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/b/buscar': typeof BBuscarRoute
   '/categoria/$valor': typeof CategoriaValorRoute
   '/empresa/$slug': typeof EmpresaSlugRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/b/buscar': typeof BBuscarRoute
   '/categoria/$valor': typeof CategoriaValorRoute
   '/empresa/$slug': typeof EmpresaSlugRoute
@@ -235,6 +243,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/b/buscar': typeof BBuscarRoute
   '/categoria/$valor': typeof CategoriaValorRoute
   '/empresa/$slug': typeof EmpresaSlugRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/sitemap.xml'
     | '/b/buscar'
     | '/categoria/$valor'
     | '/empresa/$slug'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/sitemap.xml'
     | '/b/buscar'
     | '/categoria/$valor'
     | '/empresa/$slug'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/sitemap.xml'
     | '/b/buscar'
     | '/categoria/$valor'
     | '/empresa/$slug'
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   BBuscarRoute: typeof BBuscarRoute
   CategoriaValorRoute: typeof CategoriaValorRoute
   EmpresaSlugRoute: typeof EmpresaSlugRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/b/buscar': {
@@ -594,6 +614,7 @@ const SSlugRouteWithChildren = SSlugRoute._addFileChildren(SSlugRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   BBuscarRoute: BBuscarRoute,
   CategoriaValorRoute: CategoriaValorRoute,
   EmpresaSlugRoute: EmpresaSlugRoute,

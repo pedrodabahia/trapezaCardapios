@@ -1,129 +1,170 @@
-
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Tag } from "lucide-react";
-import { listarPromocoes } from "@/modules/promocoes/controllers/promocao.controller";
-import { trackPromotionCardClick } from "@/lib/analytics";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import {
+  listarPromocoes,
+  listarCategoriasPromocao,
+} from "@/modules/promocoes/controllers/promocao.controller";
+import { PromoCard } from "@/components/promocoes/Promocard";
+import { diversificar, registrarEvento } from "@/modules/promocoes/utils/promocao-utils";
 
 type PromocoesDestaqueProps = {
+  /** Quantidade de cards no carrossel. */
   limite?: number;
+  /** Máximo de ofertas por empresa. */
+  maxPorEmpresa?: number;
   titulo?: string;
   subtitulo?: string;
   mostrarVerTodas?: boolean;
 };
 
-function formatarPreco(valor: number | null | undefined) {
-  if (valor == null) return null;
-
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
-
 export function PromocoesDestaque({
-  limite = 8,
-  titulo = "🔥 Ofertas e Promoções",
-  subtitulo = "Aproveite as ofertas dos negócios da sua região.",
+  limite = 10,
+  maxPorEmpresa = 2,
+  titulo = "🔥 Ofertas de hoje na sua região",
+  subtitulo = "Descontos de lojas da cidade. Toque em um filtro para ver só o que interessa.",
   mostrarVerTodas = true,
 }: PromocoesDestaqueProps) {
+  const [categoriaId, setCategoriaId] = useState<string | null>(null);
+
+  // Mesma chave da página /promocoes: o cache é reaproveitado.
+  // Buscamos mais itens para ter variedade de lojas antes de limitar.
   const {
     data: promocoes = [],
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["promocoes-home", limite],
-    queryFn: () => listarPromocoes({ data: { limite } }),
+    queryKey: ["promocoes-lista"],
+    queryFn: () => listarPromocoes({ data: { limite: 100 } }),
     staleTime: 30_000,
   });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["promocoes-categorias"],
+    queryFn: () => listarCategoriasPromocao({ data: {} }),
+    staleTime: 60_000,
+  });
+
+  // Só categorias ativas que têm oferta.
+  const categoriasComOferta = useMemo(() => {
+    const ids = new Set(
+      promocoes
+        .map((p) => p.categoria_negocio_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+    return [...categorias]
+      .filter((c) => c.ativo && ids.has(c.id))
+      .sort(
+        (a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome, "pt-BR"),
+      );
+  }, [categorias, promocoes]);
+
+  const exibidas = useMemo(() => {
+    const base = categoriaId
+      ? promocoes.filter((p) => p.categoria_negocio_id === categoriaId)
+      : promocoes;
+    return diversificar(base, maxPorEmpresa).slice(0, limite);
+  }, [promocoes, categoriaId, maxPorEmpresa, limite]);
+
+  // Registra uma vez quando a seção aparece na tela.
+  const secaoRef = useRef<HTMLElement>(null);
+  const visualizacaoRegistrada = useRef(false);
+  const temConteudo = promocoes.length > 0;
+
+  useEffect(() => {
+    const el = secaoRef.current;
+    if (!el || !temConteudo || visualizacaoRegistrada.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !visualizacaoRegistrada.current) {
+          visualizacaoRegistrada.current = true;
+          registrarEvento("promo_home_view");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [temConteudo]);
 
   if (isLoading || isError || promocoes.length === 0) {
     return null;
   }
 
+  function escolherCategoria(id: string | null, nome: string) {
+    setCategoriaId(id);
+    registrarEvento("promo_filtro", { tipo: "categoria_home", valor: nome });
+  }
+
+  const chip = (ativo: boolean) =>
+    `shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 ${
+      ativo
+        ? "border-orange-500 bg-orange-500 text-white"
+        : "bg-card hover:border-orange-400"
+    }`;
+
   return (
-    <section className="mx-auto max-w-6xl space-y-4 px-4 py-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="font-display text-lg font-bold">{titulo}</h2>
-          <p className="text-sm text-muted-foreground">{subtitulo}</p>
-        </div>
-
-        <Tag className="shrink-0 text-orange-600" size={22} />
+    <section ref={secaoRef} className="mx-auto max-w-6xl space-y-3 px-4 py-6">
+      <div>
+        <h2 className="font-display text-lg font-bold">{titulo}</h2>
+        <p className="text-sm text-muted-foreground">{subtitulo}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {promocoes.map((promocao) => {
-          const precoAtual = formatarPreco(promocao.preco_promocional);
-          const precoAnterior = formatarPreco(promocao.preco_anterior);
-
-          return (
-            <Link
-              key={promocao.id}
-              to="/promocoes/$slug"
-              params={{ slug: promocao.slug }}
-              onClick={() => {
-                void trackPromotionCardClick(
-                  promocao.id,
-                  promocao.empresa_id,
-                );
-              }}
-              className="group block min-w-0 overflow-hidden rounded-xl border bg-card transition hover:-translate-y-0.5 hover:shadow-md"
+      {categoriasComOferta.length > 1 && (
+        <div className="carrossel-sem-barra -mx-4 overflow-x-auto px-4">
+          <div className="flex w-max gap-2 pb-1">
+            <button
+              type="button"
+              aria-pressed={categoriaId === null}
+              onClick={() => escolherCategoria(null, "todas")}
+              className={chip(categoriaId === null)}
             >
-              <div className="relative aspect-square overflow-hidden bg-muted">
-                {promocao.imagem_url ? (
-                  <img
-                    src={promocao.imagem_url}
-                    alt={promocao.titulo}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Tag size={36} className="text-muted-foreground" />
-                  </div>
-                )}
+              Tudo
+            </button>
+            {categoriasComOferta.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                aria-pressed={categoriaId === c.id}
+                onClick={() =>
+                  escolherCategoria(categoriaId === c.id ? null : c.id, c.nome)
+                }
+                className={chip(categoriaId === c.id)}
+              >
+                {c.emoji ? `${c.emoji} ` : ""}
+                {c.nome}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-                {promocao.destaque && (
-                  <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-1 text-[10px] font-bold text-black">
-                    DESTAQUE
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-1 p-3">
-                <h3 className="line-clamp-2 text-sm font-semibold">
-                  {promocao.titulo}
-                </h3>
-
-                <p className="truncate text-xs text-muted-foreground">
-                  {promocao.empresa_nome}
-                </p>
-
-                {precoAtual && (
-                  <p className="text-base font-bold text-green-700">
-                    {precoAtual}
-                  </p>
-                )}
-
-                {precoAnterior && (
-                  <p className="text-xs text-muted-foreground line-through">
-                    {precoAnterior}
-                  </p>
-                )}
-
-                <p className="pt-1 text-xs font-semibold text-orange-600">
-                  Ver oferta →
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+      {exibidas.length === 0 ? (
+        <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+          Nenhuma oferta nessa categoria hoje.
+        </p>
+      ) : (
+        <div className="carrossel-sem-barra -mx-4 scroll-pl-4 snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-4">
+          <div className="flex w-max gap-3 pb-3">
+            {exibidas.map((promocao) => (
+              <PromoCard
+                key={promocao.id}
+                promocao={promocao}
+                modo="carrossel"
+                origem="home"
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {mostrarVerTodas && (
         <Link
           to="/promocoes"
+          onClick={() => registrarEvento("promo_ver_todas_click", { origem: "home" })}
           className="flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition hover:bg-muted"
         >
           Ver todas as promoções

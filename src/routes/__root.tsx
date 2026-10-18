@@ -90,23 +90,6 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TRAPEZA — Seu negócio à mesa",
-      },
-      {
-        name: "description",
-        content:
-          "TRAPEZA: plataforma de cardápios digitais multi-tenant. Sua empresa, seu link, seu cardápio.",
-      },
-      {
-        property: "og:title",
-        content: "TRAPEZA — Seu negócio à mesa",
-      },
-      {
-        property: "og:description",
-        content:
-          "Plataforma de cardápios digitais para vários restaurantes. Encontre sua lanchonete favorita.",
-      },
-      {
         property: "og:type",
         content: "website",
       },
@@ -163,7 +146,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -181,4 +163,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

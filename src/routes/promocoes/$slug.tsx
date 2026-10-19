@@ -20,7 +20,72 @@ import {
   getUrgencia,
 } from "@/modules/promocoes/utils/promocao-utils.ts";
 
+const SITE_URL = "https://trapeza.me";
+
+function textoSEO(valor: unknown): string {
+  return typeof valor === "string" ? valor.replace(/\s+/g, " ").trim() : "";
+}
+
 export const Route = createFileRoute("/promocoes/$slug")({
+  loader: async ({ params }) => ({
+    promocao: await getPromocaoPorSlug({ data: { slug: params.slug } }),
+  }),
+  head: ({ params, loaderData }) => {
+    const promocao = loaderData?.promocao;
+    const url = `${SITE_URL}/promocoes/${encodeURIComponent(params.slug)}`;
+
+    if (!promocao) {
+      return {
+        meta: [
+          { title: "Oferta não encontrada | Trapeza" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+        links: [{ rel: "canonical", href: url }],
+      };
+    }
+
+    const titulo = `${textoSEO(promocao.titulo)} | Ofertas no Trapeza`;
+    const descricao = (textoSEO(promocao.descricao) ||
+      `${textoSEO(promocao.titulo)} na ${textoSEO(promocao.empresa_nome)} em ${textoSEO(promocao.empresa_cidade) || "Posto da Mata"}. Confira a oferta e consulte as condições diretamente com a empresa.`).slice(0, 160);
+    const imagem = textoSEO(promocao.imagem_url || promocao.empresa_logo_url);
+    const dadosEstruturados = {
+      "@context": "https://schema.org",
+      "@type": "Offer",
+      name: textoSEO(promocao.titulo),
+      description: descricao,
+      url,
+      ...(imagem ? { image: imagem } : {}),
+      ...(promocao.preco_promocional != null
+        ? { price: String(promocao.preco_promocional), priceCurrency: "BRL" }
+        : {}),
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: textoSEO(promocao.empresa_nome),
+      },
+    };
+
+    return {
+      meta: [
+        { title: titulo },
+        { name: "description", content: descricao },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        { property: "og:type", content: "product" },
+        { property: "og:site_name", content: "Trapeza" },
+        { property: "og:locale", content: "pt_BR" },
+        { property: "og:title", content: titulo },
+        { property: "og:description", content: descricao },
+        { property: "og:url", content: url },
+        ...(imagem ? [{ property: "og:image", content: imagem }] : []),
+        { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: titulo },
+        { name: "twitter:description", content: descricao },
+        ...(imagem ? [{ name: "twitter:image", content: imagem }] : []),
+        { "script:ld+json": dadosEstruturados },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: PaginaDetalhePromocao,
 });
 
@@ -69,6 +134,7 @@ function Faixa({
 
 function PaginaDetalhePromocao() {
   const { slug } = Route.useParams();
+  const loaderData = Route.useLoaderData();
 
   const {
     data: promocao,
@@ -77,6 +143,7 @@ function PaginaDetalhePromocao() {
   } = useQuery({
     queryKey: ["promocao-detalhe", slug],
     queryFn: () => getPromocaoPorSlug({ data: { slug } }),
+    initialData: loaderData.promocao,
     staleTime: 30_000,
   });
 

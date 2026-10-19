@@ -38,6 +38,12 @@ const TAB_ITEMS = [
 ] as const;
 
 export const Route = createFileRoute("/painel/$empresaSlug")({
+  head: () => ({
+    meta: [
+      { title: "Painel da empresa | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   beforeLoad: ({ params }) => {
     const session = useAuthSession.getState().session;
     if (!session || session.role !== "admin") {

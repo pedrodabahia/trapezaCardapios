@@ -1,6 +1,7 @@
 
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
-import { useEmpresaPublica } from "@/lib/admin-store";
+import { useQuery } from "@tanstack/react-query";
+import { getEmpresaBySlug } from "@/modules/empresas/controllers/empresa.controller";
 import { AppShell } from "@/components/layout/AppShell";
 import { LogoLoader } from "@/components/LogoLoader";
 import { useEffect } from "react";
@@ -17,58 +18,66 @@ function formatarNomeSlug(slug: string) {
 }
 
 export const Route = createFileRoute("/s/$slug")({
-  head: ({ params }) => {
-    const nomeEmpresa = formatarNomeSlug(params.slug);
-    const titulo = `${nomeEmpresa} | Cardápio e informações | Trapeza`;
-    const descricao = `Confira o cardápio, produtos e informações de ${nomeEmpresa} no Trapeza. Encontre opções e entre em contato com a empresa.`;
+  loader: async ({ params }) => ({
+    empresaPublica: await getEmpresaBySlug({ data: { slug: params.slug } }),
+  }),
+  head: ({ params, loaderData }) => {
+    const dados = loaderData?.empresaPublica;
+    const empresa = dados?.empresa;
+    const nomeEmpresa = empresa?.nome?.trim() || formatarNomeSlug(params.slug);
+    const cidade = empresa?.cidade?.trim();
+    const titulo = `${nomeEmpresa}${cidade ? ` em ${cidade}` : ""} | Cardápio e ofertas | Trapeza`;
+    const descricaoBase = empresa?.descricao?.trim()
+      ? `${empresa.descricao.trim()}${cidade ? ` — ${cidade}` : ""}`
+      : `Confira o cardápio, produtos e informações de ${nomeEmpresa}${cidade ? ` em ${cidade}` : ""}. Veja as opções e entre em contato com a empresa pelo Trapeza.`;
+    const descricao = descricaoBase.replace(/\s+/g, " ").slice(0, 160);
     const url = `${SITE_URL}/s/${encodeURIComponent(params.slug)}`;
+    const imagem = empresa?.capa_url || empresa?.logo_url;
+
+    if (!empresa || empresa.status_pagamento !== "ativo") {
+      return {
+        meta: [
+          { title: "Cardápio indisponível | Trapeza" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
+
+    const dadosEstruturados = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: nomeEmpresa,
+      url,
+      ...(descricao ? { description: descricao } : {}),
+      ...(imagem ? { image: imagem } : {}),
+      ...(cidade ? {
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: cidade,
+          addressCountry: "BR",
+        },
+      } : {}),
+    };
 
     return {
       meta: [
         { title: titulo },
-        {
-          name: "description",
-          content: descricao.slice(0, 160),
-        },
-        {
-          property: "og:type",
-          content: "website",
-        },
-        {
-          property: "og:site_name",
-          content: "Trapeza",
-        },
-        {
-          property: "og:title",
-          content: titulo,
-        },
-        {
-          property: "og:description",
-          content: descricao,
-        },
-        {
-          property: "og:url",
-          content: url,
-        },
-        {
-          name: "twitter:card",
-          content: "summary",
-        },
-        {
-          name: "twitter:title",
-          content: titulo,
-        },
-        {
-          name: "twitter:description",
-          content: descricao,
-        },
+        { name: "description", content: descricao },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Trapeza" },
+        { property: "og:locale", content: "pt_BR" },
+        { property: "og:title", content: titulo },
+        { property: "og:description", content: descricao },
+        { property: "og:url", content: url },
+        ...(imagem ? [{ property: "og:image", content: imagem }] : []),
+        { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: titulo },
+        { name: "twitter:description", content: descricao },
+        ...(imagem ? [{ name: "twitter:image", content: imagem }] : []),
+        { "script:ld+json": dadosEstruturados },
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: url,
-        },
-      ],
+      links: [{ rel: "canonical", href: url }],
     };
   },
   component: TenantLayout,
@@ -76,7 +85,14 @@ export const Route = createFileRoute("/s/$slug")({
 
 function TenantLayout() {
   const { slug } = Route.useParams();
-  const { data, isLoading, error } = useEmpresaPublica(slug);
+  const loaderData = Route.useLoaderData();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["empresa-publica", slug] as const,
+    queryFn: () => getEmpresaBySlug({ data: { slug } }),
+    initialData: loaderData.empresaPublica,
+    staleTime: 30_000,
+    enabled: Boolean(slug),
+  });
 
   useEffect(() => {
     if (!data?.empresa.id) return;

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { getEmpresaBySlug } from "@/modules/empresas/controllers/empresa.controller";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Minus, Plus, Section } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +11,6 @@ import { getCartStore, cartSubtotal } from "@/lib/store";
 import { ProductCard } from "@/components/ProductCard";
 import type { CartCustomization, CartCustomizationSelecao, CartItem } from "@/lib/store";
 import {
-  useEmpresaPublica,
   useProdutoById,
   useOpcoes,
   useCategoriasOpcao,
@@ -21,14 +21,75 @@ import {
 } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
 
+const SITE_URL = "https://trapeza.me";
+
 export const Route = createFileRoute("/s/$slug/product/$id")({
+  loader: async ({ params }) => ({
+    empresaPublica: await getEmpresaBySlug({ data: { slug: params.slug } }),
+  }),
+  head: ({ params, loaderData }) => {
+    const dados = loaderData?.empresaPublica;
+    const empresa = dados?.empresa;
+    const produto = dados?.produtos.find((item) => item.id === params.id && item.ativo);
+    const url = `${SITE_URL}/s/${encodeURIComponent(params.slug)}/product/${encodeURIComponent(params.id)}`;
+
+    if (!empresa || empresa.status_pagamento !== "ativo" || !produto) {
+      return {
+        meta: [
+          { title: "Produto não encontrado | Trapeza" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
+
+    const titulo = `${produto.nome} | ${empresa.nome} | Trapeza`;
+    const descricaoBase = produto.descricao?.trim() || produto.descricao_curta?.trim() || `${produto.nome} no cardápio de ${empresa.nome}${empresa.cidade ? ` em ${empresa.cidade}` : ""}. Consulte o preço e as opções disponíveis.`;
+    const descricao = descricaoBase.replace(/\s+/g, " ").slice(0, 160);
+    const imagem = produto.imagem_url || empresa.logo_url || undefined;
+    const dadosEstruturados = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: produto.nome,
+      description: descricao,
+      url,
+      ...(imagem ? { image: imagem } : {}),
+      offers: {
+        "@type": "Offer",
+        price: String(produto.preco),
+        priceCurrency: "BRL",
+        availability: "https://schema.org/InStock",
+        url,
+        seller: { "@type": "Organization", name: empresa.nome },
+      },
+    };
+
+    return {
+      meta: [
+        { title: titulo },
+        { name: "description", content: descricao },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        { property: "og:type", content: "product" },
+        { property: "og:site_name", content: "Trapeza" },
+        { property: "og:title", content: titulo },
+        { property: "og:description", content: descricao },
+        { property: "og:url", content: url },
+        ...(imagem ? [{ property: "og:image", content: imagem }] : []),
+        { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: titulo },
+        { name: "twitter:description", content: descricao },
+        ...(imagem ? [{ name: "twitter:image", content: imagem }] : []),
+        { "script:ld+json": dadosEstruturados },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: ProdutoDetalhe,
 });
 
 function ProdutoDetalhe() {
   const { slug, id } = Route.useParams();
   const navigate = useNavigate();
-  const { data: empresaCompleta } = useEmpresaPublica(slug);
+  const { empresaPublica: empresaCompleta } = Route.useLoaderData();
   const produto = useProdutoById(empresaCompleta, id);
   const opcoes = useOpcoes(empresaCompleta);
   const categoriasOpcao = useCategoriasOpcao(empresaCompleta);

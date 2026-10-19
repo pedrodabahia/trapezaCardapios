@@ -17,10 +17,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
-  listEmpresasPublicas,
   getConfigsEmpresas,
   listPlanos,
 } from "@/lib/admin-server";
+import { getEmpresaPublicaPorSlug } from "@/modules/empresas/controllers/empresa.controller";
 import { listarPromocoesPorEmpresa } from "@/modules/promocoes/controllers/promocao.controller";
 import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
 import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
@@ -39,14 +39,11 @@ function limitarTextoSEO(valor: string, limite = 160): string {
 }
 
 export const Route = createFileRoute("/empresa/$slug")({
-  loader: async () => {
-    const empresas = await listEmpresasPublicas({
-      data: {} as Record<string, never>,
-    });
-    return { empresas };
-  },
+  loader: async ({ params }) => ({
+    empresa: await getEmpresaPublicaPorSlug({ data: { slug: params.slug } }),
+  }),
   head: ({ loaderData, params }) => {
-    const empresa = loaderData?.empresas?.find((item) => item.slug === params.slug);
+    const empresa = loaderData?.empresa;
 
     if (!empresa) {
       return {
@@ -226,20 +223,12 @@ function PaginaEmpresa() {
     staleTime: 5 * 60_000,
   });
 
-  const { data: empresas = loaderData.empresas, isLoading } = useQuery({
-    queryKey: ["empresas-publicas"],
-    queryFn: () =>
-      listEmpresasPublicas({
-        data: {} as Record<string, never>,
-      }),
-    initialData: loaderData.empresas,
+  const { data: empresa = loaderData.empresa, isLoading } = useQuery({
+    queryKey: ["empresa-publica-diretorio", slug],
+    queryFn: () => getEmpresaPublicaPorSlug({ data: { slug } }),
+    initialData: loaderData.empresa,
     staleTime: 30_000,
   });
-
-  const empresa = useMemo(
-    () => empresas.find((e) => e.slug === slug),
-    [empresas, slug],
-  );
 
   const { data: configs } = useQuery({
     queryKey: ["config-empresa-perfil", empresa?.id],

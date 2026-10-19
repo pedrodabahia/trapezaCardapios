@@ -4,7 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MapPin, MessageCircle, Tag } from "lucide-react";
 
-import { listEmpresasPublicas } from "@/lib/admin-server";
+import { getEmpresaPublicaPorSlug } from "@/modules/empresas/controllers/empresa.controller";
 import {
   trackPromotionView,
   trackPromotionWhatsAppClick,
@@ -12,7 +12,55 @@ import {
 import { listarPromocoesPorEmpresa } from "@/modules/promocoes/controllers/promocao.controller";
 import type { PromocaoPublica } from "@/modules/promocoes/types/promocao.types";
 
+const SITE_URL = "https://trapeza.me";
+
 export const Route = createFileRoute("/promocoes/empresa/$slug")({
+  loader: async ({ params }) => {
+    const empresa = await getEmpresaPublicaPorSlug({ data: { slug: params.slug } });
+    const promocoes = empresa
+      ? await listarPromocoesPorEmpresa({ data: { empresaId: empresa.id } })
+      : [];
+    return { empresa, promocoes };
+  },
+  head: ({ params, loaderData }) => {
+    const empresa = loaderData?.empresa;
+    const url = `${SITE_URL}/promocoes/empresa/${encodeURIComponent(params.slug)}`;
+
+    if (!empresa) {
+      return {
+        meta: [
+          { title: "Ofertas da empresa não encontradas | Trapeza" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
+
+    const nome = empresa.nome.trim();
+    const cidade = empresa.cidade?.trim();
+    const titulo = `Ofertas de ${nome}${cidade ? ` em ${cidade}` : ""} | Trapeza`;
+    const descricao = `Confira as promoções e ofertas de ${nome}${cidade ? ` em ${cidade}` : ""}. Veja preços e consulte as condições diretamente com a empresa no Trapeza.`.slice(0, 160);
+    const imagem = empresa.capa_url || empresa.logo_url;
+
+    return {
+      meta: [
+        { title: titulo },
+        { name: "description", content: descricao },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Trapeza" },
+        { property: "og:locale", content: "pt_BR" },
+        { property: "og:title", content: titulo },
+        { property: "og:description", content: descricao },
+        { property: "og:url", content: url },
+        ...(imagem ? [{ property: "og:image", content: imagem }] : []),
+        { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: titulo },
+        { name: "twitter:description", content: descricao },
+        ...(imagem ? [{ name: "twitter:image", content: imagem }] : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: PaginaPromocoesEmpresa,
 });
 
@@ -136,17 +184,18 @@ function CardPromocao({
 
 function PaginaPromocoesEmpresa() {
   const { slug } = Route.useParams();
+  const loaderData = Route.useLoaderData();
 
   const {
-    data: empresas = [],
+    data: empresa = loaderData.empresa,
     isLoading: carregandoEmpresas,
     isError: erroEmpresas,
   } = useQuery({
-    queryKey: ["empresas-publicas"],
-    queryFn: () => listEmpresasPublicas(),
+    queryKey: ["empresa-publica-diretorio", slug],
+    queryFn: () => getEmpresaPublicaPorSlug({ data: { slug } }),
+    initialData: loaderData.empresa,
+    staleTime: 30_000,
   });
-
-  const empresa = empresas.find((item) => item.slug === slug);
 
   const {
     data: promocoes = [],

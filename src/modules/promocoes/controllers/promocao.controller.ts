@@ -11,11 +11,11 @@ import type { NovaPromocaoInput } from "../types/promocao.types";
 
 // Público — feed de promoções válidas neste momento.
 export const listarPromocoes = createServerFn({ method: "POST" })
-  .validator((d: { limite?: number } | undefined) => d ?? {})
+  .validator((d: { limite?: number; offset?: number } | undefined) => d ?? {})
   .handler(async ({ data }) => {
     return container
       .resolve("promocaoService")
-      .listarAtivas(data.limite ?? 30);
+      .listarAtivas(data.limite ?? 30, data.offset ?? 0);
   });
 
 // Público — detalhe de uma promoção publicada.

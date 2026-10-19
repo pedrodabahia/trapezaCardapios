@@ -18,6 +18,24 @@ import { brl } from "@/lib/format";
 import { BusinessCard } from "@/components/home/BusinessCard";
 
 export const Route = createFileRoute("/b/buscar")({
+  head: ({ search }) => {
+    const termo = typeof search.q === "string" ? search.q.trim() : "";
+    return {
+      meta: [
+        {
+          title: termo
+            ? `Resultados para ${termo.slice(0, 60)} | Trapeza`
+            : "Buscar empresas e produtos | Trapeza",
+        },
+        {
+          name: "description",
+          content:
+            "Pesquise empresas, produtos, comércios e serviços cadastrados no Trapeza.",
+        },
+        { name: "robots", content: "noindex, follow" },
+      ],
+    };
+  },
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === "string" ? search.q : "",
   }),

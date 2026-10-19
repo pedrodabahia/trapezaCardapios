@@ -16,7 +16,31 @@ import {
   registrarEvento,
 } from "@/modules/promocoes/utils/promocao-utils.ts";
 
+const SITE_URL = "https://trapeza.me";
+const TITULO_PROMOCOES = "Ofertas e promoções em Posto da Mata | Trapeza";
+const DESCRICAO_PROMOCOES = "Confira ofertas e promoções de lojas, restaurantes e serviços em Posto da Mata, Bahia. Compare preços e fale diretamente com as empresas pelo Trapeza.";
+
 export const Route = createFileRoute("/promocoes/")({
+  loader: async () => ({
+    promocoes: await listarPromocoes({ data: { limite: 100 } }),
+  }),
+  head: () => ({
+    meta: [
+      { title: TITULO_PROMOCOES },
+      { name: "description", content: DESCRICAO_PROMOCOES },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Trapeza" },
+      { property: "og:locale", content: "pt_BR" },
+      { property: "og:title", content: TITULO_PROMOCOES },
+      { property: "og:description", content: DESCRICAO_PROMOCOES },
+      { property: "og:url", content: `${SITE_URL}/promocoes` },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: TITULO_PROMOCOES },
+      { name: "twitter:description", content: DESCRICAO_PROMOCOES },
+    ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/promocoes` }],
+  }),
   component: PaginaPromocoes,
 });
 
@@ -109,6 +133,7 @@ function GradeOfertas({
 }
 
 function PaginaPromocoes() {
+  const loaderData = Route.useLoaderData();
   const [busca, setBusca] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] =
     useState<string | null>(null);
@@ -125,6 +150,7 @@ function PaginaPromocoes() {
   } = useQuery({
     queryKey: ["promocoes-lista"],
     queryFn: () => listarPromocoes({ data: { limite: 100 } }),
+    initialData: loaderData.promocoes,
     staleTime: 30_000,
   });
 

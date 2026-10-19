@@ -5,6 +5,12 @@ import { getCartStore } from "@/lib/store";
 import { useEmpresaPublica, useProdutosPorEmpresa } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/s/$slug/favorites")({
+  head: () => ({
+    meta: [
+      { title: "Favoritos | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FavoritosPagina,
 });
 

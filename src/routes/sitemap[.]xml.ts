@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listEmpresasPublicas } from "@/modules/empresas/controllers/empresa.controller";
-import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
+import { getCategoriasNegocio } from "@/modules/categorias-negocio/controllers/categoria-negocio.controller";
+import { listarPromocoes } from "@/modules/promocoes/controllers/promocao.controller";
 
 const SITE_URL = "https://trapeza.me";
 
@@ -22,22 +23,36 @@ export const Route = createFileRoute("/sitemap.xml")({
     handlers: {
       GET: async () => {
         try {
-          const empresas = await listEmpresasPublicas({ data: {} });
-          const paths = new Set<string>([
-            "/",
-            "/promocoes",
-            ...CATEGORIAS_NEGOCIO.filter((categoria) => categoria.ativo).map(
-              (categoria) => `/categoria/${encodeURIComponent(categoria.valor)}`,
-            ),
-            ...empresas
-              .filter((empresa) => empresa.slug && empresa.status_pagamento === "ativo")
-              .flatMap((empresa) => {
-                const slug = encodeURIComponent(empresa.slug);
-                return empresa.tipo === "trapeza"
-                  ? [`/empresa/${slug}`, `/s/${slug}`]
-                  : [`/empresa/${slug}`];
-              }),
+          const [empresas, categorias, promocoes] = await Promise.all([
+            listEmpresasPublicas({ data: {} }),
+            getCategoriasNegocio({ data: {} }),
+            // Mantém o sitemap limitado para evitar respostas excessivas.
+            listarPromocoes({ data: { limite: 100 } }),
           ]);
+
+          const paths = new Set<string>(["/", "/promocoes"]);
+
+          for (const categoria of categorias) {
+            if (categoria.ativo && categoria.valor) {
+              paths.add(`/categoria/${encodeURIComponent(categoria.valor)}`);
+            }
+          }
+
+          for (const empresa of empresas) {
+            if (!empresa.slug || empresa.status_pagamento !== "ativo") continue;
+            const slug = encodeURIComponent(empresa.slug);
+            paths.add(`/empresa/${slug}`);
+            if (empresa.tipo === "trapeza") paths.add(`/s/${slug}`);
+          }
+
+          const empresasComPromocoes = new Set<string>();
+          for (const promocao of promocoes) {
+            if (promocao.slug) paths.add(`/promocoes/${encodeURIComponent(promocao.slug)}`);
+            if (promocao.empresa_slug) empresasComPromocoes.add(promocao.empresa_slug);
+          }
+          for (const slug of empresasComPromocoes) {
+            paths.add(`/promocoes/empresa/${encodeURIComponent(slug)}`);
+          }
 
           const urls = [...paths].map(urlEntry).join("\n");
           const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;

@@ -30,6 +30,12 @@ import {
 import { useAuthSession } from "@/lib/auth-session";
 
 export const Route = createFileRoute("/plataforma/categorias-negocio")({
+  head: () => ({
+    meta: [
+      { title: "Gerenciar categorias | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   beforeLoad: () => {
     const session = useAuthSession.getState().session;
     if (!session || session.role !== "super_admin") {

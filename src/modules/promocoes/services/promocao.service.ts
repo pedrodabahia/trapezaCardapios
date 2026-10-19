@@ -14,8 +14,8 @@ function slugify(texto: string): string {
 export class PromocaoService {
   constructor(private repository: PromocaoRepository) {}
 
-  listarAtivas(limite?: number) {
-    return this.repository.listarAtivas(limite);
+  listarAtivas(limite?: number, offset?: number) {
+    return this.repository.listarAtivas(limite, offset);
   }
 
   buscarAtivaPorSlug(slug: string) {

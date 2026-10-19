@@ -5,6 +5,12 @@ import { brl } from "@/lib/format";
 import { useEmpresaPublica } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/s/$slug/orders")({
+  head: () => ({
+    meta: [
+      { title: "Meus pedidos | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PedidosPagina,
 });
 

@@ -55,6 +55,12 @@ import { CATEGORIAS_NEGOCIO } from "@/lib/categorias-negocio";
 const TODOS = "__todos__";
 
 export const Route = createFileRoute("/plataforma/")({
+  head: () => ({
+    meta: [
+      { title: "Plataforma administrativa | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   beforeLoad: () => {
     const session = useAuthSession.getState().session;
 

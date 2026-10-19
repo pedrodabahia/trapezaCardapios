@@ -15,7 +15,7 @@ type PromocaoRow = Promocao & {
 };
 
 export interface PromocaoRepository {
-  listarAtivas(limite?: number): Promise<PromocaoPublica[]>;
+  listarAtivas(limite?: number, offset?: number): Promise<PromocaoPublica[]>;
   buscarAtivaPorSlug(slug: string): Promise<PromocaoPublica | null>;
   listarAtivasPorEmpresa(empresaId: string): Promise<PromocaoPublica[]>;
   listarTodas(): Promise<PromocaoPublica[]>;
@@ -49,7 +49,7 @@ export class SupabasePromocaoRepository implements PromocaoRepository {
     return adminClient();
   }
 
-  async listarAtivas(limite = 30): Promise<PromocaoPublica[]> {
+  async listarAtivas(limite = 30, offset = 0): Promise<PromocaoPublica[]> {
     const agora = new Date().toISOString();
 
     const { data, error } = await this.sb()
@@ -71,7 +71,7 @@ export class SupabasePromocaoRepository implements PromocaoRepository {
       .or(`fim_em.is.null,fim_em.gte.${agora}`)
       .order("destaque", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(limite);
+      .range(Math.max(0, offset), Math.max(0, offset) + Math.max(1, limite) - 1);
 
     if (error) throw new Error(error.message);
 

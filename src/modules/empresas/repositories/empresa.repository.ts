@@ -51,7 +51,8 @@ export interface EmpresaRepository {
   buscarPlanoId(empresaId: string): Promise<string | null>;
 
   listarPublicasAtivas(): Promise<EmpresaPublica[]>;
-listarPublicasAtivasPorCategorias(
+  buscarPublicaPorSlug(slug: string): Promise<EmpresaPublica | null>;
+  listarPublicasAtivasPorCategorias(
   categorias: string[],
   limit: number,
   offset: number,
@@ -151,6 +152,20 @@ export class SupabaseEmpresaRepository implements EmpresaRepository {
       .order("criado_em", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []) as EmpresaPublica[];
+  }
+
+  async buscarPublicaPorSlug(slug: string): Promise<EmpresaPublica | null> {
+    const { data, error } = await this.sb()
+      .from("empresas")
+      .select(
+        "id, slug, nome, whatsapp, endereco, logo_url, status_pagamento, categorias, cidade, tipo, url_externa, descricao, bairro, capa_url, destaque, palavras_chave, plano_id",
+      )
+      .eq("slug", slug)
+      .eq("status_pagamento", "ativo")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data ? (data as EmpresaPublica) : null;
   }
 
 async listarPublicasAtivasPorCategorias(

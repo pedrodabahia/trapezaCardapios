@@ -42,6 +42,10 @@ export class EmpresaService {
     return this.repository.listarPublicasAtivas();
   }
 
+  buscarPublicaPorSlug(slug: string) {
+    return this.repository.buscarPublicaPorSlug(slug);
+  }
+
   listarTodas() {
     return this.repository.listarTodas();
   }

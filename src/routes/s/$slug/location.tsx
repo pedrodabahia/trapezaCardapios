@@ -4,6 +4,12 @@ import { useEmpresaPublica } from "@/lib/admin-store";
 import { getHorarios } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/s/$slug/location")({
+  head: () => ({
+    meta: [
+      { title: "Localização da empresa | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: LocalizacaoPagina,
 });
 

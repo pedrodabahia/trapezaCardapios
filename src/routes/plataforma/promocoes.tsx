@@ -60,6 +60,12 @@ import type {
 } from "@/modules/promocoes/types/promocao.types";
 
 export const Route = createFileRoute("/plataforma/promocoes")({
+  head: () => ({
+    meta: [
+      { title: "Gerenciar promoções | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   beforeLoad: () => {
     const session = useAuthSession.getState().session;
 

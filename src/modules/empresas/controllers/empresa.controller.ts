@@ -35,6 +35,15 @@ export const listEmpresasPublicas = createServerFn({ method: "POST" })
     return empresaService.listarPublicasAtivas();
   });
 
+// Perfil público do diretório por slug. Evita baixar o diretório inteiro
+// apenas para montar o SEO e o perfil de uma única empresa.
+export const getEmpresaPublicaPorSlug = createServerFn({ method: "POST" })
+  .validator((d: { slug: string }) => d)
+  .handler(async ({ data }) => {
+    const empresaService = container.resolve("empresaService");
+    return empresaService.buscarPublicaPorSlug(data.slug);
+  });
+
 export const listEmpresasPublicasPorCategorias = createServerFn({ method: "POST" })
   .validator(
     (d: {

@@ -9,6 +9,12 @@ import { adminLogin, getEmpresaById } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
 
 export const Route = createFileRoute("/painel/login")({
+  head: () => ({
+    meta: [
+      { title: "Entrar no painel | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PainelLogin,
 });
 

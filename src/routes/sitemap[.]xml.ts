@@ -23,12 +23,22 @@ export const Route = createFileRoute("/sitemap.xml")({
     handlers: {
       GET: async () => {
         try {
-          const [empresas, categorias, promocoes] = await Promise.all([
+          const [empresas, categorias] = await Promise.all([
             listEmpresasPublicas({ data: {} }),
             getCategoriasNegocio({ data: {} }),
-            // Mantém o sitemap limitado para evitar respostas excessivas.
-            listarPromocoes({ data: { limite: 100 } }),
           ]);
+
+          // Busca promoções públicas em lotes para que o limite de uma única
+          // consulta não deixe páginas de ofertas de fora do sitemap.
+          const promocoes = [];
+          const tamanhoLote = 100;
+          for (let offset = 0; ; offset += tamanhoLote) {
+            const lote = await listarPromocoes({
+              data: { limite: tamanhoLote, offset },
+            });
+            promocoes.push(...lote);
+            if (lote.length < tamanhoLote) break;
+          }
 
           const paths = new Set<string>(["/", "/promocoes"]);
 
@@ -38,8 +48,10 @@ export const Route = createFileRoute("/sitemap.xml")({
             }
           }
 
+          // listEmpresasPublicas já retorna apenas perfis públicos ativos,
+          // independentemente de o plano ser gratuito ou pago.
           for (const empresa of empresas) {
-            if (!empresa.slug || empresa.status_pagamento !== "ativo") continue;
+            if (!empresa.slug) continue;
             const slug = encodeURIComponent(empresa.slug);
             paths.add(`/empresa/${slug}`);
             if (empresa.tipo === "trapeza") paths.add(`/s/${slug}`);

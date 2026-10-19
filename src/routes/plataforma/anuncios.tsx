@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/plataforma/anuncios")({
+  head: () => ({
+    meta: [
+      { title: "Gerenciar anúncios | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   beforeLoad: () => {
     const session = useAuthSession.getState().session;
     if (!session || session.role !== "super_admin") {

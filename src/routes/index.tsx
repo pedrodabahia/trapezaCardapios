@@ -55,11 +55,13 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITULO_SEO },
       { property: "og:description", content: DESCRICAO_SEO },
       { property: "og:url", content: `${SITE}/` },
-      // TODO: crie uma imagem 1200x630 e descomente. Melhora muito o preview no WhatsApp.
-      // { property: "og:image", content: `${SITE}/og-trapeza.jpg` },
-      // { name: "twitter:image", content: `${SITE}/og-trapeza.jpg` },
+      { property: "og:image", content: `${SITE}/og-trapeza.png` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Trapeza — guia comercial e ofertas de Posto da Mata e região" },
 
-      { name: "twitter:card", content: "summary" }, // troque por summary_large_image quando tiver og:image
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: `${SITE}/og-trapeza.png` },
       { name: "twitter:title", content: TITULO_SEO },
       { name: "twitter:description", content: DESCRICAO_SEO },
     ],

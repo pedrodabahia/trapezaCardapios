@@ -68,6 +68,12 @@ function slugify(s: string): string {
 }
 
 export const Route = createFileRoute("/plataforma/empresas/nova")({
+  head: () => ({
+    meta: [
+      { title: "Cadastrar empresa | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   beforeLoad: () => {
     const session = useAuthSession.getState().session;
 

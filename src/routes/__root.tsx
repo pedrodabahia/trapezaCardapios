@@ -85,6 +85,13 @@ export const Route = createRootRouteWithContext<{
   head: () => ({
     meta: [
       { charSet: "utf-8" },
+      { title: "Trapeza — Guia Comercial de Posto da Mata" },
+      {
+        name: "description",
+        content:
+          "Encontre empresas, lojas, restaurantes, serviços e promoções em Posto da Mata, Bahia. Conheça o comércio local e fale diretamente com as empresas.",
+      },
+      { name: "theme-color", content: "#ffffff" },
       {
         name: "viewport",
         content: "width=device-width, initial-scale=1",
@@ -94,8 +101,16 @@ export const Route = createRootRouteWithContext<{
         content: "website",
       },
       {
+        property: "og:site_name",
+        content: "Trapeza",
+      },
+      {
+        property: "og:locale",
+        content: "pt_BR",
+      },
+      {
         name: "twitter:card",
-        content: "summary_large_image",
+        content: "summary",
       },
     ],
     links: [

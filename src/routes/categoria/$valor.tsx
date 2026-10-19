@@ -3,14 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { ChevronLeft } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { brl } from "@/lib/format";
-import type { ProdutoCategoriaPlataforma } from "@/lib/admin-server";
+import { getCategoriasNegocio } from "@/modules/categorias-negocio/controllers/categoria-negocio.controller";
 import { listEmpresasPublicasPorCategorias } from "@/modules/empresas/controllers/empresa.controller";
-import {
-  CATEGORIAS_NEGOCIO,
-  useCategoriasNegocio,
-} from "@/lib/categorias-negocio";
+import { useCategoriasNegocio } from "@/lib/categorias-negocio";
 import { BusinessCard } from "@/components/home/BusinessCard";
 import { cn } from "@/lib/utils";
 import { LogoLoader } from "@/components/LogoLoader";
@@ -19,58 +14,66 @@ const ITENS_POR_PAGINA = 10;
 const SITE_URL = "https://trapeza.me";
 
 export const Route = createFileRoute("/categoria/$valor")({
-  head: ({ params }) => {
-    const categoria = CATEGORIAS_NEGOCIO.find(
-      (item) => item.valor === params.valor,
+  loader: async ({ params }) => {
+    // A taxonomia oficial vem do banco; o array local é somente fallback visual.
+    const categorias = await getCategoriasNegocio({ data: {} });
+    const categoria = categorias.find(
+      (item) => item.valor === params.valor && item.ativo,
     );
 
+    if (!categoria) {
+      return { categorias, categoria: null, categoriasParaBusca: [], empresas: [] };
+    }
+
+    const categoriaPai = categoria.categoria_pai_id
+      ? categorias.find((item) => item.id === categoria.categoria_pai_id)
+      : categoria;
+    const subcategorias = categoriaPai
+      ? categorias.filter((item) => item.categoria_pai_id === categoriaPai.id)
+      : [];
+    const categoriasParaBusca = categoria.categoria_pai_id
+      ? [categoria.valor]
+      : [...new Set([categoria.valor, ...subcategorias.map((item) => item.valor)])];
+
+    const empresas = await listEmpresasPublicasPorCategorias({
+      data: {
+        categorias: categoriasParaBusca,
+        limit: ITENS_POR_PAGINA,
+        offset: 0,
+      },
+    });
+
+    return { categorias, categoria, categoriasParaBusca, empresas };
+  },
+  head: ({ params, loaderData }) => {
+    const categoria = loaderData?.categorias?.find(
+      (item) => item.valor === params.valor && item.ativo,
+    );
     const tituloCategoria = categoria?.label ?? "Categoria";
-    const titulo = `${tituloCategoria} em Posto da Mata | Trapeza`;
-
+    const titulo = categoria
+      ? `${tituloCategoria} em Posto da Mata - BA | Trapeza`
+      : "Categoria não encontrada | Trapeza";
     const descricao = categoria
-      ? `Encontre empresas, comércios e serviços de ${categoria.label} em Posto da Mata. Explore opções locais no Trapeza e encontre o que procura.`
-      : "Encontre empresas, comércios e serviços em Posto da Mata no Trapeza.";
-
+      ? `Encontre ${tituloCategoria.toLowerCase()} em Posto da Mata, Bahia. Veja empresas, comércios e serviços, conheça as opções e entre em contato pelo Trapeza.`
+      : "Essa categoria não existe ou não está disponível no Trapeza.";
     const url = `${SITE_URL}/categoria/${encodeURIComponent(params.valor)}`;
 
     return {
       meta: [
         { title: titulo },
-        {
-          name: "description",
-          content: descricao,
-        },
-        {
-          name: "robots",
-          content: categoria ? "index, follow" : "noindex, follow",
-        },
-        {
-          property: "og:type",
-          content: "website",
-        },
-        {
-          property: "og:site_name",
-          content: "Trapeza",
-        },
-        {
-          property: "og:title",
-          content: titulo,
-        },
-        {
-          property: "og:description",
-          content: descricao,
-        },
-        {
-          property: "og:url",
-          content: url,
-        },
+        { name: "description", content: descricao.slice(0, 160) },
+        { name: "robots", content: categoria ? "index, follow, max-image-preview:large" : "noindex, follow" },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Trapeza" },
+        { property: "og:locale", content: "pt_BR" },
+        { property: "og:title", content: titulo },
+        { property: "og:description", content: descricao.slice(0, 160) },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary" },
+        { name: "twitter:title", content: titulo },
+        { name: "twitter:description", content: descricao.slice(0, 160) },
       ],
-      links: [
-        {
-          rel: "canonical",
-          href: url,
-        },
-      ],
+      links: [{ rel: "canonical", href: url }],
     };
   },
   component: PaginaCategoria,
@@ -78,8 +81,8 @@ export const Route = createFileRoute("/categoria/$valor")({
 
 function PaginaCategoria() {
   const { valor } = Route.useParams();
-  const { data: categorias = CATEGORIAS_NEGOCIO } =
-    useCategoriasNegocio();
+  const loaderData = Route.useLoaderData();
+  const { data: categorias = loaderData.categorias } = useCategoriasNegocio();
 
   const categoriaClicada = categorias.find(
     (categoria) => categoria.valor === valor,
@@ -156,6 +159,11 @@ function PaginaCategoria() {
 
     staleTime: 30_000,
     enabled: Boolean(categoriaClicada && categoriasParaBusca.length > 0),
+    initialData: () =>
+      loaderData.categoria?.valor === valor &&
+      JSON.stringify(loaderData.categoriasParaBusca) === JSON.stringify(categoriasParaBusca)
+        ? { pages: [loaderData.empresas], pageParams: [0] }
+        : undefined,
   });
 
   const empresas = data?.pages.flat() ?? [];
@@ -342,55 +350,3 @@ function FiltroCategoria({
   );
 }
 
-function ProdutoCard({
-  produto,
-}: {
-  produto: ProdutoCategoriaPlataforma;
-}) {
-  return (
-    <Link
-      to="/s/$slug/product/$id"
-      params={{
-        slug: produto.empresaSlug,
-        id: produto.produtoId,
-      }}
-      className="group block"
-    >
-      <Card className="h-full overflow-hidden transition group-hover:-translate-y-0.5 group-hover:shadow-md">
-        <div className="aspect-square overflow-hidden bg-muted">
-          {produto.imagemUrl ? (
-            <img
-              src={produto.imagemUrl}
-              alt={produto.nome}
-              className="h-full w-full object-cover transition group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50 text-3xl">
-              🍽️
-            </div>
-          )}
-        </div>
-
-        <CardContent className="space-y-1 p-3">
-          <h2 className="truncate text-sm font-bold">
-            {produto.nome}
-          </h2>
-
-          <p className="truncate text-xs text-muted-foreground">
-            {produto.empresaNome}
-          </p>
-
-          {produto.descricaoCurta && (
-            <p className="line-clamp-2 text-[11px] text-muted-foreground">
-              {produto.descricaoCurta}
-            </p>
-          )}
-
-          <p className="text-sm font-extrabold text-brand-brown">
-            {brl(produto.precoAtual)}
-          </p>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}

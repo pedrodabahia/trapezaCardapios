@@ -8,6 +8,12 @@ import { platformLogin } from "@/lib/admin-server";
 import { useAuthSession } from "@/lib/auth-session";
 
 export const Route = createFileRoute("/plataforma/login")({
+  head: () => ({
+    meta: [
+      { title: "Entrar na plataforma | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformLogin,
 });
 

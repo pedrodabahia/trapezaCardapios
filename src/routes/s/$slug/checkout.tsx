@@ -14,6 +14,12 @@ import { createPedido } from "@/lib/admin-server";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/s/$slug/checkout")({
+  head: () => ({
+    meta: [
+      { title: "Finalizar pedido | Trapeza" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: CheckoutPagina,
 });
 

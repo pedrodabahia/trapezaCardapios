@@ -49,14 +49,9 @@ export const Route = createFileRoute("/empresa/$slug")({
   loader: async ({ params }) => ({
     empresa: await getEmpresaPublicaPorSlug({ data: { slug: params.slug } }),
   }),
+
   head: ({ loaderData, params }) => {
-<<<<<<< HEAD
     const empresa = loaderData?.empresa;
-=======
-    const empresa = loaderData?.empresas?.find(
-      (item) => item.slug === params.slug,
-    );
->>>>>>> 7b37773 (...)
 
     if (!empresa) {
       return {
@@ -242,36 +237,25 @@ function PaginaEmpresa() {
     staleTime: 30_000,
   });
 
-<<<<<<< HEAD
-=======
-  const empresa = useMemo(
-    () => empresas.find((e) => e.slug === slug),
-    [empresas, slug],
-  );
-
-  // Reutiliza a consulta pública existente, que retorna a empresa completa
-  // com seus produtos. O selector filtra os produtos ativos.
+  // Consulta os produtos e serviços públicos da empresa.
   const { data: empresaCompleta } = useEmpresaPublica(slug);
-const produtosAtivos = useProdutosPorEmpresa(empresaCompleta);
+  const produtosAtivos = useProdutosPorEmpresa(empresaCompleta);
 
-const produtosExibidos = produtosAtivos
-  .filter(
-    (item) =>
-      (item as typeof item & { tipo?: string }).tipo !== "servico",
-  )
-  .slice(0, 5);
+  const produtosExibidos = produtosAtivos
+    .filter(
+      (item) =>
+        (item as typeof item & { tipo?: string }).tipo !== "servico",
+    )
+    .slice(0, 5);
 
-const servicosExibidos = produtosAtivos
-  .filter(
-    (item) =>
-      (item as typeof item & { tipo?: string }).tipo === "servico",
-  )
-  .slice(0, 5);
+  const servicosExibidos = produtosAtivos
+    .filter(
+      (item) =>
+        (item as typeof item & { tipo?: string }).tipo === "servico",
+    )
+    .slice(0, 5);
 
-const itensExibidos = [...produtosExibidos, ...servicosExibidos];
-
-
->>>>>>> 7b37773 (...)
+  const itensExibidos = [...produtosExibidos, ...servicosExibidos];
   const { data: configs } = useQuery({
     queryKey: ["config-empresa-perfil", empresa?.id],
     queryFn: () =>

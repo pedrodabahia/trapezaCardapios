@@ -5,7 +5,7 @@ import { useProdutosPorEmpresa } from "@/lib/admin-store";
 
 const SITE_URL = "https://trapeza.me";
 
-export const Route = createFileRoute("/s/$slug/promotions")({
+export const Route = createFileRoute("/s/$slug/search")({
   loader: async ({ params }) => ({
     empresaPublica: await getEmpresaBySlug({ data: { slug: params.slug } }),
   }),

@@ -72,22 +72,16 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITULO_SEO },
       { property: "og:description", content: DESCRICAO_SEO },
       { property: "og:url", content: `${SITE}/` },
-<<<<<<< HEAD
       { property: "og:image", content: `${SITE}/og-trapeza.png` },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "Trapeza — guia comercial e ofertas de Posto da Mata e região" },
+      {
+        property: "og:image:alt",
+        content: "Trapeza — guia comercial e ofertas de Posto da Mata e região",
+      },
 
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: `${SITE}/og-trapeza.png` },
-=======
-
-      // TODO: crie uma imagem 1200x630 e descomente.
-      // { property: "og:image", content: `${SITE}/og-trapeza.jpg` },
-      // { name: "twitter:image", content: `${SITE}/og-trapeza.jpg` },
-
-      { name: "twitter:card", content: "summary" },
->>>>>>> 7b37773 (...)
       { name: "twitter:title", content: TITULO_SEO },
       { name: "twitter:description", content: DESCRICAO_SEO },
     ],

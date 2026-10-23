@@ -28,7 +28,7 @@ export class ProdutoService {
       const total = await this.repository.contarPorEmpresa(empresaId);
       if (total >= limiteProdutosDoPlano) {
         throw new Error(
-          `Limite de ${limiteProdutosDoPlano} produtos do seu plano atingido. Faça upgrade pra cadastrar mais.`,
+          `Limite de ${limiteProdutosDoPlano} produtos e serviços do seu plano atingido. Faça upgrade pra cadastrar mais.`,
         );
       }
     }

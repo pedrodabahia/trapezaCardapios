@@ -212,7 +212,16 @@ function PainelTenant() {
           </div>
         )}
         {ehGratuito ? (
-          <PainelGratuito completa={completa} token={session.accessToken} onSaved={invalidate} />
+  <PainelGratuito
+    completa={completa}
+    token={session.accessToken}
+    onSaved={invalidate}
+    activeTab={activeTab}
+    setActiveTab={setActiveTab}
+    navOpen={navOpen}
+    setNavOpen={setNavOpen}
+    ehGratuito={ehGratuito}
+  />
         ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Desktop: abas normais. Mobile: escondidas — usamos o botão de

@@ -101,7 +101,7 @@ export const getTopProdutosPlataforma = createServerFn({ method: "POST" })
         // sem o id não dá pra buscar foto/preço com segurança, então pula.
         if (!item.produtoId) continue;
         const produto = await produtoRepository.buscarPorId(empresa.id, item.produtoId);
-        if (!produto) continue; // produto apagado/desativado desde então
+        if (!produto || produto.tipo !== "produto") continue; // item removido, inativo ou que é serviço
         resultado.push({
           produtoId: produto.id,
           nome: produto.nome,
@@ -156,7 +156,7 @@ export const getAnunciosPromocao = createServerFn({ method: "POST" })
     for (const empresa of embaralhadas) {
       if (anuncios.length >= limite) break;
       const produtos = await produtoRepository.listarAtivosPorEmpresa(empresa.id);
-      const promocoes = produtos.filter((p) => p.tag === "promocao");
+      const promocoes = produtos.filter((p) => p.tipo === "produto" && p.tag === "promocao");
       if (promocoes.length === 0) continue;
       const escolhido = promocoes[Math.floor(Math.random() * promocoes.length)];
       anuncios.push({
@@ -212,7 +212,7 @@ export const listarProdutosPorCategoriasNegocio = createServerFn({ method: "POST
     const empresaPorId = new Map(empresas.map((empresa) => [empresa.id, empresa]));
     const produtos = await produtoRepository.listarAtivosPorEmpresas(empresas.map((empresa) => empresa.id));
 
-    return produtos.map((produto) => {
+    return produtos.filter((produto) => produto.tipo === "produto").map((produto) => {
       const empresa = empresaPorId.get(produto.empresa_id)!;
       return {
         produtoId: produto.id,
@@ -265,5 +265,100 @@ export const buscarProdutosPlataforma = createServerFn({ method: "POST" })
       });
       if (resultado.length >= limite) break;
     }
+    return resultado;
+  });
+
+  export type ItemCatalogoHome = {
+  id: string;
+  tipo: "produto" | "servico";
+  nome: string;
+  descricaoCurta: string | null;
+  preco: number;
+  precoAntigo: number | null;
+  imagemUrl: string | null;
+  tag: string | null;
+  empresaId: string;
+  empresaNome: string;
+  empresaSlug: string;
+  empresaCidade: string | null;
+  categoriasEmpresa: string[];
+};
+
+export const listarCatalogoHome = createServerFn({ method: "POST" })
+  .validator((d: { limite?: number } | undefined) => d ?? {})
+  .handler(async ({ data }): Promise<ItemCatalogoHome[]> => {
+    const limite = Math.min(Math.max(data.limite ?? 240, 1), 500);
+
+    const empresaRepository = container.resolve("empresaRepository");
+    const produtoRepository = container.resolve("produtoRepository");
+
+    const empresas = (
+      await empresaRepository.listarPublicasAtivas()
+    ).filter((empresa) => empresa.tipo === "trapeza");
+
+    if (empresas.length === 0) return [];
+
+    const empresaPorId = new Map(
+      empresas.map((empresa) => [empresa.id, empresa]),
+    );
+
+    const itens = await produtoRepository.listarAtivosPorEmpresas(
+      empresas.map((empresa) => empresa.id),
+    );
+
+    const porEmpresa = new Map<string, ItemCatalogoHome[]>();
+
+    for (const item of itens) {
+      if (item.tipo !== "produto" && item.tipo !== "servico") {
+        continue;
+      }
+
+      const empresa = empresaPorId.get(item.empresa_id);
+      if (!empresa) continue;
+
+      const lista = porEmpresa.get(empresa.id) ?? [];
+
+      lista.push({
+        id: item.id,
+        tipo: item.tipo,
+        nome: item.nome,
+        descricaoCurta: item.descricao_curta ?? null,
+        preco: item.preco,
+        precoAntigo: item.preco_antigo ?? null,
+        imagemUrl: item.imagem_url ?? null,
+        tag: item.tag ?? null,
+        empresaId: empresa.id,
+        empresaNome: empresa.nome,
+        empresaSlug: empresa.slug,
+        empresaCidade: empresa.cidade ?? null,
+        categoriasEmpresa: empresa.categorias ?? [],
+      });
+
+      porEmpresa.set(empresa.id, lista);
+    }
+
+    // Distribui os itens entre empresas antes de repetir uma empresa.
+    const resultado: ItemCatalogoHome[] = [];
+    const listas = [...porEmpresa.values()];
+    let indice = 0;
+
+    while (resultado.length < limite) {
+      let adicionou = false;
+
+      for (const lista of listas) {
+        const item = lista[indice];
+        if (!item) continue;
+
+        resultado.push(item);
+        adicionou = true;
+
+        if (resultado.length >= limite) break;
+      }
+
+      if (!adicionou) break;
+
+      indice += 1;
+    }
+
     return resultado;
   });

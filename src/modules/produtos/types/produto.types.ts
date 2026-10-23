@@ -1,5 +1,6 @@
-// CAMADA DE TIPOS (produtos) — contratos de dado, sem lógica.
+// CAMADA DE TIPOS — contratos de dado, sem lógica.
 export type ProdutoTag = "mais-vendido" | "promocao" | "novo";
+export type TipoCadastro = "produto" | "servico";
 
 export type Nutricao = {
   kcal: number;
@@ -11,10 +12,13 @@ export type Nutricao = {
 export type Produto = {
   id: string;
   empresa_id: string;
+  tipo: TipoCadastro;
   categoria_id: string | null;
   nome: string;
   descricao_curta: string | null;
   descricao: string | null;
+  // Mantido obrigatório no banco. Para serviço sem preço definido, usar 0
+  // e apresentar "Consultar valor" na interface pública.
   preco: number;
   preco_antigo: number | null;
   imagem_url: string | null;
@@ -26,12 +30,13 @@ export type Produto = {
   ativo: boolean;
 };
 
-export type NovoProdutoInput = Omit<Produto, "id" | "empresa_id"> & { id?: string };
+// tipo opcional na entrada para manter compatibilidade com chamadas antigas;
+// o repository aplica "produto" como padrão quando não informado.
+export type NovoProdutoInput = Omit<Produto, "id" | "empresa_id" | "tipo"> & {
+  id?: string;
+  tipo?: TipoCadastro;
+};
 
-// Ingrediente de um produto específico. `removivel = false` significa
-// obrigatório/fixo (não aparece como opção de remoção pro cliente);
-// `removivel = true` significa que o cliente pode pedir pra tirar esse
-// ingrediente no pedido.
 export type ProdutoIngrediente = {
   id: string;
   produto_id: string;
@@ -40,8 +45,6 @@ export type ProdutoIngrediente = {
   ordem: number;
 };
 
-// Input usado ao salvar a lista inteira de ingredientes de um produto de
-// uma vez (substitui tudo — mais simples e seguro que diff incremental).
 export type ProdutoIngredienteInput = {
   nome: string;
   removivel: boolean;

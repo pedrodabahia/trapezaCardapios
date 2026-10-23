@@ -1,3 +1,4 @@
+
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
@@ -15,6 +16,7 @@ import {
   Globe,
   Tag,
   ArrowRight,
+  Package,
 } from "lucide-react";
 import {
   getConfigsEmpresas,
@@ -22,7 +24,12 @@ import {
 } from "@/lib/admin-server";
 import { getEmpresaPublicaPorSlug } from "@/modules/empresas/controllers/empresa.controller";
 import { listarPromocoesPorEmpresa } from "@/modules/promocoes/controllers/promocao.controller";
-import { getHorarios, isStoreOpenNow } from "@/lib/admin-store";
+import {
+  getHorarios,
+  isStoreOpenNow,
+  useEmpresaPublica,
+  useProdutosPorEmpresa,
+} from "@/lib/admin-store";
 import { labelsCategoriasNegocio } from "@/lib/categorias-negocio";
 import { LogoLoader } from "@/components/LogoLoader";
 
@@ -43,7 +50,13 @@ export const Route = createFileRoute("/empresa/$slug")({
     empresa: await getEmpresaPublicaPorSlug({ data: { slug: params.slug } }),
   }),
   head: ({ loaderData, params }) => {
+<<<<<<< HEAD
     const empresa = loaderData?.empresa;
+=======
+    const empresa = loaderData?.empresas?.find(
+      (item) => item.slug === params.slug,
+    );
+>>>>>>> 7b37773 (...)
 
     if (!empresa) {
       return {
@@ -119,7 +132,10 @@ export const Route = createFileRoute("/empresa/$slug")({
         { property: "og:description", content: descricao },
         { property: "og:url", content: urlCanonica },
         ...(imagem ? [{ property: "og:image", content: imagem }] : []),
-        { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
+        {
+          name: "twitter:card",
+          content: imagem ? "summary_large_image" : "summary",
+        },
         { name: "twitter:title", content: titulo },
         { name: "twitter:description", content: descricao },
         ...(imagem ? [{ name: "twitter:image", content: imagem }] : []),
@@ -175,9 +191,7 @@ function EmpresaFallback({
       <div
         className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${fundo} text-white`}
       >
-        <span className="text-xl font-bold tracking-tight">
-          {iniciais}
-        </span>
+        <span className="text-xl font-bold tracking-tight">{iniciais}</span>
       </div>
     );
   }
@@ -190,9 +204,7 @@ function EmpresaFallback({
       <div className="absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-white/10" />
 
       <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 shadow-lg backdrop-blur-sm">
-        <span className="text-2xl font-bold tracking-tight">
-          {iniciais}
-        </span>
+        <span className="text-2xl font-bold tracking-tight">{iniciais}</span>
       </div>
 
       <p className="relative mt-3 max-w-[80%] truncate px-2 text-center text-xs font-semibold">
@@ -230,6 +242,36 @@ function PaginaEmpresa() {
     staleTime: 30_000,
   });
 
+<<<<<<< HEAD
+=======
+  const empresa = useMemo(
+    () => empresas.find((e) => e.slug === slug),
+    [empresas, slug],
+  );
+
+  // Reutiliza a consulta pública existente, que retorna a empresa completa
+  // com seus produtos. O selector filtra os produtos ativos.
+  const { data: empresaCompleta } = useEmpresaPublica(slug);
+const produtosAtivos = useProdutosPorEmpresa(empresaCompleta);
+
+const produtosExibidos = produtosAtivos
+  .filter(
+    (item) =>
+      (item as typeof item & { tipo?: string }).tipo !== "servico",
+  )
+  .slice(0, 5);
+
+const servicosExibidos = produtosAtivos
+  .filter(
+    (item) =>
+      (item as typeof item & { tipo?: string }).tipo === "servico",
+  )
+  .slice(0, 5);
+
+const itensExibidos = [...produtosExibidos, ...servicosExibidos];
+
+
+>>>>>>> 7b37773 (...)
   const { data: configs } = useQuery({
     queryKey: ["config-empresa-perfil", empresa?.id],
     queryFn: () =>
@@ -323,10 +365,11 @@ function PaginaEmpresa() {
   );
 
   const empresaAtiva = empresa.tipo === "trapeza";
+  const ehPlanoGratuito =
+    empresaAtiva && planoEmpresa?.gratuito === true;
 
   const temCatalogo =
-    empresa.tipo === "trapeza" &&
-    planoEmpresa?.gratuito !== true;
+    empresaAtiva && planoEmpresa?.gratuito !== true;
 
   const categoriasLabel =
     labelsCategoriasNegocio(empresa.categorias).join(" / ");
@@ -528,6 +571,169 @@ function PaginaEmpresa() {
           )}
         </section>
 
+```tsx
+{/* PRODUTOS E SERVIÇOS — PLANO GRATUITO */}
+{ehPlanoGratuito && itensExibidos.length > 0 && (
+  <section className="mt-8 border-t border-border/60 px-2 pt-6">
+    <div className="mb-6 flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10">
+        <Package className="h-5 w-5 text-orange-600" />
+      </div>
+
+      <div>
+        <h2 className="font-display text-base font-bold">
+          O que a {empresa.nome} oferece
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Produtos e serviços disponíveis
+        </p>
+      </div>
+    </div>
+
+    {/* PRODUTOS: cards com imagem e preço */}
+    {produtosExibidos.length > 0 && (
+      <div className="mb-7">
+        <h3 className="mb-3 font-display text-sm font-bold">
+          Produtos
+        </h3>
+
+        <div className="grid grid-cols-2 gap-3">
+          {produtosExibidos.map((produto) => (
+            <article
+              key={produto.id}
+              className="overflow-hidden rounded-2xl border border-border/60 bg-background"
+            >
+              <div className="aspect-square overflow-hidden bg-muted">
+                {produto.imagem_url ? (
+                  <img
+                    src={produto.imagem_url}
+                    alt={produto.nome}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <Package className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3">
+                <h4 className="line-clamp-2 text-sm font-semibold">
+                  {produto.nome}
+                </h4>
+
+                {produto.descricao_curta && (
+                  <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                    {produto.descricao_curta}
+                  </p>
+                )}
+
+                {Number(produto.preco) > 0 && (
+                  <p className="mt-2 text-sm font-bold text-orange-600">
+                    {formatarPreco(Number(produto.preco))}
+                  </p>
+                )}
+
+                {linkWhats && (
+                  <a
+                    href={`https://wa.me/${numeroWhats}?text=${encodeURIComponent(
+                      `Olá! Vi o produto "${produto.nome}" no perfil da ${empresa.nome} no Trapeza e gostaria de saber mais.`,
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      void trackEvent("whatsapp_click", {
+                        empresaId: empresa.id,
+                      });
+                    }}
+                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-2 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Tenho interesse
+                  </a>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* SERVIÇOS: lista simples com descrição e contato */}
+    {servicosExibidos.length > 0 && (
+      <div className="space-y-3">
+        <h3 className="font-display text-sm font-bold">
+          Serviços
+        </h3>
+
+        <div className="divide-y divide-border/60 rounded-2xl ">
+          {servicosExibidos.map((servico) => (
+            <article key={servico.id} className="flex gap-3 p-4 mt-3 rounded-sm border border-4 border-transparent [background:linear-gradient(var(--background))_padding-box,linear-gradient(90deg,orange,brown)_border-box]">
+              {servico.imagem_url && (
+                <img
+                  src={servico.imagem_url}
+                  alt={servico.nome}
+                  loading="lazy"
+                  className="h-20 w-20 shrink-0 rounded-xl bg-muted object-cover"
+                />
+              )}
+
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold">{servico.nome}</h4>
+
+                {servico.descricao_curta && (
+                  <p className="mt-1 whitespace-pre-line text-sm leading-5 text-muted-foreground">
+                    {servico.descricao_curta}
+                  </p>
+                )}
+
+                {servico.descricao && (
+                  <p className="mt-2 whitespace-pre-line text-xs leading-5 text-muted-foreground">
+                    {servico.descricao}
+                  </p>
+                )}
+
+                <p className="mt-2 text-sm font-bold text-orange-600">
+                  {Number(servico.preco) > 0
+                    ? formatarPreco(Number(servico.preco))
+                    : "Consultar valor"}
+                </p>
+
+                {linkWhats && (
+                  <a
+                    href={`https://wa.me/${numeroWhats}?text=${encodeURIComponent(
+                      `Olá! Vi o serviço "${servico.nome}" no perfil da ${empresa.nome} no Trapeza e gostaria de saber mais sobre o valor e a disponibilidade.`,
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      void trackEvent("whatsapp_click", {
+                        empresaId: empresa.id,
+                      });
+                    }}
+                    className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Solicitar orçamento
+                  </a>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {produtosAtivos.length > 10 && (
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        Exibindo 10 de {produtosAtivos.length} itens.
+      </p>
+    )}
+  </section>
+)}
+```
+
         {/* OFERTAS DA EMPRESA */}
         {!carregandoPromocoes && promocoes.length > 0 && (
           <section className="mt-8 border-t border-border/60 px-2 pt-6">
@@ -567,10 +773,7 @@ function PaginaEmpresa() {
                   to="/promocoes/empresa/$slug"
                   params={{ slug: empresa.slug }}
                   onClick={() => {
-                    void trackPromotionCardClick(
-                      promocao.id,
-                      empresa.id,
-                    );
+                    void trackPromotionCardClick(promocao.id, empresa.id);
                   }}
                   className="overflow-hidden rounded-xl border border-border/60 bg-background transition hover:shadow-md"
                 >
@@ -655,10 +858,7 @@ function PaginaEmpresa() {
                   key={h.day}
                   className="flex justify-between gap-4 text-sm"
                 >
-                  <span className="text-muted-foreground">
-                    {h.label}
-                  </span>
-
+                  <span className="text-muted-foreground">{h.label}</span>
                   <span className="font-medium">
                     {h.closed ? "Fechado" : `${h.open} às ${h.close}`}
                   </span>
@@ -680,7 +880,6 @@ function PaginaEmpresa() {
                 <h3 className="font-display text-sm font-bold">
                   Onde encontrar
                 </h3>
-
                 <p className="text-xs text-muted-foreground">
                   Localização da empresa
                 </p>
@@ -729,10 +928,7 @@ function PaginaEmpresa() {
               </div>
 
               <div className="min-w-0">
-                <p className="text-sm font-bold">
-                  Site da empresa
-                </p>
-
+                <p className="text-sm font-bold">Site da empresa</p>
                 <p className="truncate text-xs text-muted-foreground">
                   Visitar site externo
                 </p>
@@ -745,13 +941,11 @@ function PaginaEmpresa() {
         {!empresaAtiva && (
           <section className="mt-8 px-2">
             <div className="rounded-2xl bg-muted/60 p-5 text-center">
-              <p className="text-sm font-bold">
-                Essa empresa é sua?
-              </p>
+              <p className="text-sm font-bold">Essa empresa é sua?</p>
 
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Reivindique este perfil para atualizar
-                as informações da sua empresa no Trapeza.
+                Reivindique este perfil para atualizar as informações da sua
+                empresa no Trapeza.
               </p>
 
               <a

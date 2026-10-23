@@ -1,195 +1,115 @@
 // CAMADA DE REPOSITORY (produtos) — CRUD puro na tabela `produtos`.
-// Mesmo padrão de sempre: `salvar` faz update se vier `id`, insert se não
-// vier; toda query filtra por `empresa_id` como segunda trava de
-// segurança (isolamento de tenant), além do RLS do banco.
-import {Produto, NovoProdutoInput} from "../types/produto.types";
+// Toda query por empresa mantém empresa_id como trava de isolamento de tenant.
+import { Produto, NovoProdutoInput } from "../types/produto.types";
 import { adminClient } from "@/core/database/supabase-admin";
 
 export interface ProdutoRepository {
   buscarPorId(empresaId: string, produtoId: string): Promise<Produto | null>;
-  // Igual buscarPorId, mas sem exigir ativo=true — usado no painel (admin
-  // precisa poder editar/salvar ingredientes de produtos pausados também).
   buscarPorIdIgnorandoAtivo(empresaId: string, produtoId: string): Promise<Produto | null>;
-  // Só produtos ativos — usado no cardápio público.
   listarAtivosPorEmpresa(empresaId: string): Promise<Produto[]>;
   listarAtivosPorEmpresas(empresaIds: string[]): Promise<Produto[]>;
-  // Todos, ativos ou não — usado no painel autenticado (admin precisa ver
-  // os que estão pausados também).
   listarTodosPorEmpresa(empresaId: string): Promise<Produto[]>;
   contarPorEmpresa(empresaId: string): Promise<number>;
-  // Busca por nome em TODAS as empresas (não filtra por empresa_id) —
-  // usado na busca global da home ("digitei 'skol', onde vende?"). Só
-  // produtos ativos; quem chama isso ainda precisa cruzar com a lista de
-  // empresas ativas/trapeza pra descartar produto de empresa suspensa.
   buscarPorNomeGlobal(termo: string, limite: number): Promise<Produto[]>;
   salvar(empresaId: string, produto: NovoProdutoInput): Promise<{ id: string }>;
   remover(empresaId: string, produtoId: string): Promise<void>;
 }
 
 export class SupabaseProdutoRepository implements ProdutoRepository {
-  private sb() {
-    return adminClient();
-  }
+  private sb() { return adminClient(); }
 
   async buscarPorId(empresaId: string, produtoId: string): Promise<Produto | null> {
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .select("*")
-      .eq("id", produtoId)
-      .eq("empresa_id", empresaId)
-      .eq("ativo", true)
-      .maybeSingle();
+    const { data, error } = await this.sb().from("produtos").select("*")
+      .eq("id", produtoId).eq("empresa_id", empresaId).eq("ativo", true).maybeSingle();
     if (error) throw new Error(error.message);
     return (data as Produto | null) ?? null;
   }
 
   async buscarPorIdIgnorandoAtivo(empresaId: string, produtoId: string): Promise<Produto | null> {
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .select("*")
-      .eq("id", produtoId)
-      .eq("empresa_id", empresaId)
-      .maybeSingle();
+    const { data, error } = await this.sb().from("produtos").select("*")
+      .eq("id", produtoId).eq("empresa_id", empresaId).maybeSingle();
     if (error) throw new Error(error.message);
     return (data as Produto | null) ?? null;
   }
 
+  // Esta listagem inclui produtos e serviços ativos para o perfil da empresa.
   async listarAtivosPorEmpresa(empresaId: string): Promise<Produto[]> {
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .select("*")
-      .eq("empresa_id", empresaId)
-      .eq("ativo", true)
-      .order("ordem");
+    const { data, error } = await this.sb().from("produtos").select("*")
+      .eq("empresa_id", empresaId).eq("ativo", true).order("ordem");
     if (error) throw new Error(error.message);
     return (data ?? []) as Produto[];
   }
 
   async listarAtivosPorEmpresas(empresaIds: string[]): Promise<Produto[]> {
     if (empresaIds.length === 0) return [];
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .select("*")
-      .in("empresa_id", empresaIds)
-      .eq("ativo", true)
-      .order("ordem");
+    const { data, error } = await this.sb().from("produtos").select("*")
+      .in("empresa_id", empresaIds).eq("ativo", true).order("ordem");
     if (error) throw new Error(error.message);
     return (data ?? []) as Produto[];
   }
 
   async listarTodosPorEmpresa(empresaId: string): Promise<Produto[]> {
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .select("*")
-      .eq("empresa_id", empresaId)
-      .order("ordem");
+    const { data, error } = await this.sb().from("produtos").select("*")
+      .eq("empresa_id", empresaId).order("ordem");
     if (error) throw new Error(error.message);
     return (data ?? []) as Produto[];
   }
 
   async contarPorEmpresa(empresaId: string): Promise<number> {
-    const { count } = await this.sb()
-      .from("produtos")
-      .select("id", { count: "exact", head: true })
-      .eq("empresa_id", empresaId);
+    const { count, error } = await this.sb().from("produtos")
+      .select("id", { count: "exact", head: true }).eq("empresa_id", empresaId);
+    if (error) throw new Error(error.message);
     return count ?? 0;
   }
 
- async buscarPorNomeGlobal(
-  termo: string,
-  limite: number,
-): Promise<Produto[]> {
-  const busca = termo.trim();
+  // Busca global exclusiva de produtos. Serviços não devem entrar no autocomplete de compra.
+  async buscarPorNomeGlobal(termo: string, limite: number): Promise<Produto[]> {
+    const busca = termo.trim();
+    if (!busca) return [];
+    const supabase = this.sb();
 
-  if (!busca) return [];
+    const { data: categorias, error: erroCategorias } = await supabase
+      .from("categorias").select("id").ilike("nome", `%${busca}%`).eq("ativo", true);
+    if (erroCategorias) throw new Error(erroCategorias.message);
+    const categoriaIds = (categorias ?? []).map((categoria) => categoria.id);
 
-  const supabase = this.sb();
-
-  // 1. Busca categorias que correspondem ao termo
-  const { data: categorias, error: erroCategorias } = await supabase
-    .from("categorias")
-    .select("id")
-    .ilike("nome", `%${busca}%`)
-    .eq("ativo", true);
-
-  if (erroCategorias) {
-    throw new Error(erroCategorias.message);
-  }
-
-  const categoriaIds = (categorias ?? []).map((categoria) => categoria.id);
-
-  // 2. Busca produtos pelo nome
-  const consultaNome = supabase
-    .from("produtos")
-    .select("*")
-    .ilike("nome", `%${busca}%`)
-    .eq("ativo", true)
-    .limit(limite);
-
-  // 3. Busca produtos pelas categorias encontradas
-  const consultaCategoria =
-    categoriaIds.length > 0
-      ? supabase
-          .from("produtos")
-          .select("*")
-          .in("categoria_id", categoriaIds)
-          .eq("ativo", true)
-          .limit(limite)
+    const consultaNome = supabase.from("produtos").select("*")
+      .ilike("nome", `%${busca}%`).eq("tipo", "produto").eq("ativo", true).limit(limite);
+    const consultaCategoria = categoriaIds.length > 0
+      ? supabase.from("produtos").select("*").in("categoria_id", categoriaIds)
+          .eq("tipo", "produto").eq("ativo", true).limit(limite)
       : Promise.resolve({ data: [], error: null });
 
-  const [resultadoNome, resultadoCategoria] = await Promise.all([
-    consultaNome,
-    consultaCategoria,
-  ]);
+    const [resultadoNome, resultadoCategoria] = await Promise.all([consultaNome, consultaCategoria]);
+    if (resultadoNome.error) throw new Error(resultadoNome.error.message);
+    if (resultadoCategoria.error) throw new Error(resultadoCategoria.error.message);
 
-  if (resultadoNome.error) {
-    throw new Error(resultadoNome.error.message);
+    const produtos = new Map<string, Produto>();
+    for (const produto of [...(resultadoNome.data ?? []), ...(resultadoCategoria.data ?? [])]) {
+      produtos.set(produto.id, produto as Produto);
+    }
+    return Array.from(produtos.values()).slice(0, limite);
   }
-
-  if (resultadoCategoria.error) {
-    throw new Error(resultadoCategoria.error.message);
-  }
-
-  // 4. Junta os resultados sem duplicar produtos
-  const produtos = new Map<string, Produto>();
-
-  for (const produto of [
-    ...(resultadoNome.data ?? []),
-    ...(resultadoCategoria.data ?? []),
-  ]) {
-    produtos.set(produto.id, produto as Produto);
-  }
-
-  return Array.from(produtos.values()).slice(0, limite);
-}
 
   async salvar(empresaId: string, produto: NovoProdutoInput): Promise<{ id: string }> {
+    const tipo = produto.tipo ?? "produto";
     if (produto.id) {
       const { id, ...patch } = produto;
-      const { error } = await this.sb()
-        .from("produtos")
-        .update(patch)
-        .eq("id", id)
-        .eq("empresa_id", empresaId);
+      const { error } = await this.sb().from("produtos")
+        .update({ ...patch, tipo }).eq("id", id).eq("empresa_id", empresaId);
       if (error) throw new Error(error.message);
       return { id };
     }
     const { id: _ignored, ...insertable } = produto;
-    const { data, error } = await this.sb()
-      .from("produtos")
-      .insert({ ...insertable, empresa_id: empresaId })
-      .select("id")
-      .single();
+    const { data, error } = await this.sb().from("produtos")
+      .insert({ ...insertable, tipo, empresa_id: empresaId }).select("id").single();
     if (error) throw new Error(error.message);
     return { id: data.id as string };
   }
 
   async remover(empresaId: string, produtoId: string): Promise<void> {
-    const { error } = await this.sb()
-      .from("produtos")
-      .delete()
-      .eq("id", produtoId)
-      .eq("empresa_id", empresaId);
+    const { error } = await this.sb().from("produtos").delete()
+      .eq("id", produtoId).eq("empresa_id", empresaId);
     if (error) throw new Error(error.message);
   }
 }

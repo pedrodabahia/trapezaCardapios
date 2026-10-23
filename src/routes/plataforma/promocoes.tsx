@@ -1,4 +1,5 @@
 import { uploadImagemPromocao } from "@/modules/promocoes/controllers/upload-promocao.controller";
+import { trackPromotionCardClick } from "@/lib/analytics";
 import {
   createFileRoute,
   redirect,

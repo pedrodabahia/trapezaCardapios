@@ -637,21 +637,21 @@ function Landing() {
                   />
                 )}
 
-                {temProdutos && (
-                  <CatalogDiscovery
-                    itens={catalogoHome}
-                    cidade={
-                      cidadeFiltro === TODAS_CIDADES
-                        ? null
-                        : cidadeFiltro
-                    }
-                    categoria={cat.valor}
-                    tipo="produto"
-                    titulo={`🛍️ Produtos de ${cat.label.toLowerCase()}`}
-                    subtitulo={`Confira o que as empresas de ${cat.label.toLowerCase()} oferecem.`}
-                    limite={8}
-                  />
-                )}
+              {temProdutos && (
+                <CatalogDiscovery
+                  itens={catalogoHome}
+                  cidade={
+                    cidadeFiltro === TODAS_CIDADES
+                      ? null
+                      : cidadeFiltro
+                  }
+                  categoria={cat.valor}
+                  tipo="produto"
+                  titulo={`🛍️ Produtos de ${cat.label.toLowerCase()}`}
+                  subtitulo={`Confira o que as empresas de ${cat.label.toLowerCase()} oferecem.`}
+                  limite={8}
+                />
+              )}
 
                 {temServicos && (
                   <CatalogDiscovery

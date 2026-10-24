@@ -8,6 +8,7 @@ type Props = {
   itens: ItemCatalogoHome[];
   cidade?: string | null;
   categoria?: string;
+  categoriaProdutoId?: string;
   tipo?: "produto" | "servico";
   titulo?: string;
   subtitulo?: string;
@@ -66,6 +67,7 @@ export function CatalogDiscovery({
   itens,
   cidade,
   categoria,
+  categoriaProdutoId,
   tipo = "produto",
   titulo,
   subtitulo,
@@ -212,11 +214,27 @@ export function CatalogDiscovery({
           </Link>
         ))}
 
-        {/* Card "Ver mais" no final do carrossel */}
+        {/*
+          Card "Ver mais" no final do carrossel:
+          1. urlVerMaisGeral: vai para /produtos.
+          2. categoriaProdutoId (produto): UUID da categoria de produto.
+          3. categoria: valor da categoria de negócio (produto ou serviço).
+          A página /categoria/$valor distingue UUID de valor de negócio.
+        */}
         {urlVerMaisGeral ? (
           <Link
             to="/produtos"
             aria-label={`Ver todos os ${textoTodos}`}
+            className={`flex items-center justify-center ${CLASSE_LARGURA_CARD}`}
+          >
+            <CardVerMais textoTodos={textoTodos} />
+          </Link>
+        ) : tipo === "produto" && categoriaProdutoId ? (
+          <Link
+            to="/categoria/$valor"
+            params={{ valor: categoriaProdutoId }}
+            search={{ tipo: "produto" }}
+            aria-label="Ver todos os produtos desta categoria"
             className={`flex items-center justify-center ${CLASSE_LARGURA_CARD}`}
           >
             <CardVerMais textoTodos={textoTodos} />
@@ -226,7 +244,7 @@ export function CatalogDiscovery({
             to="/categoria/$valor"
             params={{ valor: categoria }}
             search={{ tipo }}
-            aria-label={`Ver todos os ${textoTodos} da categoria`}
+            aria-label={`Ver todos os ${textoTodos} desta categoria`}
             className={`flex items-center justify-center ${CLASSE_LARGURA_CARD}`}
           >
             <CardVerMais textoTodos={textoTodos} />

@@ -20,6 +20,15 @@ import { LogoLoader } from "@/components/LogoLoader";
 const ITENS_POR_PAGINA = 80;
 const SITE_URL = "https://trapeza.me";
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// O parâmetro da URL pode ser o UUID de uma categoria de produto
+// (?tipo=produto) ou o valor/slug de uma categoria de negócio.
+function ehUuid(valor: string) {
+  return UUID_REGEX.test(valor);
+}
+
 type TipoCatalogo = "produto" | "servico";
 
 type Empresas = Awaited<ReturnType<typeof listEmpresasPublicasPorCategorias>>;
@@ -60,9 +69,8 @@ export const Route = createFileRoute("/categoria/$valor")({
   loader: async ({ params, deps }) => {
     const categorias = await getCategoriasNegocio({ data: {} });
 
-    // Para produtos, o parâmetro da URL é o UUID da categoria de produto,
-    // não o valor/slug de uma categoria de negócio.
-    if (deps.tipo === "produto") {
+    // Categoria de PRODUTO: só quando o parâmetro é um UUID.
+    if (deps.tipo === "produto" && ehUuid(params.valor)) {
       const categoriaProduto = await buscarCategoriaProdutoPublica({
         data: { categoriaId: params.valor },
       }).catch(() => null);
@@ -76,6 +84,7 @@ export const Route = createFileRoute("/categoria/$valor")({
       };
     }
 
+    // Categoria de NEGÓCIO (empresas, produtos ou serviços).
     const categoria = categorias.find(
       (item) => item.valor === params.valor && item.ativo,
     );
@@ -109,13 +118,17 @@ export const Route = createFileRoute("/categoria/$valor")({
           ]),
         ];
 
-    const empresas = await listEmpresasPublicasPorCategorias({
-      data: {
-        categorias: categoriasParaBusca,
-        limit: ITENS_POR_PAGINA,
-        offset: 0,
-      },
-    });
+    // No modo catálogo (produto/serviço) as empresas não são usadas,
+    // então evitamos a consulta.
+    const empresas: Empresas = deps.tipo
+      ? ([] as Empresas)
+      : await listEmpresasPublicasPorCategorias({
+          data: {
+            categorias: categoriasParaBusca,
+            limit: ITENS_POR_PAGINA,
+            offset: 0,
+          },
+        });
 
     return {
       categorias,
@@ -333,7 +346,10 @@ function PaginaCategoria() {
     (categoria) => categoria.valor === valor && categoria.ativo,
   );
   const categoriaProduto = loaderData.categoriaProduto;
-  const ehCategoriaProduto = tipo === "produto";
+
+  // UUID + tipo=produto: categoria de produto. Qualquer outro caso
+  // usa a categoria de negócio.
+  const ehCategoriaProduto = tipo === "produto" && ehUuid(valor);
   const categoriaValida = ehCategoriaProduto
     ? Boolean(categoriaProduto && categoriaProduto.id === valor)
     : Boolean(categoriaClicada);
@@ -411,9 +427,16 @@ function PaginaCategoria() {
   });
 
   const queryCatalogo = useInfiniteQuery({
-    queryKey: ["catalogo-publico-categoria", valor, tipo, categoriasParaBusca],
+    queryKey: [
+      "catalogo-publico-categoria",
+      valor,
+      tipo,
+      ehCategoriaProduto,
+      categoriasParaBusca,
+    ],
     queryFn: ({ pageParam }) => {
-      if (tipo === "produto") {
+      // Categoria de produto (UUID).
+      if (ehCategoriaProduto) {
         return listarCatalogoPorCategoriaProduto({
           data: {
             categoriaId: valor,
@@ -424,10 +447,11 @@ function PaginaCategoria() {
         });
       }
 
+      // Categoria de negócio: produtos ou serviços.
       return listarCatalogoPorCategoriasNegocio({
         data: {
           categorias: categoriasParaBusca,
-          tipo: "servico",
+          tipo: tipo === "produto" ? "produto" : "servico",
           limite: ITENS_POR_PAGINA,
           offset: pageParam,
         },
@@ -440,11 +464,9 @@ function PaginaCategoria() {
         : todasPaginas.length * ITENS_POR_PAGINA,
     staleTime: 30_000,
     enabled: Boolean(
-      tipo === "produto"
+      ehCategoriaProduto
         ? categoriaProduto && categoriaProduto.id === valor
-        : categoriaClicada &&
-            tipo === "servico" &&
-            categoriasParaBusca.length > 0,
+        : categoriaClicada && modoCatalogo && categoriasParaBusca.length > 0,
     ),
   });
 
@@ -598,19 +620,36 @@ function PaginaCategoria() {
                 </nav>
               )}
 
-              {/*
-                Este bloco só aparece no modo serviços. No modo produto o
-                parâmetro da URL é o UUID da categoria de produto, então não
-                há como alternar para outras visões a partir dele.
-              */}
-              {tipo === "servico" && (
+              {/* Alternância Produtos / Serviços / Empresas da categoria de negócio */}
+              {modoCatalogo && !ehCategoriaProduto && (
                 <div className="mt-4 flex gap-2">
-                  <span
-                    aria-current="page"
-                    className="rounded-full border border-brand-brown bg-brand-brown px-4 py-2 text-sm font-semibold text-white"
+                  <Link
+                    to="/categoria/$valor"
+                    params={{ valor }}
+                    search={{ tipo: "produto" }}
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                      tipo === "produto"
+                        ? "border-brand-brown bg-brand-brown text-white"
+                        : "border-border bg-card hover:border-brand-brown/50",
+                    )}
+                  >
+                    Produtos
+                  </Link>
+
+                  <Link
+                    to="/categoria/$valor"
+                    params={{ valor }}
+                    search={{ tipo: "servico" }}
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                      tipo === "servico"
+                        ? "border-brand-brown bg-brand-brown text-white"
+                        : "border-border bg-card hover:border-brand-brown/50",
+                    )}
                   >
                     Serviços
-                  </span>
+                  </Link>
 
                   <Link
                     to="/categoria/$valor"

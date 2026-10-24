@@ -1,14 +1,18 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { getEmpresaBySlug } from "@/modules/empresas/controllers/empresa.controller";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Minus, Plus, Section } from "lucide-react";
+import { ArrowLeft, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { brl } from "@/lib/format";
-import { getCartStore, cartSubtotal } from "@/lib/store";
-import { ProductCard } from "@/components/ProductCard";
+import { getCartStore } from "@/lib/store";
 import type { CartCustomization, CartCustomizationSelecao, CartItem } from "@/lib/store";
 import {
   useProdutoById,
@@ -16,8 +20,6 @@ import {
   useCategoriasOpcao,
   useIngredientesDoProduto,
   getFrete,
-  useCategoriasAtivas,
-  useProdutosPorEmpresa,
 } from "@/lib/admin-store";
 import { cn } from "@/lib/utils";
 
@@ -89,14 +91,12 @@ export const Route = createFileRoute("/s/$slug/product/$id")({
 function ProdutoDetalhe() {
   const { slug, id } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
   const { empresaPublica: empresaCompleta } = Route.useLoaderData();
   const produto = useProdutoById(empresaCompleta, id);
   const opcoes = useOpcoes(empresaCompleta);
   const categoriasOpcao = useCategoriasOpcao(empresaCompleta);
   const ingredientesProdutoRaw = useIngredientesDoProduto(empresaCompleta, produto?.id);
-
-  const categorias = useCategoriasAtivas(empresaCompleta);
-  const produtos = useProdutosPorEmpresa(empresaCompleta);
 
   const categoria = empresaCompleta?.categorias.find(
     (c) => c.id === produto?.categoria_id,
@@ -120,17 +120,27 @@ function ProdutoDetalhe() {
     [categoriasOpcao, idsAtivos, opcoes],
   );
 
+  // Volta para a página anterior do usuário. Se não houver histórico
+  // (ex.: abriu o link direto numa nova aba), vai para a home.
+  // Esta página nunca leva o usuário para /s/$slug.
+  function voltar() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      void navigate({ to: "/" });
+    }
+  }
+
   if (!empresaCompleta) return null;
   if (!produto) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-lg font-semibold">Produto não encontrado.</p>
         <Link
-          to="/s/$slug"
-          params={{ slug }}
+          to="/"
           className="mt-4 inline-block text-brand-red underline"
         >
-          Voltar pro cardápio
+          Voltar para o início
         </Link>
       </div>
     );
@@ -174,7 +184,19 @@ function ProdutoDetalhe() {
     return lista;
   };
 
-  function handleAdd() {
+  const precoUnitario =
+    produto.preco + adicionaisSelecionados().reduce((s, a) => s + a.price, 0);
+  const totalCompra = precoUnitario * qtd;
+
+  // Valor mínimo pra fechar pedido, configurado no painel (aba Entrega).
+  const frete = getFrete(empresaCompleta.config);
+  const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
+  const atingiuMinimo = totalCompra >= pedidoMinimo;
+
+  // Compra direta: leva este produto para o checkout.
+  function handleComprar() {
+    if (!atingiuMinimo) return;
+
     const selecoesCarrinho: CartCustomizationSelecao[] = categoriasDoProduto
       .map((co) => ({
         categoriaOpcaoId: co.id,
@@ -198,66 +220,23 @@ function ProdutoDetalhe() {
       quantity: qtd,
       customization,
     };
-    getCartStore(slug).getState().addItem(item);
-    toast.success("Adicionado ao carrinho!",{
-      duration:1000,
-    });
-    navigate({ to: "/s/$slug", params: { slug } });
+
+    const store = getCartStore(slug).getState();
+    store.addItem(item);
+    store.closeDrawer();
+    toast.success("Produto selecionado!", { duration: 1000 });
+    navigate({ to: "/s/$slug/checkout", params: { slug } });
   }
-
-      const {items,closeDrawer} = getCartStore(slug)();
-      const subtotal = cartSubtotal(items);
-      // Valor mínimo pra fechar pedido, configurado no painel (aba Entrega).
-      const frete = getFrete(empresaCompleta.config);
-      const pedidoMinimo = Number(frete.pedido_minimo ?? 0);
-
-  function handleFinalizar(){
-        const selecoesCarrinho: CartCustomizationSelecao[] = categoriasDoProduto
-      .map((co) => ({
-        categoriaOpcaoId: co.id,
-        categoriaNome: co.nome,
-        valores: selecoes[co.id] ?? [],
-      }))
-      .filter((s) => s.valores.length > 0);
-
-    const customization: CartCustomization = {
-      selecoes: selecoesCarrinho,
-      remover,
-      adicionais: adicionaisSelecionados(),
-      observacoes: obs.trim() || undefined,
-    };
-    const item: CartItem = {
-      id: `${produto!.id}-${Date.now()}`,
-      productId: produto!.id,
-      name: produto!.nome,
-      image: produto!.imagem_url ?? "",
-      basePrice: produto!.preco,
-      quantity: qtd,
-      customization,
-    };
-    getCartStore(slug).getState().addItem(item);
-    toast.success("Adicionado ao carrinho!",{
-      duration:1000,
-    });
-    navigate({to: "/s/$slug/checkout", params: {slug}})
-    closeDrawer();
-    
-    console.log(subtotal);
-    
-  }
-
-  const precoUnitario =
-    produto.preco + adicionaisSelecionados().reduce((s, a) => s + a.price, 0);
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-32 pt-4 md:px-8">
-      <Link
-        to="/s/$slug"
-        params={{ slug }}
+      <button
+        type="button"
+        onClick={voltar}
         className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-brown"
       >
         <ArrowLeft className="h-4 w-4" /> Voltar
-      </Link>
+      </button>
 
       <div className="overflow-hidden rounded-3xl bg-muted">
         <div className="aspect-[4/3] w-full">
@@ -373,89 +352,47 @@ function ProdutoDetalhe() {
         />
       </section>
 
-      {/* OUTROS PRODUTOS*/}
-      <section>
-      <div className="flex items-center justify-center mt-12 w-full ">
-        <div className="bg-brand-red w-[20px] h-[1px] mx-2" />
-        <h2 className="font-display  text-2xl font-bold">Aproveite e confira</h2>
-        <div className="bg-brand-red w-[20px] h-[1px] mx-2" />
-
-      </div>
-      {categorias.length > 0 && (
-        categorias.map((c) => {
-          const produtosDaCategoria = produtos.filter((p) => p.categoria_id === c.id);
-          if(produtosDaCategoria.length === 0) return null;
-
-          return(
-<div key={c.id} className="mt-10 ">
-  <div className="mb-4 flex items-end justify-between">
-    <h2 className="font-display text-xl font-bold">{c.nome}</h2>
-  </div>
-
-  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-    {produtosDaCategoria.map((p) => (
-      <div key={p.id} className="w-[180px] shrink-0 sm:w-[200px]">
-        <ProductCard produto={p} slug={slug} />
-      </div>
-    ))}
-  </div>
-</div>
-          )
-        })
-      )}
-      </section>
-
-
-
-      {/* Barra fixa inferior */}
+      {/* Barra fixa inferior: quantidade + compra direta */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card p-4 shadow-2xl">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <div className="flex items-center gap-1 rounded-full border bg-background p-1">
-            <button
-              onClick={() => setQtd((q) => Math.max(1, q - 1))}
-              className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted"
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-            <span className="w-8 text-center font-semibold">{qtd}</span>
-            <button
-              onClick={() => setQtd((q) => q + 1)}
-              className="grid h-9 w-9 place-items-center rounded-full bg-brand-red text-white hover:bg-brand-red/90"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-          <Button
-            onClick={handleAdd}
-            className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90"
-          >
-            Adicionar
-          </Button>
-          {subtotal >= pedidoMinimo || (qtd * produto.preco) >= pedidoMinimo? (
-                      <Button
-          onClick={handleFinalizar}
-          className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90"
-          >
-            Comprar
-          </Button>
-          ): (          <Button
-          className="h-12 flex-1 rounded-full bg-gray-500/30 text-base font-bold hover:bg-brand-red/90"
-          >
-            Comprar
-          </Button>)}
+        <div className="mx-auto max-w-3xl">
+          {!atingiuMinimo && (
+            <p className="mb-2 text-center text-xs text-muted-foreground">
+              Pedido mínimo de {brl(pedidoMinimo)}. Aumente a quantidade para continuar.
+            </p>
+          )}
 
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 rounded-full border bg-background p-1">
+              <button
+                type="button"
+                aria-label="Diminuir quantidade"
+                onClick={() => setQtd((q) => Math.max(1, q - 1))}
+                className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="w-8 text-center font-semibold">{qtd}</span>
+              <button
+                type="button"
+                aria-label="Aumentar quantidade"
+                onClick={() => setQtd((q) => q + 1)}
+                className="grid h-9 w-9 place-items-center rounded-full bg-brand-red text-white hover:bg-brand-red/90"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleComprar}
+              disabled={!atingiuMinimo}
+              className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90 disabled:bg-gray-500/30"
+            >
+              Comprar · {brl(totalCompra)}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-{/*
-  <Link
-                to="/s/$slug/checkout"
-                params={{ slug }}
-                onClick={closeDrawer}
-                className="mt-4 block"
-              ></Link>
-  */}
- 

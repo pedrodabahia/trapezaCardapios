@@ -1,5 +1,9 @@
-
-import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  useMatchRoute,
+} from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getEmpresaBySlug } from "@/modules/empresas/controllers/empresa.controller";
 import { AppShell } from "@/components/layout/AppShell";
@@ -86,6 +90,7 @@ export const Route = createFileRoute("/s/$slug")({
 function TenantLayout() {
   const { slug } = Route.useParams();
   const loaderData = Route.useLoaderData();
+  const matchRoute = useMatchRoute();
   const { data, isLoading, error } = useQuery({
     queryKey: ["empresa-publica", slug] as const,
     queryFn: () => getEmpresaBySlug({ data: { slug } }),
@@ -93,6 +98,12 @@ function TenantLayout() {
     staleTime: 30_000,
     enabled: Boolean(slug),
   });
+
+  // Na página de produto não mostramos o AppShell (cabeçalho, botão de
+  // cardápio, carrinho etc.), pois ela é uma página única de compra direta.
+  const ehPaginaDeProduto = Boolean(
+    matchRoute({ to: "/s/$slug/product/$id" }),
+  );
 
   useEffect(() => {
     if (!data?.empresa.id) return;
@@ -136,6 +147,10 @@ function TenantLayout() {
         </div>
       </div>
     );
+  }
+
+  if (ehPaginaDeProduto) {
+    return <Outlet />;
   }
 
   return (

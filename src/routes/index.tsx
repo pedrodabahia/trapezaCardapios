@@ -471,6 +471,24 @@ function Landing() {
     () => categoriasOrdenadas.slice(0, categoriasVisiveis),
     [categoriasOrdenadas, categoriasVisiveis],
   );
+  useEffect(() => {
+  const personalizados = categoriasOrdenadas.find(
+    (categoria) => categoria.valor === "personalizados",
+  );
+
+  console.log("[DEBUG personalizados]", {
+    categoriaEncontrada: personalizados,
+    estaRenderizada: categoriasRenderizadas.some(
+      (categoria) => categoria.valor === "personalizados",
+    ),
+    produtosNoCatalogo: catalogoHome.filter(
+      (item) =>
+        item.tipo === "produto" &&
+        item.categoriasEmpresa?.includes("personalizados"),
+    ),
+    quantidadeCategoriasRenderizadas: categoriasRenderizadas.length,
+  });
+}, [categoriasOrdenadas, categoriasRenderizadas, catalogoHome]);
 
   useEffect(() => {
     const sentinela = sentinelaCategoriasRef.current;

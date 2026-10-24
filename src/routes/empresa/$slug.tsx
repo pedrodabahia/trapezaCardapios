@@ -554,8 +554,6 @@ function PaginaEmpresa() {
             </div>
           )}
         </section>
-
-```tsx
 {/* PRODUTOS E SERVIÇOS — PLANO GRATUITO */}
 {ehPlanoGratuito && itensExibidos.length > 0 && (
   <section className="mt-8 border-t border-border/60 px-2 pt-6">
@@ -585,41 +583,53 @@ function PaginaEmpresa() {
           {produtosExibidos.map((produto) => (
             <article
               key={produto.id}
-              className="overflow-hidden rounded-2xl border border-border/60 bg-background"
+              className="group overflow-hidden rounded-2xl border border-border/60 bg-background transition hover:border-orange-500/50 hover:shadow-md"
             >
-              <div className="aspect-square overflow-hidden bg-muted">
-                {produto.imagem_url ? (
-                  <img
-                    src={produto.imagem_url}
-                    alt={produto.nome}
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <Package className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                )}
-              </div>
+              <Link
+                to="/s/$slug/product/$id"
+                params={{ slug: empresa.slug, id: produto.id }}
+                aria-label={`Ver detalhes de ${produto.nome}`}
+                className="block rounded-t-2xl outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-inset"
+              >
+                <div className="aspect-square overflow-hidden bg-muted">
+                  {produto.imagem_url ? (
+                    <img
+                      src={produto.imagem_url}
+                      alt={produto.nome}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <Package className="h-8 w-8 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </div>
 
-              <div className="p-3">
-                <h4 className="line-clamp-2 text-sm font-semibold">
-                  {produto.nome}
-                </h4>
+                <div className="p-3 pb-1">
+                  <h4 className="line-clamp-2 text-sm font-semibold group-hover:text-orange-600">
+                    {produto.nome}
+                  </h4>
 
-                {produto.descricao_curta && (
-                  <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
-                    {produto.descricao_curta}
+                  {produto.descricao_curta && (
+                    <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                      {produto.descricao_curta}
+                    </p>
+                  )}
+
+                  {Number(produto.preco) > 0 && (
+                    <p className="mt-2 text-sm font-bold text-orange-600">
+                      {formatarPreco(Number(produto.preco))}
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs font-semibold text-muted-foreground">
+                    Ver detalhes <ArrowRight className="ml-1 inline h-3 w-3" />
                   </p>
-                )}
+                </div>
+              </Link>
 
-                {Number(produto.preco) > 0 && (
-                  <p className="mt-2 text-sm font-bold text-orange-600">
-                    {formatarPreco(Number(produto.preco))}
-                  </p>
-                )}
-
-                {linkWhats && (
+              {linkWhats && (
+                <div className="px-3 pb-3">
                   <a
                     href={`https://wa.me/${numeroWhats}?text=${encodeURIComponent(
                       `Olá! Vi o produto "${produto.nome}" no perfil da ${empresa.nome} no Trapeza e gostaria de saber mais.`,
@@ -631,13 +641,13 @@ function PaginaEmpresa() {
                         empresaId: empresa.id,
                       });
                     }}
-                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-2 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-2 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
                   >
                     <MessageCircle className="h-3.5 w-3.5" />
                     Tenho interesse
                   </a>
-                )}
-              </div>
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -653,56 +663,64 @@ function PaginaEmpresa() {
 
         <div className="divide-y divide-border/60 rounded-2xl ">
           {servicosExibidos.map((servico) => (
-            <article key={servico.id} className="flex gap-3 p-4 mt-3 rounded-sm border border-4 border-transparent [background:linear-gradient(var(--background))_padding-box,linear-gradient(90deg,orange,brown)_border-box]">
-              {servico.imagem_url && (
-                <img
-                  src={servico.imagem_url}
-                  alt={servico.nome}
-                  loading="lazy"
-                  className="h-20 w-20 shrink-0 rounded-xl bg-muted object-cover"
-                />
+            <article key={servico.id} className="mt-3 rounded-2xl border border-border/60 bg-background p-3 transition hover:border-orange-500/50 hover:shadow-sm">
+              <Link
+                to="/s/$slug/product/$id"
+                params={{ slug: empresa.slug, id: servico.id }}
+                aria-label={`Ver detalhes do serviço ${servico.nome}`}
+                className="flex gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              >
+                {servico.imagem_url ? (
+                  <img
+                    src={servico.imagem_url}
+                    alt={servico.nome}
+                    loading="lazy"
+                    className="h-20 w-20 shrink-0 rounded-xl bg-muted object-cover"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Package className="h-6 w-6 text-muted-foreground/40" />
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-semibold hover:text-orange-600">{servico.nome}</h4>
+
+                  {servico.descricao_curta && (
+                    <p className="mt-1 line-clamp-3 whitespace-pre-line text-sm leading-5 text-muted-foreground">
+                      {servico.descricao_curta}
+                    </p>
+                  )}
+
+                  <p className="mt-2 text-sm font-bold text-orange-600">
+                    {Number(servico.preco) > 0
+                      ? formatarPreco(Number(servico.preco))
+                      : "Consultar valor"}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                    Ver detalhes <ArrowRight className="ml-1 inline h-3 w-3" />
+                  </p>
+                </div>
+              </Link>
+
+              {linkWhats && (
+                <a
+                  href={`https://wa.me/${numeroWhats}?text=${encodeURIComponent(
+                    `Olá! Vi o serviço "${servico.nome}" no perfil da ${empresa.nome} no Trapeza e gostaria de saber mais sobre o valor e a disponibilidade.`,
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    void trackEvent("whatsapp_click", {
+                      empresaId: empresa.id,
+                    });
+                  }}
+                  className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Solicitar orçamento
+                </a>
               )}
-
-              <div className="min-w-0 flex-1">
-                <h4 className="font-semibold">{servico.nome}</h4>
-
-                {servico.descricao_curta && (
-                  <p className="mt-1 whitespace-pre-line text-sm leading-5 text-muted-foreground">
-                    {servico.descricao_curta}
-                  </p>
-                )}
-
-                {servico.descricao && (
-                  <p className="mt-2 whitespace-pre-line text-xs leading-5 text-muted-foreground">
-                    {servico.descricao}
-                  </p>
-                )}
-
-                <p className="mt-2 text-sm font-bold text-orange-600">
-                  {Number(servico.preco) > 0
-                    ? formatarPreco(Number(servico.preco))
-                    : "Consultar valor"}
-                </p>
-
-                {linkWhats && (
-                  <a
-                    href={`https://wa.me/${numeroWhats}?text=${encodeURIComponent(
-                      `Olá! Vi o serviço "${servico.nome}" no perfil da ${empresa.nome} no Trapeza e gostaria de saber mais sobre o valor e a disponibilidade.`,
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      void trackEvent("whatsapp_click", {
-                        empresaId: empresa.id,
-                      });
-                    }}
-                    className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    Solicitar orçamento
-                  </a>
-                )}
-              </div>
             </article>
           ))}
         </div>

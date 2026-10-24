@@ -414,6 +414,76 @@ function ProdutoDetalhe() {
         />
       </section>
 
+      {/* Outros produtos da mesma empresa */}
+      {(() => {
+        const outrosProdutos = (empresaCompleta.produtos ?? []).filter(
+          (item) =>
+            item.ativo &&
+            item.id !== produto.id &&
+            item.tipo !== "servico",
+        );
+
+        if (outrosProdutos.length === 0) return null;
+
+        return (
+          <section className="mt-10 border-t border-border pt-6">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-bold">
+                  Mais produtos desta empresa
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Veja o que mais você encontra por aqui.
+                </p>
+              </div>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {outrosProdutos.length} {outrosProdutos.length === 1 ? "produto" : "produtos"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {outrosProdutos.map((item) => (
+                <Link
+                  key={item.id}
+                  to="/s/$slug/product/$id"
+                  params={{ slug, id: item.id }}
+                  className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-brand-red/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red"
+                >
+                  <div className="aspect-square overflow-hidden bg-muted">
+                    {item.imagem_url ? (
+                      <img
+                        src={item.imagem_url}
+                        alt={item.nome}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="grid h-full place-items-center px-3 text-center text-xs text-muted-foreground">
+                        Sem foto
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="line-clamp-2 text-sm font-semibold">
+                      {item.nome}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {item.descricao_curta || item.descricao || "Confira os detalhes deste produto."}
+                    </p>
+                    <p className="mt-3 font-display text-base font-bold text-brand-red">
+                      {item.preco > 0 ? brl(item.preco) : "Consultar valor"}
+                    </p>
+                    <span className="mt-2 inline-flex items-center text-xs font-semibold text-brand-brown group-hover:text-brand-red">
+                      Ver produto <span aria-hidden="true" className="ml-1">→</span>
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
+
       {/* Barra fixa inferior: quantidade + compra direta */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card p-4 shadow-2xl">
         <div className="mx-auto max-w-3xl">

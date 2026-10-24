@@ -87,7 +87,7 @@ export function CatalogDiscovery({
     return selecionarDiversificados(filtrados, limite);
   }, [itens, cidade, categoria, tipo, limite]);
 
-  if (visiveis.length < 2) return null;
+  if (visiveis.length === 0) return null;
 
   const heading =
     titulo ??

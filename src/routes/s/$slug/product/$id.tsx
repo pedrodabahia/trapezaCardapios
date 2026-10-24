@@ -255,7 +255,7 @@ function ProdutoDetalhe() {
         <p className="mt-1 text-sm text-muted-foreground">{produto.descricao}</p>
         <div className="mt-3 flex items-baseline gap-2">
           <span className="font-display text-2xl font-bold text-brand-red">
-            {brl(produto.preco)}
+            {produto.preco > 0 ? brl(produto.preco) : "Consultar valor"}
           </span>
           {produto.preco_antigo && (
             <span className="text-sm text-muted-foreground line-through">
@@ -388,7 +388,7 @@ function ProdutoDetalhe() {
               disabled={!atingiuMinimo}
               className="h-12 flex-1 rounded-full bg-brand-red text-base font-bold hover:bg-brand-red/90 disabled:bg-gray-500/30"
             >
-              Comprar · {brl(totalCompra)}
+              Comprar · {totalCompra > 0 ? brl(totalCompra) : ""}
             </Button>
           </div>
         </div>

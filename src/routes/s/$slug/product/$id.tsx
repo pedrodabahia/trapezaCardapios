@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { getEmpresaBySlug } from "@/modules/empresas/controllers/empresa.controller";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,8 +45,15 @@ export const Route = createFileRoute("/s/$slug/product/$id")({
     }
 
     const titulo = `${produto.nome} | ${empresa.nome} | Trapeza`;
-    const descricaoBase = produto.descricao?.trim() || produto.descricao_curta?.trim() || `${produto.nome} no cardápio de ${empresa.nome}${empresa.cidade ? ` em ${empresa.cidade}` : ""}. Consulte o preço e as opções disponíveis.`;
-    const descricao = descricaoBase.replace(/\s+/g, " ").slice(0, 160);
+    const precoTexto = produto.preco > 0
+      ? `Preço: ${brl(produto.preco)}. `
+      : "Preço sob consulta. ";
+    const descricaoProduto =
+      produto.descricao?.trim() ||
+      produto.descricao_curta?.trim() ||
+      `${produto.nome} no catálogo de ${empresa.nome}${empresa.cidade ? ` em ${empresa.cidade}` : ""}.`;
+    // Prioriza o preço na prévia, já que redes sociais podem truncar a descrição.
+    const descricao = `${precoTexto}${descricaoProduto}`.replace(/\s+/g, " ").slice(0, 160);
     const imagem = produto.imagem_url || empresa.logo_url || undefined;
     const dadosEstruturados = {
       "@context": "https://schema.org",
@@ -75,7 +82,10 @@ export const Route = createFileRoute("/s/$slug/product/$id")({
         { property: "og:title", content: titulo },
         { property: "og:description", content: descricao },
         { property: "og:url", content: url },
-        ...(imagem ? [{ property: "og:image", content: imagem }] : []),
+        ...(imagem ? [
+          { property: "og:image", content: imagem },
+          { property: "og:image:alt", content: produto.nome },
+        ] : []),
         { name: "twitter:card", content: imagem ? "summary_large_image" : "summary" },
         { name: "twitter:title", content: titulo },
         { name: "twitter:description", content: descricao },
@@ -128,6 +138,46 @@ function ProdutoDetalhe() {
       router.history.back();
     } else {
       void navigate({ to: "/" });
+    }
+  }
+
+  async function handleCompartilhar() {
+    if (!produto || !empresaCompleta) return;
+
+    const url = typeof window !== "undefined"
+      ? window.location.href
+      : `${SITE_URL}/s/${encodeURIComponent(slug)}/product/${encodeURIComponent(id)}`;
+    const preco = produto.preco > 0 ? brl(produto.preco) : "Consulte o valor";
+    const descricao = produto.descricao?.trim() || produto.descricao_curta?.trim();
+    const texto = [
+      `${produto.nome} — ${empresaCompleta.empresa?.nome ?? "Trapeza"}`,
+      `Preço: ${preco}`,
+      descricao,
+      "Confira na Trapeza:",
+    ].filter(Boolean).join("\n");
+
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+        await navigator.share({ title: produto.nome, text: texto, url });
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${texto}\n${url}`);
+        toast.success("Link e informações do produto copiados!");
+        return;
+      }
+
+      toast.error("Não foi possível compartilhar neste dispositivo.");
+    } catch (error) {
+      // Fechar o menu nativo de compartilhamento não é um erro para o usuário.
+      if (error instanceof Error && error.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(`${texto}\n${url}`);
+        toast.success("Link e informações do produto copiados!");
+      } catch {
+        toast.error("Não foi possível compartilhar. Copie o link da página.");
+      }
     }
   }
 
@@ -251,7 +301,19 @@ function ProdutoDetalhe() {
       </div>
 
       <div className="mt-5">
-        <h1 className="font-display text-2xl font-bold">{produto.nome}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="min-w-0 flex-1 font-display text-2xl font-bold">{produto.nome}</h1>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCompartilhar}
+            aria-label={`Compartilhar ${produto.nome}`}
+            className="shrink-0 rounded-full gap-2 border-brand-red/30 text-brand-red hover:bg-brand-red/5 hover:text-brand-red"
+          >
+            <Share2 className="h-4 w-4" />
+            <span>Compartilhar</span>
+          </Button>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">{produto.descricao}</p>
         <div className="mt-3 flex items-baseline gap-2">
           <span className="font-display text-2xl font-bold text-brand-red">

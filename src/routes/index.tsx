@@ -601,6 +601,7 @@ function Landing() {
           tipo="produto"
           titulo="🛍️ O que tem pra comprar por aqui"
           subtitulo="Produtos cadastrados pelas empresas da cidade."
+          urlVerMaisGeral
         />
 
         {/* 8. CTA para empresas */}

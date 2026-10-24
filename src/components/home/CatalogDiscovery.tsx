@@ -1,4 +1,3 @@
-
 import { useMemo, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +12,11 @@ type Props = {
   titulo?: string;
   subtitulo?: string;
   limite?: number;
+  urlVerMaisGeral?: boolean;
 };
+
+const CLASSE_LARGURA_CARD =
+  "w-[155px] min-w-[155px] snap-start sm:w-[185px] sm:min-w-[185px] lg:w-[205px] lg:min-w-[205px]";
 
 function selecionarDiversificados(
   itens: ItemCatalogoHome[],
@@ -23,7 +26,6 @@ function selecionarDiversificados(
   const selecionados: ItemCatalogoHome[] = [];
   const empresas = new Set<string>();
 
-  // Prioriza um item de cada empresa antes de repetir.
   while (restantes.length && selecionados.length < limite) {
     const index = restantes.findIndex(
       (item) => !empresas.has(item.empresaId),
@@ -39,6 +41,27 @@ function selecionarDiversificados(
   return selecionados;
 }
 
+function CardVerMais({ textoTodos }: { textoTodos: string }) {
+  return (
+    <Card className="flex h-full min-h-[220px] w-full items-center justify-center border-dashed transition hover:border-orange-400 hover:bg-muted/50">
+      <CardContent className="flex flex-col items-center gap-3 p-4 text-center">
+        <span
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-2xl"
+          aria-hidden="true"
+        >
+          →
+        </span>
+
+        <span className="text-sm font-semibold">Ver mais</span>
+
+        <span className="text-xs text-muted-foreground">
+          Todos os {textoTodos}
+        </span>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function CatalogDiscovery({
   itens,
   cidade,
@@ -46,7 +69,8 @@ export function CatalogDiscovery({
   tipo = "produto",
   titulo,
   subtitulo,
-  limite = 8,
+  limite = 10,
+  urlVerMaisGeral = false,
 }: Props) {
   const carrosselRef = useRef<HTMLDivElement>(null);
 
@@ -69,17 +93,17 @@ export function CatalogDiscovery({
       ? "Serviços para conhecer"
       : "Produtos para descobrir");
 
+  const textoTodos = tipo === "servico" ? "serviços" : "produtos";
+
   function moverCarrossel(direcao: "esquerda" | "direita") {
     const carrossel = carrosselRef.current;
     if (!carrossel) return;
 
-    const distancia = Math.max(
-      carrossel.clientWidth * 0.8,
-      240,
-    );
-
     carrossel.scrollBy({
-      left: direcao === "direita" ? distancia : -distancia,
+      left:
+        direcao === "direita"
+          ? Math.max(carrossel.clientWidth * 0.8, 240)
+          : -Math.max(carrossel.clientWidth * 0.8, 240),
       behavior: "smooth",
     });
   }
@@ -88,9 +112,7 @@ export function CatalogDiscovery({
     <section className="mx-auto max-w-6xl px-4 pt-5">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-display text-base font-bold">
-            {heading}
-          </h2>
+          <h2 className="font-display text-base font-bold">{heading}</h2>
 
           <p className="mt-0.5 text-xs text-muted-foreground">
             {subtitulo ??
@@ -136,7 +158,7 @@ export function CatalogDiscovery({
               slug: item.empresaSlug,
               id: item.id,
             }}
-            className="group block w-[155px] min-w-[155px] snap-start sm:w-[185px] sm:min-w-[185px] lg:w-[205px] lg:min-w-[205px]"
+            className={`group block ${CLASSE_LARGURA_CARD}`}
           >
             <Card className="h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="aspect-square overflow-hidden bg-muted">
@@ -172,15 +194,13 @@ export function CatalogDiscovery({
 
                 <p
                   className="text-xs font-bold"
-                  style={{
-                    color: "var(--tp-orange, #c65d3a)",
-                  }}
+                  style={{ color: "var(--tp-orange, #c65d3a)" }}
                 >
                   {tipo === "servico" && item.preco <= 0
                     ? "Consultar valor"
                     : brl(item.preco)}
 
-                  {item.precoAntigo &&
+                  {item.precoAntigo != null &&
                   item.precoAntigo > item.preco ? (
                     <span className="ml-1 font-normal text-muted-foreground line-through">
                       {brl(item.precoAntigo)}
@@ -191,6 +211,27 @@ export function CatalogDiscovery({
             </Card>
           </Link>
         ))}
+
+        {/* Card "Ver mais" no final do carrossel */}
+        {urlVerMaisGeral ? (
+          <Link
+            to="/produtos"
+            aria-label={`Ver todos os ${textoTodos}`}
+            className={`flex items-center justify-center ${CLASSE_LARGURA_CARD}`}
+          >
+            <CardVerMais textoTodos={textoTodos} />
+          </Link>
+        ) : categoria ? (
+          <Link
+            to="/categoria/$valor"
+            params={{ valor: categoria }}
+            search={{ tipo }}
+            aria-label={`Ver todos os ${textoTodos} da categoria`}
+            className={`flex items-center justify-center ${CLASSE_LARGURA_CARD}`}
+          >
+            <CardVerMais textoTodos={textoTodos} />
+          </Link>
+        ) : null}
       </div>
     </section>
   );

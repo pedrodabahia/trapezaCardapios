@@ -48,8 +48,14 @@ export {
 } from "@/modules/empresas/controllers/empresa.controller";
 
 export { getProdutoById, getTopProdutosPlataforma, getAnunciosPromocao, buscarProdutosPlataforma, listarProdutosPorCategoriasNegocio } from "@/modules/produtos/controllers/produto.controller";
-export type { TopProdutoPlataforma, AnuncioPromocao, ProdutoBuscaGlobal, ProdutoCategoriaPlataforma, ItemCatalogoHome } from "@/modules/produtos/controllers/produto.controller";
-
+export type {
+  TopProdutoPlataforma,
+  AnuncioPromocao,
+  ProdutoBuscaGlobal,
+  ProdutoCategoriaPlataforma,
+  ItemCatalogoHome,
+  ItemCatalogoCompleto,
+} from "@/modules/produtos/controllers/produto.controller";
 // ============================================================================
 // Leitura — autenticada (admin da empresa)
 // ============================================================================
@@ -70,6 +76,7 @@ export {
   deleteProduto,
   saveProdutoIngredientes,
   listarCatalogoHome,
+  listarCatalogoCompleto,
 } from "@/modules/produtos/controllers/produto.controller";
 
 export { uploadImagem } from "@/modules/midia/controllers/midia.controller";

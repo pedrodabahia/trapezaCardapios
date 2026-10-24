@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { container } from "@/core/container";
 import { authTenantAtivo } from "@/core/auth/session";
+import { adminClient } from "@/core/database/supabase-admin";
 import "../container";
 import "@/modules/empresas/container";
 import "@/modules/planos/container";
@@ -361,4 +362,364 @@ export const listarCatalogoHome = createServerFn({ method: "POST" })
     }
 
     return resultado;
+  });
+
+
+export type ItemCatalogoCategoria = {
+  produtoId: string;
+  tipo: "produto" | "servico";
+  nome: string;
+  descricaoCurta: string | null;
+  precoAtual: number;
+  precoAntigo: number | null;
+  imagemUrl: string | null;
+  categoriaId: string | null;
+  categoriaNome: string;
+  empresaId: string;
+  empresaNome: string;
+  empresaSlug: string;
+};
+
+export const listarCatalogoPorCategoriasNegocio = createServerFn({
+  method: "POST",
+})
+  .validator(
+    (d: {
+      categorias: string[];
+      tipo: "produto" | "servico";
+      limite?: number;
+      offset?: number;
+    }) => d,
+  )
+  .handler(async ({ data }): Promise<ItemCatalogoCategoria[]> => {
+    const categoriasNegocio = [
+      ...new Set(data.categorias.filter(Boolean)),
+    ];
+
+    const tipo = data.tipo;
+    const limite = Math.min(Math.max(data.limite ?? 20, 1), 100);
+    const offset = Math.max(data.offset ?? 0, 0);
+
+    if (categoriasNegocio.length === 0) return [];
+
+    const empresaRepository = container.resolve("empresaRepository");
+    const produtoRepository = container.resolve("produtoRepository");
+
+    const empresas = (
+      await empresaRepository.listarPublicasAtivas()
+    ).filter(
+      (empresa) =>
+        empresa.tipo === "trapeza" &&
+        empresa.categorias?.some((categoria) =>
+          categoriasNegocio.includes(categoria),
+        ),
+    );
+
+    if (empresas.length === 0) return [];
+
+    const empresaPorId = new Map(
+      empresas.map((empresa) => [empresa.id, empresa]),
+    );
+
+    const itens = await produtoRepository.listarAtivosPorEmpresas(
+      empresas.map((empresa) => empresa.id),
+    );
+
+    const itensFiltrados = itens.filter((item) => item.tipo === tipo);
+
+    if (itensFiltrados.length === 0) return [];
+
+    const categoriaIds = [
+      ...new Set(
+        itensFiltrados
+          .map((item) => item.categoria_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    const categoriasPorId = new Map<string, string>();
+
+    if (categoriaIds.length > 0) {
+      const { data: categorias, error } = await adminClient()
+        .from("categorias")
+        .select("id, nome")
+        .in("id", categoriaIds)
+        .eq("ativo", true);
+
+      if (error) {
+        throw new Error(
+          `Erro ao buscar categorias dos produtos: ${error.message}`,
+        );
+      }
+
+      for (const categoria of categorias ?? []) {
+        categoriasPorId.set(categoria.id, categoria.nome);
+      }
+    }
+
+    const resultado: ItemCatalogoCategoria[] = itensFiltrados
+      .map((item) => {
+        const empresa = empresaPorId.get(item.empresa_id);
+
+        if (!empresa) return null;
+
+        const categoriaId = item.categoria_id ?? null;
+
+        return {
+          produtoId: item.id,
+          tipo,
+          nome: item.nome,
+          descricaoCurta: item.descricao_curta ?? null,
+          precoAtual: item.preco,
+          precoAntigo: item.preco_antigo ?? null,
+          imagemUrl: item.imagem_url ?? null,
+          categoriaId,
+          categoriaNome: categoriaId
+            ? categoriasPorId.get(categoriaId) ?? "Outros"
+            : "Outros",
+          empresaId: empresa.id,
+          empresaNome: empresa.nome,
+          empresaSlug: empresa.slug,
+        };
+      })
+      .filter(
+        (item): item is ItemCatalogoCategoria => item !== null,
+      )
+      .sort((a, b) => {
+        const comparacaoCategoria = a.categoriaNome.localeCompare(
+          b.categoriaNome,
+          "pt-BR",
+        );
+
+        if (comparacaoCategoria !== 0) return comparacaoCategoria;
+
+        return a.nome.localeCompare(b.nome, "pt-BR");
+      });
+
+    return resultado.slice(offset, offset + limite);
+  });
+
+
+export const listarCatalogoPorCategoriaProduto = createServerFn({
+  method: "POST",
+})
+  .validator(
+    (data: {
+      categoriaId: string;
+      tipo: "produto" | "servico";
+      limite?: number;
+      offset?: number;
+    }) => data,
+  )
+  .handler(async ({ data }): Promise<ItemCatalogoCategoria[]> => {
+    const categoriaId = data.categoriaId.trim();
+    const tipo = data.tipo;
+    const limite = Math.min(Math.max(data.limite ?? 80, 1), 100);
+    const offset = Math.max(data.offset ?? 0, 0);
+
+    if (!categoriaId) return [];
+
+    const { data: categoria, error: erroCategoria } = await adminClient()
+      .from("categorias")
+      .select("id, nome")
+      .eq("id", categoriaId)
+      .eq("ativo", true)
+      .maybeSingle();
+
+    if (erroCategoria) {
+      throw new Error(
+        `Erro ao buscar categoria do produto: ${erroCategoria.message}`,
+      );
+    }
+
+    if (!categoria) return [];
+
+    const empresaRepository = container.resolve("empresaRepository");
+    const produtoRepository = container.resolve("produtoRepository");
+
+    const empresas = (
+      await empresaRepository.listarPublicasAtivas()
+    ).filter((empresa) => empresa.tipo === "trapeza");
+
+    if (empresas.length === 0) return [];
+
+    const empresaPorId = new Map(
+      empresas.map((empresa) => [empresa.id, empresa]),
+    );
+
+    const produtos = await produtoRepository.listarAtivosPorEmpresas(
+      empresas.map((empresa) => empresa.id),
+    );
+
+    const resultado: ItemCatalogoCategoria[] = produtos
+      .filter(
+        (produto) =>
+          produto.tipo === tipo && produto.categoria_id === categoriaId,
+      )
+      .map((produto) => {
+        const empresa = empresaPorId.get(produto.empresa_id);
+
+        if (!empresa) return null;
+
+        return {
+          produtoId: produto.id,
+          tipo,
+          nome: produto.nome,
+          descricaoCurta: produto.descricao_curta ?? null,
+          precoAtual: produto.preco,
+          precoAntigo: produto.preco_antigo ?? null,
+          imagemUrl: produto.imagem_url ?? null,
+          categoriaId: categoria.id,
+          categoriaNome: categoria.nome,
+          empresaId: empresa.id,
+          empresaNome: empresa.nome,
+          empresaSlug: empresa.slug,
+        };
+      })
+      .filter(
+        (item): item is ItemCatalogoCategoria => item !== null,
+      )
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+
+    return resultado.slice(offset, offset + limite);
+  });
+
+
+export const buscarCategoriaProdutoPublica = createServerFn({
+  method: "POST",
+})
+  .validator((data: { categoriaId: string }) => data)
+  .handler(async ({ data }) => {
+    const categoriaId = data.categoriaId.trim();
+
+    if (!categoriaId) return null;
+
+    const { data: categoria, error } = await adminClient()
+      .from("categorias")
+      .select("id, nome")
+      .eq("id", categoriaId)
+      .eq("ativo", true)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(
+        `Erro ao buscar categoria do produto: ${error.message}`,
+      );
+    }
+
+    return categoria;
+  });
+
+
+
+export type ItemCatalogoCompleto = {
+  produtoId: string;
+  tipo: "produto";
+  nome: string;
+  descricaoCurta: string | null;
+  precoAtual: number;
+  precoAntigo: number | null;
+  imagemUrl: string | null;
+  categoriaId: string | null;
+  categoriaNome: string;
+  empresaId: string;
+  empresaNome: string;
+  empresaSlug: string;
+  empresaCidade: string | null;
+};
+
+export const listarCatalogoCompleto = createServerFn({
+  method: "POST",
+})
+  .validator((data: { cidade?: string | null } | undefined) => data ?? {})
+  .handler(async ({ data }): Promise<ItemCatalogoCompleto[]> => {
+    const empresaRepository = container.resolve("empresaRepository");
+    const produtoRepository = container.resolve("produtoRepository");
+
+    const empresas = (
+      await empresaRepository.listarPublicasAtivas()
+    ).filter(
+      (empresa) =>
+        empresa.tipo === "trapeza" &&
+        (!data.cidade || empresa.cidade === data.cidade),
+    );
+
+    if (empresas.length === 0) return [];
+
+    const empresaPorId = new Map(
+      empresas.map((empresa) => [empresa.id, empresa]),
+    );
+
+    const produtos = (
+      await produtoRepository.listarAtivosPorEmpresas(
+        empresas.map((empresa) => empresa.id),
+      )
+    ).filter((produto) => produto.tipo === "produto");
+
+    if (produtos.length === 0) return [];
+
+    const categoriaIds = [
+      ...new Set(
+        produtos
+          .map((produto) => produto.categoria_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    const categoriasPorId = new Map<string, string>();
+
+    if (categoriaIds.length > 0) {
+      const { data: categorias, error } = await adminClient()
+        .from("categorias")
+        .select("id, nome")
+        .in("id", categoriaIds)
+        .eq("ativo", true);
+
+      if (error) {
+        throw new Error(
+          `Erro ao buscar categorias dos produtos: ${error.message}`,
+        );
+      }
+
+      for (const categoria of categorias ?? []) {
+        categoriasPorId.set(categoria.id, categoria.nome);
+      }
+    }
+
+    return produtos
+      .map((produto): ItemCatalogoCompleto | null => {
+        const empresa = empresaPorId.get(produto.empresa_id);
+        if (!empresa) return null;
+
+        const categoriaId = produto.categoria_id ?? null;
+
+        return {
+          produtoId: produto.id,
+          tipo: "produto",
+          nome: produto.nome,
+          descricaoCurta: produto.descricao_curta ?? null,
+          precoAtual: produto.preco,
+          precoAntigo: produto.preco_antigo ?? null,
+          imagemUrl: produto.imagem_url ?? null,
+          categoriaId,
+          categoriaNome: categoriaId
+            ? categoriasPorId.get(categoriaId) ?? "Outros"
+            : "Outros",
+          empresaId: empresa.id,
+          empresaNome: empresa.nome,
+          empresaSlug: empresa.slug,
+          empresaCidade: empresa.cidade ?? null,
+        };
+      })
+      .filter(
+        (item): item is ItemCatalogoCompleto => item !== null,
+      )
+      .sort((a, b) => {
+        const categoria = a.categoriaNome.localeCompare(
+          b.categoriaNome,
+          "pt-BR",
+        );
+
+        return categoria || a.nome.localeCompare(b.nome, "pt-BR");
+      });
   });
